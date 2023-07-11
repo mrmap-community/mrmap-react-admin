@@ -64,6 +64,7 @@ export default (
             
       return httpClient(`${apiUrl}/${resource}?${stringify(query)}`, options).then(({headers, json}) => (
         {
+          // TODO: how to handle relationships?
           data: json.data.map( (value: JsonApiPrimaryData) => Object.assign(
             { id: value.id },
             value.attributes,
@@ -76,16 +77,23 @@ export default (
     },
 
     getOne: (resource: string, params: GetOneParams) =>
-        httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-            data: json,
+        httpClient(`${apiUrl}/${resource}/${params.id}`, options).then(({ json }) => ({
+            // TODO: how to handle relationships?
+            
+            data: {
+                id: json.data.id,
+                ...json.data.attributes
+            },
         })),
+
+
 
     getMany: (resource: string, params: GetManyParams) => {
         const query = {
             filter: JSON.stringify({ ids: params.ids }),
         };
         const url = `${apiUrl}/${resource}?${stringify(query)}`;
-        return httpClient(url).then(({ json }) => ({ data: json }));
+        return httpClient(url, options).then(({ json }) => ({ data: json }));
     },
 
     getManyReference: (resource: string, params: GetManyReferenceParams) => {
@@ -101,7 +109,7 @@ export default (
         };
         const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
-        return httpClient(url).then(({ headers, json }) => ({
+        return httpClient(url, options).then(({ headers, json }) => ({
             data: json,
             total: getTotal(json),
         }));
