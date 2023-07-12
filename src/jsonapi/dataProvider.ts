@@ -2,7 +2,7 @@ import { fetchUtils, GetListParams, GetOneParams, GetManyParams, GetManyReferenc
 import { stringify } from 'query-string';
 import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from './types/jsonapi';
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from './utils';
-
+import jsonpointer from 'jsonpointer';
 
 
 export interface JsonApiDataProviderOptions extends Options {
@@ -12,17 +12,15 @@ export interface JsonApiDataProviderOptions extends Options {
     headers?: Headers;
 }
 
-
-
 export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
     const opts = {
       httpClient: fetchUtils.fetchJson,
       headers: new Headers(
-        {
-            'Accept': JsonApiMimeType,
-            'Content-Type': JsonApiMimeType,
-        }
-    ),
+            {
+                'Accept': JsonApiMimeType,
+                'Content-Type': JsonApiMimeType,
+            }
+      ),
       total: "/meta/pagination/count",
       ...options,
     };
@@ -30,20 +28,12 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
 
 
     const getTotal = (response: JsonApiDocument): number => {
-        const paths = opts.total?.split("/");
-        let total = 10;
-        try {
-            paths?.forEach((value: any) => {
-                // @ts-ignore cause we climb down the json pointer
-                total = response[value];
-            });
-        } catch (error) {
-            total = 10;
-        }
+        const total = jsonpointer.get(response, opts.total)
+
         if (typeof total === 'string'){
-            total = parseInt(total, 10);
+            return parseInt(total, 10);
         }
-        return total ?? 10;
+        return total;
     };
 
 

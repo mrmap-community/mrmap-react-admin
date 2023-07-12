@@ -1,4 +1,4 @@
-import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton } from "react-admin";
+import { useResourceDefinition, ReferenceArrayField, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton } from "react-admin";
 import { JsonApiDocument, JsonApiErrorObject } from "../types/jsonapi";
 import { useSearchParams } from 'react-router-dom';
 import { ReactElement } from "react";

@@ -25,17 +25,10 @@ export const encapsulateJsonApiPrimaryData = (data: JsonApiPrimaryData): any => 
      * 
      */
 
-    // const relationships = data.relationships ?? {}
-
-    
-    // for (const [relationName, relationship] of Object.entries(relationships)){
-    //     console.log(`${relationName}: ${relationship}`);
-    // }
-
-
     return {
         // TODO: how to handle relationships?
         id: data.id,
         ...data.attributes
+
     }
 }

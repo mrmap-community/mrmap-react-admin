@@ -11,6 +11,7 @@ import WmsIcon from '@mui/icons-material/Map';
 import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
 import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
 import tokenAuthProvider, { fetchJsonWithAuthToken } from "./authProvider";
+import { Route } from 'react-router-dom';
 
 // TODO: get api url from env
 const authProvider = tokenAuthProvider({loginUrl:'http://localhost:8001/api/auth/login/', logoutUrl:'http://localhost:8001/api/auth/login/'});
@@ -37,8 +38,18 @@ export const App = () => {
         list={ResourceList} 
         edit={ResourceEdit}
         create={ResourceCreate}
-      />
-      <Resource name="registry/layers" list={ListGuesser}/>
+      >
+            <Route path=":id/layers" element={<ResourceList />} />
+      </Resource>
+      
+      <Resource 
+        name="registry/layers" 
+        options={{label: 'Layers', type: 'Layers'}} 
+        icon={WmsIcon} 
+        recordRepresentation={(record) => record.title}
+        list={ResourceList} 
+        edit={ResourceEdit}
+        create={ResourceCreate}/>
     </Admin>
 
   )
