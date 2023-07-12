@@ -2,23 +2,42 @@ import {
   Admin,
   Resource,
   ListGuesser,
-  EditGuesser,
   defaultTheme,
   RaThemeOptions
 } from "react-admin";
-import jsonApidataProvider from "./services/dataProvider";
-import { WebMapServiceList } from "./components/WmsList";
+import jsonApidataProvider from "./jsonapi/dataProvider";
+import { ResourceList } from "./jsonapi/components/ResourceList";
+import WmsIcon from '@mui/icons-material/Map';
+import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
+import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
+import tokenAuthProvider, { fetchJsonWithAuthToken } from "./authProvider";
 
 // TODO: get api url from env
-const dataProvider = jsonApidataProvider('http://localhost:8001/api');
+const authProvider = tokenAuthProvider({loginUrl:'http://localhost:8001/api/auth/login/', logoutUrl:'http://localhost:8001/api/auth/login/'});
+const dataProvider = jsonApidataProvider({apiUrl: 'http://localhost:8001/api', httpClient: fetchJsonWithAuthToken } );
 const lightTheme = defaultTheme;
 const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } };
+
+
 
 export const App = () => {
   return(
 
-    <Admin theme={lightTheme} darkTheme={darkTheme} dataProvider={dataProvider}>
-      <Resource name="registry/wms" list={WebMapServiceList} edit={EditGuesser}/>
+    <Admin 
+      theme={lightTheme} 
+      darkTheme={darkTheme} 
+      dataProvider={dataProvider}
+      authProvider={authProvider}
+    >
+      <Resource 
+        name="registry/wms" 
+        options={{label: 'WebMapService', type: 'WebMapService'}} 
+        icon={WmsIcon} 
+        recordRepresentation={(record) => record.title}
+        list={ResourceList} 
+        edit={ResourceEdit}
+        create={ResourceCreate}
+      />
       <Resource name="registry/layers" list={ListGuesser}/>
     </Admin>
 

@@ -1,12 +1,30 @@
-import { List, Datagrid, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, FilterPayload, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton } from "react-admin";
+import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton } from "react-admin";
 import { JsonApiDocument, JsonApiErrorObject } from "../types/jsonapi";
 import { useSearchParams } from 'react-router-dom';
 import { ReactElement } from "react";
 
 
-export const WebMapServiceList = () => {
+const ListActions = () => (
+  <TopToolbar>
+      <SelectColumnsButton />
+      <FilterButton/>
+      <CreateButton/>
+      <ExportButton/>
+  </TopToolbar>
+
+);
+
+export const ResourceList = () => {
+  /** json:api specific list component to handle json:api resources
+   * 
+   */
   
   const resource = useResourceContext();
+  const def = useResourceDefinition();
+
+  const jsonApiType = def.options?.type;
+
+
   const [listParams, setListParams]  = useStore(`${resource}.listParams`);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -50,31 +68,21 @@ export const WebMapServiceList = () => {
     <TextInput key="search" label="Title contains" source="title" />,
   ];
 
-  const PostListActions = () => (
-    <TopToolbar>
-        <SelectColumnsButton />
-        <FilterButton/>
-        <CreateButton/>
-        <ExportButton/>
-    </TopToolbar>
-
-);
-
 
   return (
 
-  <List 
-    actions={<PostListActions />}
-    filters={postFilters}
-    queryOptions={{ onError }}
-  >
-    <DatagridConfigurable rowClick="edit">
-      <TextField source="id"/>
-      <TextField source="title"/>
-      <DateField source="createdAt"/>
-      <BooleanField source="isActive"></BooleanField>
-    </DatagridConfigurable>
-  </List>
-)
+    <List 
+      actions={<ListActions />}
+      filters={postFilters}
+      queryOptions={{ onError, meta: {type: jsonApiType} }}
+    >
+      <DatagridConfigurable rowClick="edit">
+        <TextField source="id"/>
+        <TextField source="title"/>
+        <DateField source="createdAt"/>
+        <BooleanField source="isActive"></BooleanField>
+      </DatagridConfigurable>
+    </List>
+  )
 
 };
