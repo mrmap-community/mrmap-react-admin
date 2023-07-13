@@ -1,8 +1,18 @@
-import { useResourceDefinition, ReferenceArrayField, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton } from "react-admin";
+import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton, ReferenceManyCount, ListProps, RaRecord, ArrayField, SingleFieldList, ChipField } from "react-admin";
 import { JsonApiDocument, JsonApiErrorObject } from "../types/jsonapi";
 import { useSearchParams } from 'react-router-dom';
 import { ReactElement } from "react";
 
+
+export interface FieldDefinition {
+  source: string;
+  dataType: string;
+};
+
+
+export interface ResourceListProps<RecordType extends RaRecord = any> extends ListProps {
+  fields: FieldDefinition[]
+};
 
 const ListActions = () => (
   <TopToolbar>
@@ -14,11 +24,10 @@ const ListActions = () => (
 
 );
 
-export const ResourceList = () => {
+export const JsonApiList = (): ReactElement  => {
   /** json:api specific list component to handle json:api resources
    * 
    */
-  
   const resource = useResourceContext();
   const def = useResourceDefinition();
 
@@ -48,8 +57,6 @@ export const ResourceList = () => {
 
       jsonApiDocument.errors?.forEach((apiError: JsonApiErrorObject) => {
         if (isInvalidSort(apiError)){
-          console.log("unable to sort");
-  
           // remove sort from storage
           const newParams = listParams;
           newParams.sort = '';
@@ -65,7 +72,7 @@ export const ResourceList = () => {
 
   const postFilters: ReactElement[] = [
     <TextInput key="search" label="Search" source="search" alwaysOn />,
-    <TextInput key="search" label="Title contains" source="title" />,
+    <TextInput key="filter_title" label="Title contains" source="title__icontains" />,
   ];
 
 
@@ -74,13 +81,26 @@ export const ResourceList = () => {
     <List 
       actions={<ListActions />}
       filters={postFilters}
-      queryOptions={{ onError, meta: {type: jsonApiType} }}
+      queryOptions={{ onError, meta: {include: 'keywords'} }}
     >
       <DatagridConfigurable rowClick="edit">
         <TextField source="id"/>
         <TextField source="title"/>
         <DateField source="createdAt"/>
         <BooleanField source="isActive"></BooleanField>
+        <ArrayField source="keywords">
+            <SingleFieldList>
+                <ChipField source="keyword" size="small" />
+            </SingleFieldList>
+        </ArrayField>
+
+
+        {/* <ReferenceManyCount
+                label="Layers"
+                reference="registry/layers"
+                target="service"
+                link
+        /> */}
       </DatagridConfigurable>
     </List>
   )

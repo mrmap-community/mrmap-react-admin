@@ -15,7 +15,7 @@ export interface JsonApiDocument {
   errors?: JsonApiErrorObject[];
   meta?: any;
   links?: any;
-  included?: any;
+  included?: JsonApiPrimaryData[];
 }
 
 export interface JsonApiErrorSource {

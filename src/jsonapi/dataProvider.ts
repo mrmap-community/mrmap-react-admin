@@ -45,7 +45,8 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
         const query: any = {
             'page[number]': page,
             'page[size]': perPage,
-            'sort': `${order == 'ASC' ? '': '-'}${field}`
+            'sort': `${order == 'ASC' ? '': '-'}${field}`,
+            'include': params.meta?.include
         };
 
         for (const [filterName, filterValue] of Object.entries(params.filter)){
@@ -58,7 +59,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
                 const resources = json.data as JsonApiPrimaryData[]
                 return {
                     data: resources.map( (data: JsonApiPrimaryData) => Object.assign(
-                        encapsulateJsonApiPrimaryData(data)
+                        encapsulateJsonApiPrimaryData(json, data)
                     )),
                     total: getTotal(json),
                 }
@@ -71,7 +72,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
                 `${opts.apiUrl}/${resource}/${params.id}`, 
                 {headers: opts.headers}
             ).then(
-                ( {json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json.data as JsonApiPrimaryData) })
+                ( {json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
             ),
 
 
@@ -85,22 +86,31 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
         },
 
         getManyReference: (resource: string, params: GetManyReferenceParams) => {
-            // const { page, perPage } = params.pagination;
-            // const { field, order } = params.sort;
-            // const query = {
-            //     sort: JSON.stringify([field, order]),
-            //     range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
-            //     filter: JSON.stringify({
-            //         ...params.filter,
-            //         [params.target]: params.id,
-            //     }),
-            // };
-            // const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
-            // return httpClient(url, options).then(({ headers, json }) => ({
-            //     data: json,
-            //     total: getTotal(json),
-            // }));
+            const { page, perPage } = params.pagination;
+            const { field, order } = params.sort;
+            const query: any = {
+                'page[number]': page,
+                'page[size]': perPage,
+                'sort': `${order == 'ASC' ? '': '-'}${field}`
+            };
+
+            for (const [filterName, filterValue] of Object.entries(params.filter)){
+                query[`filter[${filterName}]`] = filterValue
+            }
+
+            query[`filter[${params.target}]`] = params.id
+
+            return httpClient(`${opts.apiUrl}/${resource}?${stringify(query)}`, {headers: opts.headers}
+            ).then(({json}: {json: JsonApiDocument}) => {
+                const resources = json.data as JsonApiPrimaryData[]
+                return {
+                    data: resources.map( (data: JsonApiPrimaryData) => Object.assign(
+                        encapsulateJsonApiPrimaryData(json, data)
+                    )),
+                    total: getTotal(json),
+                }
+            });
         },
 
         create: (resource: string, params: CreateParams) =>
@@ -109,7 +119,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
                 body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
                 headers: opts.headers
             }).then(
-                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json.data as JsonApiPrimaryData) })
+                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
             ),
 
         update: (resource: string, params: UpdateParams) =>
@@ -119,7 +129,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
                 body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
                 headers: opts.headers
             }).then(
-                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json.data as JsonApiPrimaryData) })
+                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
             ),
 
         updateMany: (resource: string, params: UpdateManyParams) => {

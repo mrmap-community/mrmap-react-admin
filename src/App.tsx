@@ -6,7 +6,7 @@ import {
   RaThemeOptions
 } from "react-admin";
 import jsonApidataProvider from "./jsonapi/dataProvider";
-import { ResourceList } from "./jsonapi/components/ResourceList";
+import { JsonApiList } from "./jsonapi/components/ResourceList";
 import WmsIcon from '@mui/icons-material/Map';
 import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
 import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
@@ -29,17 +29,18 @@ export const App = () => {
       darkTheme={darkTheme} 
       dataProvider={dataProvider}
       authProvider={authProvider}
+      
     >
       <Resource 
         name="registry/wms" 
         options={{label: 'WebMapService', type: 'WebMapService'}} 
         icon={WmsIcon} 
         recordRepresentation={(record) => record.title}
-        list={ResourceList} 
+        list={JsonApiList} 
         edit={ResourceEdit}
         create={ResourceCreate}
       >
-            <Route path=":id/layers" element={<ResourceList />} />
+            <Route path=":id/layers" element={<JsonApiList />} />
       </Resource>
       
       <Resource 
@@ -47,7 +48,7 @@ export const App = () => {
         options={{label: 'Layers', type: 'Layers'}} 
         icon={WmsIcon} 
         recordRepresentation={(record) => record.title}
-        list={ResourceList} 
+        list={JsonApiList} 
         edit={ResourceEdit}
         create={ResourceCreate}/>
     </Admin>
