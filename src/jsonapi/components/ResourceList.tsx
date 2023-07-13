@@ -1,7 +1,9 @@
-import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton, ReferenceManyCount, ListProps, RaRecord, ArrayField, SingleFieldList, ChipField } from "react-admin";
+import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton, ReferenceManyCount, ListProps, RaRecord, ArrayField, SingleFieldList, ChipField, Link, sanitizeFieldRestProps, NumberFieldProps, useRecordContext, useTranslate, useCreatePath } from "react-admin";
 import { JsonApiDocument, JsonApiErrorObject } from "../types/jsonapi";
 import { useSearchParams } from 'react-router-dom';
 import { ReactElement } from "react";
+import get from 'lodash/get';
+import Typography from '@mui/material/Typography';
 
 
 export interface FieldDefinition {
@@ -23,6 +25,36 @@ const ListActions = () => (
   </TopToolbar>
 
 );
+
+const ResourceLinkField = <
+RecordType extends Record<string, unknown> = Record<string, any>
+>(
+props: NumberFieldProps<RecordType>
+) => {
+const { className, source, emptyText, ...rest } = props;
+const record = useRecordContext(props);
+const value = get(record, source);
+const translate = useTranslate();
+const total = value?.length;
+console.log('value', value);
+const createPath = useCreatePath();
+
+//TODO: How-To build the link with the correct resource?
+return (
+    <Typography
+        component="span"
+        variant="body2"
+        className={className}
+        {...sanitizeFieldRestProps(rest)}
+    >
+        {<Link to={"TODO"}
+            variant="body2"
+            onClick={e => e.stopPropagation()}>
+          {total}
+        </Link>}
+    </Typography>
+);
+};
 
 export const JsonApiList = (): ReactElement  => {
   /** json:api specific list component to handle json:api resources
@@ -88,7 +120,11 @@ export const JsonApiList = (): ReactElement  => {
         <TextField source="title"/>
         <DateField source="createdAt"/>
         <BooleanField source="isActive"></BooleanField>
+        <ResourceLinkField source="keywords"/>
+        
         <ArrayField source="keywords">
+        
+
             <SingleFieldList>
                 <ChipField source="keyword" size="small" />
             </SingleFieldList>
