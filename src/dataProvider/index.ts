@@ -1,8 +1,11 @@
 import { fetchUtils, GetListParams, GetOneParams, GetManyParams, GetManyReferenceParams, CreateParams, UpdateParams, UpdateManyParams, DeleteParams, DeleteManyParams, Options, useStore, DataProvider, HttpError } from 'react-admin';
 import { stringify } from 'query-string';
-import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from './types/jsonapi';
-import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from './utils';
+import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from '../jsonapi/types/jsonapi';
+import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils';
 import jsonpointer from 'jsonpointer';
+import { invokeOperation } from './invokeOperation';
+import SwaggerClient from "swagger-client";
+import { introspect } from "../introspect";
 
 
 export interface JsonApiDataProviderOptions extends Options {
@@ -14,7 +17,7 @@ export interface JsonApiDataProviderOptions extends Options {
 
 export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
     const opts = {
-      httpClient: fetchUtils.fetchJson,
+      httpClient: SwaggerClient({ url: options.apiUrl }),
       headers: new Headers(
             {
                 'Accept': JsonApiMimeType,
@@ -39,31 +42,26 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
 
     return {
         getList: (resource: string , params: GetListParams) => {
-            
-        const { page, perPage } = params.pagination;
-        const { field, order } = params.sort;
-        const query: any = {
-            'page[number]': page,
-            'page[size]': perPage,
-            'sort': `${order == 'ASC' ? '': '-'}${field}`,
-            'include': params.meta?.include
-        };
 
-        for (const [filterName, filterValue] of Object.entries(params.filter)){
-            query[`filter[${filterName}]`] = filterValue
-        }
+            const { page, perPage } = params.pagination;
+            const { field, order } = params.sort;
+            const query: any = {
+                'page[number]': page,
+                'page[size]': perPage,
+                'sort': `${order == 'ASC' ? '': '-'}${field}`,
+                'include': params.meta?.include
+            };
 
+            for (const [filterName, filterValue] of Object.entries(params.filter)){
+                query[`filter[${filterName}]`] = filterValue
+            }
+
+            return invokeOperation({
+                operationId: `get_list${resource}`,
+                parameters: query,
+                resolveClient: httpClient
+            })
                 
-        return httpClient(`${opts.apiUrl}/${resource}?${stringify(query)}`, {headers: opts.headers}
-            ).then(({json}: {json: JsonApiDocument}) => {
-                const resources = json.data as JsonApiPrimaryData[]
-                return {
-                    data: resources.map( (data: JsonApiPrimaryData) => Object.assign(
-                        encapsulateJsonApiPrimaryData(json, data)
-                    )),
-                    total: getTotal(json),
-                }
-        });
 
         },
 
@@ -159,5 +157,6 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
             //     body: JSON.stringify(params.data),
             // }).then(({ json }) => ({ data: json }));
         },
+        introspect: introspect.bind(undefined, opts.apiUrl),
     }
 };
