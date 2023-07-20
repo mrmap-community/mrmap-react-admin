@@ -18,8 +18,8 @@ import { AdminGuesser, OpenApiAdmin, openApiDataProvider, openApiSchemaAnalyzer 
 const apiEntryPoint = 'http://localhost:8001/api'
 
 // TODO: get api url from env
-const authProvider = tokenAuthProvider({loginUrl: `${apiEntryPoint}auth/login/`, logoutUrl:`${apiEntryPoint}auth/login/`});
-const jsonApiDataProvider = jsonApidataProvider({apiUrl: 'http://localhost:8001/api/schema',  } );
+//const authProvider = tokenAuthProvider({loginUrl: `${apiEntryPoint}auth/login/`, logoutUrl:`${apiEntryPoint}auth/login/`});
+const jsonApiDataProvider = jsonApidataProvider({entrypoint: 'http://localhost:8001', docUrl: "http://localhost:8001/api/schema"  } );
 const lightTheme = defaultTheme;
 const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } };
 
@@ -34,20 +34,17 @@ const dataProvider = openApiDataProvider({
 });
 
 
-const schemaAnalyzer = {
-  getFieldNameFromSchema: () => "name",
-  getOrderParametersFromSchema: () => Promise.resolve([]),
-  getFiltersParametersFromSchema: () => Promise.resolve([]),
-  getFieldType: () => "text"
-};
 
 
 export const App = () => {
   return(
 
-    <AdminGuesser
+    <OpenApiAdmin
+      theme={lightTheme} 
+      darkTheme={darkTheme} 
       dataProvider={jsonApiDataProvider}
-      schemaAnalyzer={schemaAnalyzer}
+      entrypoint="http://localhost:8001/api"
+      docEntrypoint="http://localhost:8001/api/schema"
     />
 
   )

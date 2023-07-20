@@ -1,8 +1,13 @@
-import { parseSwaggerDocumentation } from "@api-platform/api-doc-parser";
+import collectJsonApiResourcesFromOpenApi3Documentation from "./openapi/parser";
 
 export function introspect(entrypoint: string) {
-  return parseSwaggerDocumentation(entrypoint).then(({ api }) => {
+  
+  
+  
+  
+  return collectJsonApiResourcesFromOpenApi3Documentation(entrypoint).then(({ api }) => {
     const { resources } = api;
+    console.log("resources", resources);
 
     return {
       data: {

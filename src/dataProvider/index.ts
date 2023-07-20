@@ -4,20 +4,21 @@ import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from '../jsonapi
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils';
 import jsonpointer from 'jsonpointer';
 import { invokeOperation } from './invokeOperation';
-import SwaggerClient from "swagger-client";
 import { introspect } from "../introspect";
-
+import OpenAPIClientAxios from 'openapi-client-axios';
+import { ApiPlatformAdminDataProvider, ApiPlatformAdminRecord, OpenApiDataProviderFactoryParams } from '@api-platform/admin/lib/types';
 
 export interface JsonApiDataProviderOptions extends Options {
-    apiUrl: string;
-    httpClient?: Function;
+    entrypoint: string;
+    docUrl: string;
+    httpClient?: OpenAPIClientAxios;
     total?: string;
     headers?: Headers;
 }
 
-export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
+export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvider  =>  {
     const opts = {
-      httpClient: SwaggerClient({ url: options.apiUrl }),
+      httpClient: new OpenAPIClientAxios({ definition: options.docUrl }),
       headers: new Headers(
             {
                 'Accept': JsonApiMimeType,
@@ -27,9 +28,10 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
       total: "/meta/pagination/count",
       ...options,
     };
-    const httpClient = opts.httpClient;
+    const httpClient = opts.httpClient.init();
+    console.log("httpClient", httpClient);
 
-
+    
     const getTotal = (response: JsonApiDocument): number => {
         const total = jsonpointer.get(response, opts.total)
 
@@ -55,19 +57,27 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
             for (const [filterName, filterValue] of Object.entries(params.filter)){
                 query[`filter[${filterName}]`] = filterValue
             }
-
             return invokeOperation({
-                operationId: `get_list${resource}`,
+                operationId: `list_${resource}`,
                 parameters: query,
-                resolveClient: httpClient
-            })
-                
+                resolveClient: httpClient,
+                apiUrl: opts.entrypoint
+            }).then((response)=> {
+                const jsonApiDocument = response.data as JsonApiDocument;
+                const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+                return {
+                    data: resources.map( (data: JsonApiPrimaryData) => Object.assign(
+                        encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+                    )),
+                    total: getTotal(jsonApiDocument),
+                }
+            })                
 
         },
 
         getOne: (resource: string, params: GetOneParams) =>
             httpClient(
-                `${opts.apiUrl}/${resource}/${params.id}`, 
+                `${opts.entrypoint}/${resource}/${params.id}`, 
                 {headers: opts.headers}
             ).then(
                 ( {json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
@@ -99,7 +109,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
 
             query[`filter[${params.target}]`] = params.id
 
-            return httpClient(`${opts.apiUrl}/${resource}?${stringify(query)}`, {headers: opts.headers}
+            return httpClient(`${opts.entrypoint}/${resource}?${stringify(query)}`, {headers: opts.headers}
             ).then(({json}: {json: JsonApiDocument}) => {
                 const resources = json.data as JsonApiPrimaryData[]
                 return {
@@ -112,7 +122,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
         },
 
         create: (resource: string, params: CreateParams) =>
-            httpClient(`${opts.apiUrl}/${resource}`, {
+            httpClient(`${opts.entrypoint}/${resource}`, {
                 method: 'POST',
                 body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
                 headers: opts.headers
@@ -121,7 +131,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
             ),
 
         update: (resource: string, params: UpdateParams) =>
-            httpClient(`${opts.apiUrl}/${resource}/${params.id}`, {
+            httpClient(`${opts.entrypoint}/${resource}/${params.id}`, {
                 // TODO: resource name is not the correct JsonApi Type here...
                 method: 'PATCH',
                 body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
@@ -141,7 +151,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
         },
 
         delete: (resource: string, params: DeleteParams) =>
-            httpClient(`${opts.apiUrl}/${resource}/${params.id}`, {
+            httpClient(`${opts.entrypoint}/${resource}/${params.id}`, {
                 method: 'DELETE',
                 headers: opts.headers
             }).then(
@@ -157,6 +167,11 @@ export default (options: JsonApiDataProviderOptions): DataProvider  =>  {
             //     body: JSON.stringify(params.data),
             // }).then(({ json }) => ({ data: json }));
         },
-        introspect: introspect.bind(undefined, opts.apiUrl),
+        introspect: introspect.bind(undefined, opts.docUrl),
+        subscribe:(
+            resourceIds: string[],
+            callback: (document: ApiPlatformAdminRecord) => void,
+          ) => Promise.resolve({ data: null }),
+        unsubscribe: (_resource: string, resourceIds: string[]) => Promise.resolve({ data: null })
     }
 };
