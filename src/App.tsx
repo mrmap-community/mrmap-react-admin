@@ -11,9 +11,8 @@ import WmsIcon from '@mui/icons-material/Map';
 import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
 import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
 import tokenAuthProvider, { fetchJsonWithAuthToken } from "./authProvider";
-import { Route } from 'react-router-dom';
-import { AdminGuesser, OpenApiAdmin, ResourceGuesser, openApiDataProvider, openApiSchemaAnalyzer } from "@api-platform/admin";
-
+import { OpenApiAdmin } from "@api-platform/admin";
+import schemaAnalyzer from "./openapi/schemaAnalyzer";
 
 const apiEntryPoint = 'http://localhost:8001/api'
 
@@ -22,17 +21,6 @@ const apiEntryPoint = 'http://localhost:8001/api'
 const jsonApiDataProvider = jsonApidataProvider({entrypoint: 'http://localhost:8001', docUrl: "http://localhost:8001/api/schema"  } );
 const lightTheme = defaultTheme;
 const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } };
-
-
-
-
-const dataProvider = openApiDataProvider({
-  // Use any data provider you like
-  dataProvider: jsonApiDataProvider,
-  entrypoint: apiEntryPoint,
-  docEntrypoint: 'http://localhost:8001/api/schema',
-});
-
 
 
 
@@ -45,6 +33,7 @@ export const App = () => {
       dataProvider={jsonApiDataProvider}
       entrypoint="http://localhost:8001/api"
       docEntrypoint="http://localhost:8001/api/schema"
+      schemaAnalyzer={schemaAnalyzer}
     >
        
     </OpenApiAdmin>

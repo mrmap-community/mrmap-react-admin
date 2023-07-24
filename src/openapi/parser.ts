@@ -1,14 +1,14 @@
 import { OpenAPIV3 } from "openapi-types";
 
 import OpenAPIClientAxios, { Operation as AxiosOperation } from "openapi-client-axios";
-import  { Api, Operation, Resource, Field, FieldType } from "@api-platform/api-doc-parser"
+import  { Api, Operation, Resource, Parameter, Field, FieldType } from "@api-platform/api-doc-parser"
 import inflection from "inflection";
+import { required } from "react-admin";
 
 export interface ParsedOpenApi3Documentation {
   api: Api;
   document: OpenAPIV3.Document;
 }
-
 
 const mergeResources = (resourceA: Resource, resourceB: Resource) => {
   resourceB.fields?.forEach((fieldB) => {
@@ -55,17 +55,15 @@ const getType = (openApiType: string, format?: string): FieldType => {
   return openApiType;
 };
 
-const buildResourceFromSchema = (schema: OpenAPIV3.SchemaObject, operation: AxiosOperation) => {
+const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operation: AxiosOperation) => {
 
   const description = schema.description;
+  const fieldNames: string[] = []
   const readableFields: Field[] = [];
   const writableFields: Field[] = [];
-
   const isList = schema?.properties?.data?.hasOwnProperty("items");
-  const fieldNames: string[] = []
 
-  const jsonApiPrimaryDataList = schema?.properties?.data as OpenAPIV3.ArraySchemaObject;
-  const jsonApiPrimaryData = isList ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject;
+  const jsonApiPrimaryData = getEncapsulatedSchema(operation);
   const jsonApiPrimaryDataProperties = jsonApiPrimaryData?.properties as {[key: string]: OpenAPIV3.NonArraySchemaObject};
   
   const requiredFields = jsonApiPrimaryData?.required ?? [];
@@ -162,6 +160,53 @@ const buildResourceFromSchema = (schema: OpenAPIV3.SchemaObject, operation: Axio
       })
   ]
 
+  // TODO: add parameters
+  const parameters: Parameter[] = []
+  const parametersSchema = operation.parameters as OpenAPIV3.ParameterObject[]
+  parametersSchema?.forEach((schema) => {
+    
+    if (schema.name.includes("sort")){
+      // provide sort parameter as order[id], order[lastModifiedAt] and so on
+      const sortFieldSchema = schema?.schema as OpenAPIV3.ArraySchemaObject;
+      const sortFieldParams = sortFieldSchema.items as OpenAPIV3.NonArraySchemaObject
+      sortFieldParams?.enum?.filter((sortableField) => !sortableField.includes("-")).forEach((sortableField) => 
+      
+      
+      {
+        parameters.push(
+          new Parameter(
+            `order[${sortableField}]`,
+            null,
+            schema.required?? false,
+            `order by ${sortableField}`,
+            schema.deprecated?? false,
+          )
+        )
+      });
+    } else if (schema.name.includes("filter")){
+      parameters.push(
+        new Parameter(
+          schema.name,
+          null,
+          schema.required?? false,
+          `filter by ${schema.description}`,
+          schema.deprecated?? false,
+        )
+      )
+    } else {
+      parameters.push(
+        new Parameter(
+          schema.name,
+          null,
+          schema.required?? false,
+          operation.description?? "",
+          schema.deprecated?? false,
+        )
+      )
+    }
+
+  });
+
   return new Resource(name, "url", {
     id: null,
     title: name,
@@ -169,7 +214,7 @@ const buildResourceFromSchema = (schema: OpenAPIV3.SchemaObject, operation: Axio
     fields,
     readableFields,
     writableFields,
-    parameters: [],
+    parameters: parameters,
     getParameters: () => Promise.resolve([]),
     operations: operations
   });
@@ -177,7 +222,7 @@ const buildResourceFromSchema = (schema: OpenAPIV3.SchemaObject, operation: Axio
 };
 
 
-const getSchema = (operation: AxiosOperation): OpenAPIV3.SchemaObject | undefined => {
+export const getResourceSchema = (operation: AxiosOperation): OpenAPIV3.SchemaObject | undefined => {
   if (operation.method === "get") {
     const responseObject = operation?.responses?.['200'] as OpenAPIV3.ResponseObject;
     return responseObject?.content?.['application/vnd.api+json']?.schema as OpenAPIV3.SchemaObject;
@@ -187,7 +232,18 @@ const getSchema = (operation: AxiosOperation): OpenAPIV3.SchemaObject | undefine
   }
 };
 
-const collectJsonApiResourcesFromOpenApi3Documentation = (
+export const getEncapsulatedSchema = (operation: AxiosOperation): OpenAPIV3.NonArraySchemaObject => {
+  /** helper function to return the encapsulated openapi schema of the jsonapi resource
+   * 
+   */
+  const schema = getResourceSchema(operation);
+  const isList = schema?.properties?.data?.hasOwnProperty("items");
+
+  const jsonApiPrimaryDataList = schema?.properties?.data as OpenAPIV3.ArraySchemaObject;
+  return isList ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject;
+};
+
+export const collectJsonApiResourcesFromOpenApi3Documentation = (
     docEntrypoint: string
   ): Promise<ParsedOpenApi3Documentation> => {
 
@@ -200,18 +256,18 @@ const collectJsonApiResourcesFromOpenApi3Documentation = (
       
       operations.forEach((operation) => {
         
-        const schema = getSchema(operation);
+        if (operation?.operationId?.includes("_related_")) return; // nested resources urls represents not a full resource
+
+        const schema = getResourceSchema(operation);
         if (!schema) return;
 
-        if (operation?.operationId?.includes("_related_")) return; // nested resources urls represents not a full resource
-    
-        const resource = buildResourceFromSchema(schema, operation);
+        const resource = buildResourceFromOpenApiSchema(schema, operation);
         if (!resource) return;
 
-        // TODO: add parameters
 
         const existingResource = resources.find(collectedResource => collectedResource.name == resource.name)
         if (existingResource) {
+          // FIXME: how to handle different model forms?
           const mergedResource = mergeResources(existingResource, resource)
           resources[resources.indexOf(existingResource)] = mergedResource;
         } else {
@@ -223,7 +279,6 @@ const collectJsonApiResourcesFromOpenApi3Documentation = (
       return resources;
     })
     .then((resources) => {
-      console.log("resources", resources);
       return {
         api: new Api(docEntrypoint, {title: axiosClient.document.info.title, resources: resources}),
         document: axiosClient.document as OpenAPIV3.Document,

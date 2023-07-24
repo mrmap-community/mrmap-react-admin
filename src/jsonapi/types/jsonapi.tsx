@@ -40,7 +40,7 @@ export interface ResourceIdentifierObject {
 }
 
 export interface ResourceLinkage {
-  links: any;
+  links?: any;
   data: null | ResourceIdentifierObject | ResourceIdentifierObject[];
   meta?: any;
 }

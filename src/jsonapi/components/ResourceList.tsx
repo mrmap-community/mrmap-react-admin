@@ -1,4 +1,4 @@
-import { useResourceDefinition, List, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton, ReferenceManyCount, ListProps, RaRecord, ArrayField, SingleFieldList, ChipField, Link, sanitizeFieldRestProps, NumberFieldProps, useRecordContext, useTranslate, useCreatePath } from "react-admin";
+import { useResourceDefinition, TextInput, TextField, DateField, HttpError, useStore, useResourceContext, BooleanField, TopToolbar, SelectColumnsButton, DatagridConfigurable, FilterButton, CreateButton, ExportButton, ReferenceManyCount, ListProps, RaRecord, ArrayField, SingleFieldList, ChipField, Link, sanitizeFieldRestProps, NumberFieldProps, useRecordContext, useTranslate, useCreatePath, ListGuesser } from "react-admin";
 import { JsonApiDocument, JsonApiErrorObject } from "../types/jsonapi";
 import { useSearchParams } from 'react-router-dom';
 import { ReactElement } from "react";
@@ -55,7 +55,9 @@ return (
 );
 };
 
-export const JsonApiList = (): ReactElement  => {
+export const JsonApiList = (
+  props: Omit<ListProps, 'children'>
+  ): ReactElement  => {
   /** json:api specific list component to handle json:api resources
    * 
    */
@@ -109,10 +111,12 @@ export const JsonApiList = (): ReactElement  => {
 
   return (
 
-    <List 
+    <ListGuesser 
+      {...props}
       actions={<ListActions />}
       filters={postFilters}
       queryOptions={{ onError, meta: {include: 'keywords'} }}
+      
     >
       <DatagridConfigurable rowClick="edit">
         <TextField source="id"/>
@@ -137,7 +141,7 @@ export const JsonApiList = (): ReactElement  => {
                 link
         /> */}
       </DatagridConfigurable>
-    </List>
+    </ListGuesser>
   )
 
 };

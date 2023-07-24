@@ -41,7 +41,12 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
 
     const updateResource = (resource: string, params: UpdateParams) => 
         httpClient.then((client)=> {
-            const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{'id': params.id}, capsulateJsonApiPrimaryData(params.data, resource), axiosRequestConf])
+            const operationId = `partial_update_${resource}`;
+            const operation = client.api.getOperation(operationId);
+
+            // FIXME: only post the edited fields for partial update
+
+            const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{'id': params.id}, capsulateJsonApiPrimaryData(params.data, resource, operation), axiosRequestConf])
             return client.request(conf)
         }).then((response) => {
             const jsonApiDocument = response.data as JsonApiDocument;
@@ -61,7 +66,7 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
 
     return {
         getList: (resource: string , params: GetListParams) => {
-
+            console.log("params", params);
             const { page, perPage } = params.pagination;
             const { field, order } = params.sort;
             const parameters: ParamsArray = [
@@ -72,12 +77,14 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
             ];
 
             for (const [filterName, filterValue] of Object.entries(params.filter)){
+                console.log("filter", params.filter);
                 const _filterValue = filterValue as string;
                 parameters.push(
                     {name: `filter[${filterName}]`, value: _filterValue}
                 )
             }
 
+            console.log("query", parameters);
             return httpClient.then((client)=> {
                 const conf = client.api.getAxiosConfigForOperation( `list_${resource}`, [parameters, undefined, axiosRequestConf])
                 return client.request(conf)
@@ -141,7 +148,10 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
 
         create: (resource: string, params: CreateParams) =>
             httpClient.then((client)=> {
-                const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, capsulateJsonApiPrimaryData(params.data, resource), axiosRequestConf])
+                const operationId = `create_${resource}`;
+                const operation = client.api.getOperation(operationId);
+
+                const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, capsulateJsonApiPrimaryData(params.data, resource, operation), axiosRequestConf])
                 return client.request(conf)
             }).then((response) => {
                 const jsonApiDocument = response.data as JsonApiDocument;

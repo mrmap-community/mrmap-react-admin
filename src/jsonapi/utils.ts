@@ -1,21 +1,51 @@
-import { JsonApiDocument, JsonApiPrimaryData, ResourceIdentifierObject } from "./types/jsonapi";
+import { OpenAPIV3, Operation } from "openapi-client-axios";
+import { JsonApiDocument, JsonApiPrimaryData, ResourceIdentifierObject, ResourceLinkage } from "./types/jsonapi";
+import { getEncapsulatedSchema } from "../openapi/parser";
+import { Identifier } from "react-admin";
 
 
 
-export const capsulateJsonApiPrimaryData = (data: any, type: string): JsonApiPrimaryData => {
+export const capsulateJsonApiPrimaryData = (data: any, type: string, operation: Operation): JsonApiPrimaryData => {
     /** helper to transform react admin data to json:api conform primary data object
      * 
      */
     const id = data.id;
     const attributes = data;
     delete attributes.id;
-    // TODO: how to handle relationships?
+    
+    const relationships: Record<string, ResourceLinkage> = {};
+
+    const resourceSchema = getEncapsulatedSchema(operation)
+
+    const jsonApiPrimaryDataProperties = resourceSchema?.properties as {[key: string]: OpenAPIV3.NonArraySchemaObject};
+    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject;
+    
+    for (const [relationName, resourceLinkageSchema] of Object.entries( jsonApiResourceRelationships )){
+        if (relationName in attributes){
+            // need to capsulate data of relationship as well
+            const relationData = attributes[relationName];
+            const isList = resourceLinkageSchema.properties.data?.hasOwnProperty("items");
+            const relationSchema = isList ? resourceLinkageSchema?.properties?.data?.items as OpenAPIV3.NonArraySchemaObject : resourceLinkageSchema.properties.data as OpenAPIV3.NonArraySchemaObject;
+            const relationResourceType = relationSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject;
+
+            if (isList){
+                const newData: ResourceIdentifierObject[] = []
+                relationData.forEach((id: Identifier) => newData.push({id: id, type: relationResourceType?.enum?.[0]}))
+                relationships[relationName] = {data: newData};
+            } else {
+                relationships[relationName] = {data: {id: id, type: relationResourceType?.enum?.[0]}};
+            }
+            delete attributes[relationName];
+        }
+    }
+
     const primaryData: JsonApiPrimaryData = {
           id: id,
           type: type,
-          attributes: attributes
+          attributes: attributes,
+          relationships: relationships
       };
-
+    console.log("primaryData", primaryData);
     return primaryData;
 };
 

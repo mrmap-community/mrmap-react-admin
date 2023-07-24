@@ -1,10 +1,7 @@
 import collectJsonApiResourcesFromOpenApi3Documentation from "./openapi/parser";
 
 export function introspect(entrypoint: string) {
-  
-  
-  
-  
+    
   return collectJsonApiResourcesFromOpenApi3Documentation(entrypoint).then(({ api }) => {
     const { resources } = api;
 
@@ -17,7 +14,7 @@ export function introspect(entrypoint: string) {
             ...field,
             embedded: null
           })),
-          parameters: []
+          //parameters: resource.parameters
         }))
       },
       customRoutes: []
