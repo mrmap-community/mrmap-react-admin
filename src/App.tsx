@@ -12,7 +12,7 @@ import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
 import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
 import tokenAuthProvider, { fetchJsonWithAuthToken } from "./authProvider";
 import { Route } from 'react-router-dom';
-import { AdminGuesser, OpenApiAdmin, openApiDataProvider, openApiSchemaAnalyzer } from "@api-platform/admin";
+import { AdminGuesser, OpenApiAdmin, ResourceGuesser, openApiDataProvider, openApiSchemaAnalyzer } from "@api-platform/admin";
 
 
 const apiEntryPoint = 'http://localhost:8001/api'
@@ -45,7 +45,9 @@ export const App = () => {
       dataProvider={jsonApiDataProvider}
       entrypoint="http://localhost:8001/api"
       docEntrypoint="http://localhost:8001/api/schema"
-    />
+    >
+       
+    </OpenApiAdmin>
 
   )
 };

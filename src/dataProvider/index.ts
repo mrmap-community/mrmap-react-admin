@@ -1,25 +1,25 @@
-import { fetchUtils, GetListParams, GetOneParams, GetManyParams, GetManyReferenceParams, CreateParams, UpdateParams, UpdateManyParams, DeleteParams, DeleteManyParams, Options, useStore, DataProvider, HttpError } from 'react-admin';
+import { GetListParams, GetOneParams, GetManyParams, GetManyReferenceParams, CreateParams, UpdateParams, UpdateManyParams, DeleteParams, DeleteManyParams, Options, useStore, DataProvider, HttpError, Identifier } from 'react-admin';
 import { stringify } from 'query-string';
 import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from '../jsonapi/types/jsonapi';
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils';
 import jsonpointer from 'jsonpointer';
-import { invokeOperation } from './invokeOperation';
 import { introspect } from "../introspect";
-import OpenAPIClientAxios from 'openapi-client-axios';
-import { ApiPlatformAdminDataProvider, ApiPlatformAdminRecord, OpenApiDataProviderFactoryParams } from '@api-platform/admin/lib/types';
+import OpenAPIClientAxios, { AxiosHeaders, ParamsArray } from 'openapi-client-axios';
+import { ApiPlatformAdminDataProvider, ApiPlatformAdminRecord } from '@api-platform/admin/lib/types';
+import { update } from 'lodash';
 
 export interface JsonApiDataProviderOptions extends Options {
     entrypoint: string;
     docUrl: string;
     httpClient?: OpenAPIClientAxios;
     total?: string;
-    headers?: Headers;
+    headers?: AxiosHeaders;
 }
 
 export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvider  =>  {
     const opts = {
       httpClient: new OpenAPIClientAxios({ definition: options.docUrl }),
-      headers: new Headers(
+      headers: new AxiosHeaders(
             {
                 'Accept': JsonApiMimeType,
                 'Content-Type': JsonApiMimeType,
@@ -28,40 +28,59 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       total: "/meta/pagination/count",
       ...options,
     };
+    const axiosRequestConf = {baseURL: opts.entrypoint, headers: opts.headers}
     const httpClient = opts.httpClient.init();
-    console.log("httpClient", httpClient);
-
     
     const getTotal = (response: JsonApiDocument): number => {
         const total = jsonpointer.get(response, opts.total)
-
         if (typeof total === 'string'){
             return parseInt(total, 10);
         }
         return total;
     };
 
+    const updateResource = (resource: string, params: UpdateParams) => 
+        httpClient.then((client)=> {
+            const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{'id': params.id}, capsulateJsonApiPrimaryData(params.data, resource), axiosRequestConf])
+            return client.request(conf)
+        }).then((response) => {
+            const jsonApiDocument = response.data as JsonApiDocument;
+            const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+            return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource)}
+        });
+
+    const deleteResource = (resource: string, params: DeleteParams) =>
+        httpClient.then((client)=> {
+            const conf = client.api.getAxiosConfigForOperation(`delete_${resource}`, [{'id': params.id}, undefined, axiosRequestConf])
+            return client.request(conf)
+        }).then((response) => {
+            const jsonApiDocument = response.data as JsonApiDocument;
+            const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+            return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource)}
+        });
 
     return {
         getList: (resource: string , params: GetListParams) => {
 
             const { page, perPage } = params.pagination;
             const { field, order } = params.sort;
-            const query: any = {
-                'page[number]': page,
-                'page[size]': perPage,
-                'sort': `${order == 'ASC' ? '': '-'}${field}`,
-                'include': params.meta?.include
-            };
+            const parameters: ParamsArray = [
+                {name: 'page[number]', value: page},
+                {name: 'page[size]', value: perPage},
+                {name: 'sort', value: `${order == 'ASC' ? '': '-'}${field}`},
+                {name: 'include', value: params.meta?.include}
+            ];
 
             for (const [filterName, filterValue] of Object.entries(params.filter)){
-                query[`filter[${filterName}]`] = filterValue
+                const _filterValue = filterValue as string;
+                parameters.push(
+                    {name: `filter[${filterName}]`, value: _filterValue}
+                )
             }
-            return invokeOperation({
-                operationId: `list_${resource}`,
-                parameters: query,
-                resolveClient: httpClient,
-                apiUrl: opts.entrypoint
+
+            return httpClient.then((client)=> {
+                const conf = client.api.getAxiosConfigForOperation( `list_${resource}`, [parameters, undefined, axiosRequestConf])
+                return client.request(conf)
             }).then((response)=> {
                 const jsonApiDocument = response.data as JsonApiDocument;
                 const resources = jsonApiDocument.data as JsonApiPrimaryData[]
@@ -71,20 +90,19 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
                     )),
                     total: getTotal(jsonApiDocument),
                 }
-            })                
+            })      
 
         },
 
-        getOne: (resource: string, params: GetOneParams) =>
-            httpClient(
-                `${opts.entrypoint}/${resource}/${params.id}`, 
-                {headers: opts.headers}
-            ).then(
-                ( {json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
-            ),
-
-
-
+        getOne: (resource: string, params: GetOneParams) => httpClient.then((client)=> {
+                const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [{'id': params.id}, undefined, axiosRequestConf])
+                return client.request(conf)
+            }).then((response) => {
+                const jsonApiDocument = response.data as JsonApiDocument;
+                const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+                return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource)}
+            }),
+            
         getMany: (resource: string, params: GetManyParams) => {
             // const query = {
             //     filter: JSON.stringify({ ids: params.ids }),
@@ -122,50 +140,49 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
         },
 
         create: (resource: string, params: CreateParams) =>
-            httpClient(`${opts.entrypoint}/${resource}`, {
-                method: 'POST',
-                body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
-                headers: opts.headers
-            }).then(
-                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
-            ),
+            httpClient.then((client)=> {
+                const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, capsulateJsonApiPrimaryData(params.data, resource), axiosRequestConf])
+                return client.request(conf)
+            }).then((response) => {
+                const jsonApiDocument = response.data as JsonApiDocument;
+                const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+                return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource)}
+            }),
 
         update: (resource: string, params: UpdateParams) =>
-            httpClient(`${opts.entrypoint}/${resource}/${params.id}`, {
-                // TODO: resource name is not the correct JsonApi Type here...
-                method: 'PATCH',
-                body: JSON.stringify({data: capsulateJsonApiPrimaryData(params.data, params.meta.type)}),
-                headers: opts.headers
-            }).then(
-                ({json } : {json: JsonApiDocument}) => ({ data: encapsulateJsonApiPrimaryData(json, json.data as JsonApiPrimaryData) })
-            ),
+            updateResource(resource, params),
 
         updateMany: (resource: string, params: UpdateManyParams) => {
-            // const query = {
-            //     filter: JSON.stringify({ id: params.ids}),
-            // };
-            // return httpClient(`${apiUrl}/${resource}?${stringify(query)}`, {
-            //     method: 'PUT',
-            //     body: JSON.stringify(params.data),
-            // }).then(({ json }) => ({ data: json }));
+            // Hacky many update via for loop. JSON:API does not support many update in a single transaction. 
+            const results: Identifier[] = []
+            params.ids.forEach((id) => 
+                updateResource(
+                    resource,
+                    {
+                        id: id,
+                        data: params.data,
+                        previousData: undefined
+                    }
+                ).then(() => {
+                    results.push(id);
+                })
+            )
+            return Promise.resolve({data: results});
+
         },
 
         delete: (resource: string, params: DeleteParams) =>
-            httpClient(`${opts.entrypoint}/${resource}/${params.id}`, {
-                method: 'DELETE',
-                headers: opts.headers
-            }).then(
-                ({json } : {json: JsonApiDocument}) => ({ data: json })
-            ),
-
+            deleteResource(resource, params),
         deleteMany: (resource: string, params: DeleteManyParams) => {
-            // const query = {
-            //     filter: JSON.stringify({ id: params.ids}),
-            // };
-            // return httpClient(`${apiUrl}/${resource}?${stringify(query)}`, {
-            //     method: 'DELETE',
-            //     body: JSON.stringify(params.data),
-            // }).then(({ json }) => ({ data: json }));
+            const results: Identifier[] = []
+            params.ids.forEach((id) => 
+                deleteResource(
+                    resource, {id: id,}
+                ).then(() => {
+                    results.push(id);
+                })
+            )
+            return Promise.resolve({data: results});
         },
         introspect: introspect.bind(undefined, opts.docUrl),
         subscribe:(

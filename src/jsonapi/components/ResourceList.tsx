@@ -36,7 +36,6 @@ const record = useRecordContext(props);
 const value = get(record, source);
 const translate = useTranslate();
 const total = value?.length;
-console.log('value', value);
 const createPath = useCreatePath();
 
 //TODO: How-To build the link with the correct resource?

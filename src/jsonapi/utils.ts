@@ -1,5 +1,4 @@
-import { RaRecord } from "react-admin";
-import { JsonApiDocument, JsonApiPrimaryData, ResourceIdentifierObject, ResourceLinkage } from "./types/jsonapi";
+import { JsonApiDocument, JsonApiPrimaryData, ResourceIdentifierObject } from "./types/jsonapi";
 
 
 
@@ -27,7 +26,7 @@ export const findIncludedData = (document: JsonApiDocument, resourceIdentifierOb
     const return_val = founded ?? resourceIdentifierObject as JsonApiPrimaryData; 
     return return_val;
 };
-
+// concrete the return value; it should be `ApiPlatformAdminRecord`
 export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: JsonApiPrimaryData): any => {
     /** helper to transform json:api primary data object to react admin record
      * 
@@ -68,6 +67,5 @@ export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: J
 
     }: undefined;
 
-    console.log(raData);
     return raData 
 }

@@ -30,6 +30,13 @@ const mergeResources = (resourceA: Resource, resourceB: Resource) => {
       resourceA.writableFields?.push(fieldB);
     }
   });
+  resourceB.operations?.forEach((operationB) => {
+    if (
+      !resourceA.operations?.some((operationA => operationA.name === operationB.name))
+    ) {
+      resourceA.operations?.push(operationB)
+    }
+  });
 
   return resourceA;
 };
@@ -195,6 +202,8 @@ const collectJsonApiResourcesFromOpenApi3Documentation = (
         
         const schema = getSchema(operation);
         if (!schema) return;
+
+        if (operation?.operationId?.includes("_related_")) return; // nested resources urls represents not a full resource
     
         const resource = buildResourceFromSchema(schema, operation);
         if (!resource) return;
@@ -214,6 +223,7 @@ const collectJsonApiResourcesFromOpenApi3Documentation = (
       return resources;
     })
     .then((resources) => {
+      console.log("resources", resources);
       return {
         api: new Api(docEntrypoint, {title: axiosClient.document.info.title, resources: resources}),
         document: axiosClient.document as OpenAPIV3.Document,

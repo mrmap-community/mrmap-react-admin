@@ -7,7 +7,6 @@ export function introspect(entrypoint: string) {
   
   return collectJsonApiResourcesFromOpenApi3Documentation(entrypoint).then(({ api }) => {
     const { resources } = api;
-    console.log("resources", resources);
 
     return {
       data: {
