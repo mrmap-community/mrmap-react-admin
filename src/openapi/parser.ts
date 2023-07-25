@@ -184,15 +184,44 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
         )
       });
     } else if (schema.name.includes("filter")){
-      parameters.push(
-        new Parameter(
-          schema.name,
-          null,
-          schema.required?? false,
-          `filter by ${schema.description}`,
-          schema.deprecated?? false,
+
+
+      if (schema.name.includes(".")) {
+        const splitted = schema.name.replace("filter[", "").replace("]", "").split(".")
+        const fieldName = splitted[0]
+        const lookup = splitted[1]
+
+        const dummyName = `${fieldName}_filter_lookup_${lookup}`
+
+        const baseField = fields.find((field) => field.name === fieldName)
+        const dummyBaseField = {...baseField}
+        delete dummyBaseField.name
+        console.log("dummyName", dummyName);
+        
+        fields.push(new Field(dummyName, {...dummyBaseField}))
+        parameters.push(
+          new Parameter(
+            dummyName,
+            null,
+            schema.required?? false,
+            `filter by ${schema.description}`,
+            schema.deprecated?? false,
+          )
         )
-      )
+      } else {
+        parameters.push(
+          new Parameter(
+            schema.name,
+            null,
+            schema.required?? false,
+            `filter by ${schema.description}`,
+            schema.deprecated?? false,
+          )
+        )
+
+      }
+
+     
     } else {
       parameters.push(
         new Parameter(
@@ -206,7 +235,8 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
     }
 
   });
-
+  console.log("fields", fields);
+  console.log("parameters", parameters)
   return new Resource(name, "url", {
     id: null,
     title: name,

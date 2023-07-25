@@ -11,7 +11,6 @@ const ORDER_MARKER = "order"
  * @returns The name of the reference field
  */
 const getFieldNameFromSchema = (schema: Resource) => {
-  console.log("fieldnamelookup",schema);
   if (!schema.fields || !schema.fields[0]) {
     return '';
   }
@@ -31,7 +30,6 @@ const getFieldNameFromSchema = (schema: Resource) => {
  */
 export const resolveSchemaParameters = (schema: Resource) => {
     if (!schema.parameters || !schema.getParameters) {
-      console.log("möp", schema);
       return Promise.resolve([]);
     }
   
@@ -57,14 +55,27 @@ export const getFiltersParametersFromSchema = (
 
     // TODO: what about global search parameter?
     return resolveSchemaParameters(schema).then((parameters) => {
-    
       const filters = parameters
         .map((filter) => {
           const filterName = filter.variable.replace("filter[", "").replace("]", "")
-          return {
-            name: filterName,
-            isRequired: filter.required,
+
+          if (filterName.includes("_filter_lookup_")){
+            const splitted = filterName.split("_filter_lookup_")
+            const fieldName = splitted[0]
+            const lookup = splitted[1]
+              return {
+                name: `${fieldName}_filter_lookup_${lookup}`,
+                isRequired: filter.required,
+              }
+          }else{
+            return {
+              name: filterName,
+              isRequired: filter.required,
+            }
           }
+        
+          
+          
         })
         .filter((filter) => {
           return !filter.name.includes(ORDER_MARKER) 

@@ -45,7 +45,6 @@ export const capsulateJsonApiPrimaryData = (data: any, type: string, operation: 
           attributes: attributes,
           relationships: relationships
       };
-    console.log("primaryData", primaryData);
     return primaryData;
 };
 

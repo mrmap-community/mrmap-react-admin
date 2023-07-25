@@ -11,4 +11,9 @@ export default defineConfig({
         host: true,
     },
     base: './',
+    // resolve: {
+    //     alias: {
+    //         '@api-platform/admin/src/InputGuesser': './node_modules/@api-platform/admin/src/InputGuesser'
+    //     }
+    // }
 });

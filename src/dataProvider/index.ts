@@ -66,7 +66,6 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
 
     return {
         getList: (resource: string , params: GetListParams) => {
-            console.log("params", params);
             const { page, perPage } = params.pagination;
             const { field, order } = params.sort;
             const parameters: ParamsArray = [
@@ -75,16 +74,18 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
                 {name: 'sort', value: `${order == 'ASC' ? '': '-'}${field}`},
                 {name: 'include', value: params.meta?.include}
             ];
-
+            console.log("params filter", params.filter);
             for (const [filterName, filterValue] of Object.entries(params.filter)){
-                console.log("filter", params.filter);
                 const _filterValue = filterValue as string;
+                
                 parameters.push(
-                    {name: `filter[${filterName}]`, value: _filterValue}
+                    {name: `filter[${filterName.includes("_filter_lookup_")? filterName.replace("_filter_lookup_", ".") : filterName}]`, value: _filterValue}
                 )
+                
+
+                
             }
 
-            console.log("query", parameters);
             return httpClient.then((client)=> {
                 const conf = client.api.getAxiosConfigForOperation( `list_${resource}`, [parameters, undefined, axiosRequestConf])
                 return client.request(conf)

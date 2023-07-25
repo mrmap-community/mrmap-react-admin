@@ -1,7 +1,6 @@
 import {
   Admin,
   Resource,
-  ListGuesser,
   defaultTheme,
   RaThemeOptions
 } from "react-admin";
@@ -11,8 +10,9 @@ import WmsIcon from '@mui/icons-material/Map';
 import { ResourceEdit } from "./jsonapi/components/ResourceEdit";
 import { ResourceCreate } from "./jsonapi/components/ResourceCreate";
 import tokenAuthProvider, { fetchJsonWithAuthToken } from "./authProvider";
-import { OpenApiAdmin } from "@api-platform/admin";
+import { OpenApiAdmin, ResourceGuesser } from "@api-platform/admin";
 import schemaAnalyzer from "./openapi/schemaAnalyzer";
+import ListGuesser from "./jsonapi/components/ListGuesser";
 
 const apiEntryPoint = 'http://localhost:8001/api'
 
@@ -35,6 +35,7 @@ export const App = () => {
       docEntrypoint="http://localhost:8001/api/schema"
       schemaAnalyzer={schemaAnalyzer}
     >
+      {/* <ResourceGuesser name={"Organization"} list={ListGuesser}/> */}
        
     </OpenApiAdmin>
 
