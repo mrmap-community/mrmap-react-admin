@@ -35,7 +35,7 @@ export const App = () => {
       docEntrypoint="http://localhost:8001/api/schema"
       schemaAnalyzer={schemaAnalyzer}
     >
-      {/* <ResourceGuesser name={"Organization"} list={ListGuesser}/> */}
+      <ResourceGuesser name={"Layer"} list={ListGuesser}/>
        
     </OpenApiAdmin>
 

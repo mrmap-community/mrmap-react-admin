@@ -1,7 +1,8 @@
-import type { Resource } from '@api-platform/api-doc-parser';
+import type { Field, Resource } from '@api-platform/api-doc-parser';
 import type { FilterParameter } from '@api-platform/admin'
 import { SchemaAnalyzer } from "@api-platform/admin";
 import {openApiSchemaAnalyzer} from "@api-platform/admin";
+
 
 const ORDER_MARKER = "order"
 
@@ -88,9 +89,23 @@ export const getFiltersParametersFromSchema = (
 
       });
   };
+
+
   
   
-const analyzer = {...openApiSchemaAnalyzer()};
+const analyzer = openApiSchemaAnalyzer();
+
+
+
+
+analyzer.getFieldType = (field: Field) => {
+  if (field.name.includes("bbox")){
+    console.log("field", field);
+
+  }
+  return openApiSchemaAnalyzer().getFieldType(field);
+};
+
 analyzer.getFieldNameFromSchema = getFieldNameFromSchema;
 analyzer.getFiltersParametersFromSchema = getFiltersParametersFromSchema;
 

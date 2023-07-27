@@ -89,9 +89,8 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
 
   const fields = fieldNames.map((fieldName) => {
     const property = properties[fieldName] as OpenAPIV3.SchemaObject;
-    
+
     const type = getType(property.type || "string", property.format);
-    
     const field = new Field(fieldName, {
       id: null,
       range: null,
@@ -127,7 +126,7 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
     if (!property.readOnly) {
       writableFields.push(field);
     }
-    
+
 
     return field;
   });
@@ -187,27 +186,33 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
 
 
       if (schema.name.includes(".")) {
+        // cause api platform InputGuesser will search for a field source name we need to add a dummy field, so it can be founded by the guesser.
         const splitted = schema.name.replace("filter[", "").replace("]", "").split(".")
         const fieldName = splitted[0]
         const lookup = splitted[1]
 
         const dummyName = `${fieldName}_filter_lookup_${lookup}`
-
-        const baseField = fields.find((field) => field.name === fieldName)
-        const dummyBaseField = {...baseField}
-        delete dummyBaseField.name
-        console.log("dummyName", dummyName);
         
-        fields.push(new Field(dummyName, {...dummyBaseField}))
-        parameters.push(
-          new Parameter(
-            dummyName,
-            null,
-            schema.required?? false,
-            `filter by ${schema.description}`,
-            schema.deprecated?? false,
+        // FIXME: if it is a nested field filter the field is not found inside this resource
+        const baseField = fields.find((field) => field.name === fieldName)
+        
+        if (baseField){
+          const dummyBaseField = {...baseField};
+          delete dummyBaseField.name
+          console.log("dummyBaseField", dummyName, dummyBaseField);
+          fields.push(new Field(dummyName, {...dummyBaseField}))
+          parameters.push(
+            new Parameter(
+              dummyName,
+              null,
+              schema.required?? false,
+              `filter by ${schema.description}`,
+              schema.deprecated?? false,
+            )
           )
-        )
+        }
+        
+        
       } else {
         parameters.push(
           new Parameter(
@@ -235,8 +240,8 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
     }
 
   });
-  console.log("fields", fields);
-  console.log("parameters", parameters)
+
+
   return new Resource(name, "url", {
     id: null,
     title: name,

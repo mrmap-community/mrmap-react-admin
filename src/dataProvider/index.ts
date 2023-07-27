@@ -74,7 +74,6 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
                 {name: 'sort', value: `${order == 'ASC' ? '': '-'}${field}`},
                 {name: 'include', value: params.meta?.include}
             ];
-            console.log("params filter", params.filter);
             for (const [filterName, filterValue] of Object.entries(params.filter)){
                 const _filterValue = filterValue as string;
                 

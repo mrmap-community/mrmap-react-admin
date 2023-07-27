@@ -27,6 +27,7 @@ export const IntrospectedFilterGuesser = ({
       schemaAnalyzer
         .getFiltersParametersFromSchema(schema)
         .then((parameters) => {
+          console.log("parameters", parameters);
           setFiltersParameters(parameters);
         });
     }
@@ -37,12 +38,21 @@ export const IntrospectedFilterGuesser = ({
   }
 
 
+  
+
   return (
     <Filter {...rest}>
       {filtersParameters.map((filterParam)=> {
         const splitted = filterParam.name.split(".")
         const fieldName = splitted[0];
         const lookup = splitted[1];
+        const field = fields.find(({ name }) => name === fieldName);
+
+        if (field?.name.includes("bbox")){
+          const fieldType = schemaAnalyzer.getFieldType(field);
+          console.log(fieldName, "fieldType", fieldType);
+        }
+
 
         return <InputGuesser
             key={`${fieldName}${lookup}`}
