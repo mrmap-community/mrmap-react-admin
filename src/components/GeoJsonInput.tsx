@@ -1,16 +1,157 @@
-import { TextInput, TextInputProps, useResourceContext } from "react-admin";
+import { TextInput, TextInputProps, useInput } from "react-admin";
+import {Modal, Box, Typography} from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { GeoJSON,  FeatureGroup, MapContainer, TileLayer } from "react-leaflet";
+import { EditControl } from "react-leaflet-draw";
+import type { GeoJSON as GeoJSONType } from 'geojson';
+import {  useForm} from 'react-hook-form';
+
+import { useLeafletContext } from '@react-leaflet/core';
+
+import L, { Polygon } from "leaflet";
+
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%',
+  height: '80%',
+  //bgcolor: 'background.paper',
+  //border: '2px solid #000',
+  boxShadow: 24,
+  //pt: 2,
+  //px: 4,
+  //pb: 3,
+};
+
+
+export interface EditorProps {
+  geoJson?: GeoJSONType;
+  setGeoJson: Function;
+};
+
+const Editor = (props: EditorProps) => {
+
+  const context = useLeafletContext();
+
+  const updateGeoJson = useCallback((event: any) => {
+    const fg = L.featureGroup();
+
+    context.map.eachLayer((layer)=>{
+      if(layer instanceof L.Polygon){
+
+        fg.addLayer(layer);
+      }
+    });
+    console.log(fg.toGeoJSON());
+    props.setGeoJson(fg.toGeoJSON());
+    console.log("huhu");
+  }, []);
+
+  useEffect(() => {
+    if (props.geoJson){
+      const bounds = L.geoJSON(props.geoJson).getBounds();
+      if (Object.keys(bounds).length > 1) {
+        context.map.flyToBounds(bounds, {duration: 0.3});
+      }
+    }
+  }, [props.geoJson])
+
+  const geoJsonObject = props.geoJson ? <GeoJSON data={props.geoJson} />: <div></div>;
+
+  return (
+    <FeatureGroup
+      
+    >
+      {geoJsonObject}
+      <EditControl
+        position='topright'
+        onEdited={updateGeoJson}
+        onCreated={updateGeoJson}
+        onDeleted={updateGeoJson}
+        //onDrawStop={onEdit}
+        draw={{
+          marker: false,
+          circlemarker: false,
+          circle: false,
+        }}
+      />
+    </FeatureGroup>
+  )
+};
+
 
 const GeoJsonInput = (props: TextInputProps) => {
 
     
-    const resource = useResourceContext(props);
-  
+    const [isOpen, setIsOpen] = useState<boolean>(false);
 
+    const [geoJson, setGeoJson] = useState<GeoJSONType>();
+    const [geoJsonString, setGeoJsonString]= useState(geoJson ? JSON.stringify(geoJson): "huhu")
+    const {
+      field: { value, onChange },
+      fieldState: { isTouched, error },
+      formState: { isSubmitted },
+      isRequired,
+    } = useInput(props);    
+    
+
+
+
+    useEffect(() => {
+      setGeoJsonString(geoJson ? JSON.stringify(geoJson): "");
+    }, [geoJson]);
+
+
+    useEffect(() => {
+      onChange(geoJsonString);
+    }, [geoJsonString]);
+
+    console.log("geojson", geoJson, geoJsonString);
+    
 
     return (
+      <div>
       <TextInput
         {...props}
+        onClick={() => {
+          setIsOpen(true)}
+        }
+        contentEditable={false}
+        onChange={onChange}
       />
+      <Modal
+            open={isOpen}
+            onClose={() => setIsOpen(false)}
+            aria-labelledby="modal-modal-title"
+        >
+        <Box sx={{ ...style }}>
+            <Typography id="modal-modal-title" variant="h6" component="h2" >
+            {props.title ?? props.label} huhu
+            </Typography>
+
+            <MapContainer 
+              center={ [51.505, -0.09] } 
+              zoom={2} 
+              scrollWheelZoom={true}
+              style={{ height: '100%', width: '100wh' }}
+              
+            >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Editor
+              geoJson={geoJson}
+              setGeoJson={setGeoJson}
+            />
+          </MapContainer>
+
+        </Box>
+        </Modal>
+      </div>
     );
   };
   

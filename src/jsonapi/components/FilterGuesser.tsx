@@ -8,6 +8,7 @@ import type {
   FilterParameter,
   IntrospectedFiterGuesserProps,
 } from '@api-platform/admin';
+import GeoJsonInput from '../../components/GeoJsonInput';
 
 
 export const IntrospectedFilterGuesser = ({
@@ -27,7 +28,6 @@ export const IntrospectedFilterGuesser = ({
       schemaAnalyzer
         .getFiltersParametersFromSchema(schema)
         .then((parameters) => {
-          console.log("parameters", parameters);
           setFiltersParameters(parameters);
         });
     }
@@ -48,11 +48,14 @@ export const IntrospectedFilterGuesser = ({
         const lookup = splitted[1];
         const field = fields.find(({ name }) => name === fieldName);
 
-        if (field?.name.includes("bbox")){
-          const fieldType = schemaAnalyzer.getFieldType(field);
-          console.log(fieldName, "fieldType", fieldType);
+        if (field?.type === "geojson"){
+          return <GeoJsonInput
+                    key={`${fieldName}${lookup}`}
+                    source={fieldName}
+                    label={lookup ? `${fieldName} ${lookup}`: undefined}
+                    alwaysOn={filterParam.isRequired}
+          />
         }
-
 
         return <InputGuesser
             key={`${fieldName}${lookup}`}

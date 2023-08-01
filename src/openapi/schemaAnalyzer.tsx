@@ -95,17 +95,6 @@ export const getFiltersParametersFromSchema = (
   
 const analyzer = openApiSchemaAnalyzer();
 
-
-
-
-analyzer.getFieldType = (field: Field) => {
-  if (field.name.includes("bbox")){
-    console.log("field", field);
-
-  }
-  return openApiSchemaAnalyzer().getFieldType(field);
-};
-
 analyzer.getFieldNameFromSchema = getFieldNameFromSchema;
 analyzer.getFiltersParametersFromSchema = getFiltersParametersFromSchema;
 

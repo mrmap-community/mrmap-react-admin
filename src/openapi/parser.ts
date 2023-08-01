@@ -47,6 +47,8 @@ const getType = (openApiType: string, format?: string): FieldType => {
       case "int32":
       case "int64":
         return "integer";
+      case "geojson":
+        return "geojson";
       default:
         return inflection.camelize(format.replace("-", "_"), true);
     }
@@ -86,11 +88,14 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
   const typeRef = jsonApiResourceType?.allOf as [OpenAPIV3.SchemaObject];
   const name = typeRef?.[0]?.enum?.[0] ?? jsonApiResourceType?.enum?.[0] ?? "";
   fieldNames.push(...Object.keys(properties ?? {}));
+  
 
   const fields = fieldNames.map((fieldName) => {
     const property = properties[fieldName] as OpenAPIV3.SchemaObject;
 
-    const type = getType(property.type || "string", property.format);
+    const type = getType(property.type ?? "string", property.format);
+    
+
     const field = new Field(fieldName, {
       id: null,
       range: null,
@@ -98,7 +103,7 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
       arrayType:
         type === "array" && "items" in property
           ? getType(
-              (property.items as OpenAPIV3.SchemaObject).type || "string",
+              (property.items as OpenAPIV3.SchemaObject).type ?? "string",
               (property.items as OpenAPIV3.SchemaObject).format
             )
           : null,
@@ -163,6 +168,8 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
   const parameters: Parameter[] = []
   const parametersSchema = operation.parameters as OpenAPIV3.ParameterObject[]
   parametersSchema?.forEach((schema) => {
+
+
     
     if (schema.name.includes("sort")){
       // provide sort parameter as order[id], order[lastModifiedAt] and so on
@@ -186,6 +193,10 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
 
 
       if (schema.name.includes(".")) {
+
+
+        const parameterSchema = schema.schema as OpenAPIV3.SchemaObject;
+
         // cause api platform InputGuesser will search for a field source name we need to add a dummy field, so it can be founded by the guesser.
         const splitted = schema.name.replace("filter[", "").replace("]", "").split(".")
         const fieldName = splitted[0]
@@ -196,10 +207,12 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
         // FIXME: if it is a nested field filter the field is not found inside this resource
         const baseField = fields.find((field) => field.name === fieldName)
         
+        const parameterType = getType(parameterSchema.type ?? "string", parameterSchema.format)
+
         if (baseField){
-          const dummyBaseField = {...baseField};
+          const dummyBaseField = {...baseField, type: parameterType};
+
           delete dummyBaseField.name
-          console.log("dummyBaseField", dummyName, dummyBaseField);
           fields.push(new Field(dummyName, {...dummyBaseField}))
           parameters.push(
             new Parameter(
