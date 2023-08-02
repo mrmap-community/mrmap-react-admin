@@ -6,7 +6,6 @@ import jsonpointer from 'jsonpointer';
 import { introspect } from "../introspect";
 import OpenAPIClientAxios, { AxiosHeaders, ParamsArray } from 'openapi-client-axios';
 import { ApiPlatformAdminDataProvider, ApiPlatformAdminRecord } from '@api-platform/admin/lib/types';
-import { update } from 'lodash';
 
 export interface JsonApiDataProviderOptions extends Options {
     entrypoint: string;
@@ -28,6 +27,9 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       total: "/meta/pagination/count",
       ...options,
     };
+
+
+    // TODO: get baseURL from open api client
     const axiosRequestConf = {baseURL: opts.entrypoint, headers: opts.headers}
     const httpClient = opts.httpClient.init();
     

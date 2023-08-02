@@ -68,7 +68,7 @@ export const getFiltersParametersFromSchema = (
                 name: `${fieldName}_filter_lookup_${lookup}`,
                 isRequired: filter.required,
               }
-          }else{
+          } else {
             return {
               name: filterName,
               isRequired: filter.required,
