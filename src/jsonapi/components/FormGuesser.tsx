@@ -1,36 +1,51 @@
-import { useContext } from 'react';
-import { Edit, EditProps, SimpleForm, TextInput, useRecordContext, useResourceDefinition } from 'react-admin';
+import { ReactNode, useContext, useEffect, useState } from 'react';
+import { Edit, EditProps, SimpleForm, TextInput, useRecordContext, useResourceDefinition, getElementsFromRecords,InferredElement, InferenceTypes, NumberField } from 'react-admin';
 import HttpClientContext from '../../context/HttpClientContext';
 import { getEncapsulatedSchema, getResourceSchema } from '../../openapi/parser';
 import { OpenAPIV3 } from 'openapi-client-axios';
 
 
 
-export interface FormGuesserProps {
-    formType: "edit" | "create"
-};
+const inferElementFromSchema = ( name: string, schema: OpenAPIV3.NonArraySchemaObject): ReactNode =>{
+    if (schema.type === 'integer' || ' number') {
+        return <NumberField 
+            source={name} 
+            label={schema.title ?? name}           
+        />
+    }
+
+}
 
 
-const FormGuesser = (props: FormGuesserProps) => {
+const EditGuesser = (props: EditProps) => {
     
-
     const def = useResourceDefinition();
     const httpClient = useContext(HttpClientContext);
+    const [fields, setFields] = useState<ReactNode[]>();
 
+
+    useEffect(()=>{
+        if (def){
+            httpClient
+            .then((client) => client.api.getOperation(`partial_update_${def.name}`))
+            .then((operation) => getEncapsulatedSchema(operation))
+            .then((schema) => {
+                const jsonApiPrimaryDataProperties = schema?.properties as {[key: string]: OpenAPIV3.NonArraySchemaObject};
+        
+                const requiredFields = schema?.required ?? [];
+            
+                const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as {[key: string]: OpenAPIV3.NonArraySchemaObject};
+                const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes as OpenAPIV3.NonArraySchemaObject;
+                const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships as OpenAPIV3.NonArraySchemaObject;
+                
+
+           
+            
+            })
+        }
+        
+    }, [def, httpClient]);
     
-    
-    httpClient
-    .then((client) => client.api.getOperation(`partial_update_${def.name}`))
-    .then((operation) => getEncapsulatedSchema(operation))
-    .then((schema) => {
-        const jsonApiPrimaryDataProperties = schema?.properties as {[key: string]: OpenAPIV3.NonArraySchemaObject};
-  
-        const requiredFields = schema?.required ?? [];
-      
-        const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as {[key: string]: OpenAPIV3.NonArraySchemaObject};
-        const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes as OpenAPIV3.NonArraySchemaObject;
-        const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships as OpenAPIV3.NonArraySchemaObject;
-    })
 
     const jsonApiType = def.options?.type;
 
@@ -48,12 +63,9 @@ const FormGuesser = (props: FormGuesserProps) => {
             queryOptions={{ refetchOnReconnect: true }}
             mutationOptions={ {onError, meta: {type: jsonApiType} } }
             mutationMode='pessimistic'
-            
         >
             <SimpleForm>
-                <TextInput disabled label="Id" source="id" />
-                <TextInput source="title" />
-                <TextInput multiline source="abstract" />
+               {fields}
                
                 
             </SimpleForm>
@@ -61,4 +73,4 @@ const FormGuesser = (props: FormGuesserProps) => {
     )
 };
 
-export default FormGuesser;
+export default EditGuesser;
