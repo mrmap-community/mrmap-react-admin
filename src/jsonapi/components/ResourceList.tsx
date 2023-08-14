@@ -31,28 +31,28 @@ RecordType extends Record<string, unknown> = Record<string, any>
 >(
 props: NumberFieldProps<RecordType>
 ) => {
-const { className, source, emptyText, ...rest } = props;
-const record = useRecordContext(props);
-const value = get(record, source);
-const translate = useTranslate();
-const total = value?.length;
-const createPath = useCreatePath();
+  const { className, source, emptyText, ...rest } = props;
+  const record = useRecordContext(props);
+  const value = get(record, source);
+  const translate = useTranslate();
+  const total = value?.length;
+  const createPath = useCreatePath();
 
-//TODO: How-To build the link with the correct resource?
-return (
-    <Typography
-        component="span"
-        variant="body2"
-        className={className}
-        {...sanitizeFieldRestProps(rest)}
-    >
-        {<Link to={"TODO"}
-            variant="body2"
-            onClick={e => e.stopPropagation()}>
-          {total}
-        </Link>}
-    </Typography>
-);
+  //TODO: How-To build the link with the correct resource?
+  return (
+      <Typography
+          component="span"
+          variant="body2"
+          className={className}
+          {...sanitizeFieldRestProps(rest)}
+      >
+          {<Link to={"TODO"}
+              variant="body2"
+              onClick={e => e.stopPropagation()}>
+            {total}
+          </Link>}
+      </Typography>
+  );
 };
 
 export const JsonApiList = (

@@ -4,21 +4,20 @@ import { JsonApiDocument, JsonApiMimeType, JsonApiPrimaryData } from '../jsonapi
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils';
 import jsonpointer from 'jsonpointer';
 import { introspect } from "../introspect";
-import OpenAPIClientAxios, { AxiosHeaders, ParamsArray } from 'openapi-client-axios';
+import OpenAPIClientAxios, { OpenAPIClient, AxiosHeaders, ParamsArray } from 'openapi-client-axios';
 import { ApiPlatformAdminDataProvider, ApiPlatformAdminRecord } from '@api-platform/admin/lib/types';
-import { update } from 'lodash';
 
 export interface JsonApiDataProviderOptions extends Options {
     entrypoint: string;
     docUrl: string;
-    httpClient?: OpenAPIClientAxios;
+    httpClient?: Promise<OpenAPIClient>;
     total?: string;
     headers?: AxiosHeaders;
 }
 
 export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvider  =>  {
     const opts = {
-      httpClient: new OpenAPIClientAxios({ definition: options.docUrl }),
+      httpClient: new OpenAPIClientAxios({ definition: options.docUrl }).init(),
       headers: new AxiosHeaders(
             {
                 'Accept': JsonApiMimeType,
@@ -28,8 +27,11 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       total: "/meta/pagination/count",
       ...options,
     };
+
+
+    // TODO: get baseURL from open api client
     const axiosRequestConf = {baseURL: opts.entrypoint, headers: opts.headers}
-    const httpClient = opts.httpClient.init();
+    const httpClient = opts.httpClient;
     
     const getTotal = (response: JsonApiDocument): number => {
         const total = jsonpointer.get(response, opts.total)
