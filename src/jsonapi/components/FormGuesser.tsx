@@ -3,6 +3,7 @@ import { Edit, EditProps, SimpleForm, useResourceDefinition, NumberInput, DateTi
 import HttpClientContext from '../../context/HttpClientContext';
 import { getEncapsulatedSchema } from '../../openapi/parser';
 import { OpenAPIV3 } from 'openapi-client-axios';
+import GeoJsonInput from '../../components/GeoJsonInput';
 
 
 
@@ -32,6 +33,10 @@ const inferElementFromSchema = ( name: string, schema: OpenAPIV3.NonArraySchemaO
         } else if (schema.format === 'duration') {
             // TODO: is there a durationinput?
             return <TextInput {...commonProps}/>
+        }
+
+        else if (schema.format === 'geojson') {
+            return <GeoJsonInput {...commonProps}/>
         }
 
     }
