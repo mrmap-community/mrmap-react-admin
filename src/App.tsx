@@ -9,6 +9,7 @@ import schemaAnalyzer from "./openapi/schemaAnalyzer";
 import ListGuesser from "./jsonapi/components/ListGuesser";
 import { useContext } from "react";
 import HttpClientContext from "./context/HttpClientContext";
+import EditGuesser from "./jsonapi/components/FormGuesser";
 
 
 
@@ -35,7 +36,7 @@ export const App = () => {
       docEntrypoint="http://localhost:8001/api/schema"
       schemaAnalyzer={schemaAnalyzer}
     >
-      <ResourceGuesser name={"WebMapService"} list={ListGuesser} create={FormGuesser}  hasCreate={true} hasEdit={true} hasShow={true}/>
+      <ResourceGuesser name={"WebMapService"} list={ListGuesser} create={FormGuesser} edit={EditGuesser}  hasCreate={true} hasEdit={true} hasShow={true}/>
       <ResourceGuesser name={"Layer"} list={ListGuesser} create={FormGuesser} hasCreate={true} hasEdit={true} hasShow={true}/>
        
     </OpenApiAdmin>

@@ -37,7 +37,6 @@ const Editor = (props: EditorProps) => {
   const context = useLeafletContext();
 
   const updateGeoJson = useCallback((event: any) => {
-    const fg = L.layerGroup();
     const multiPolygon: MultiPolygon = {
       type: 'MultiPolygon',
       coordinates: []
