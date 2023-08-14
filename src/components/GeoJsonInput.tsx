@@ -3,7 +3,7 @@ import {Modal, Box, Typography} from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GeoJSON,  FeatureGroup, MapContainer, TileLayer } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
-import type { GeoJSON as GeoJSONType } from 'geojson';
+import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson';
 import {  useForm} from 'react-hook-form';
 
 import { useLeafletContext } from '@react-leaflet/core';
@@ -37,17 +37,19 @@ const Editor = (props: EditorProps) => {
   const context = useLeafletContext();
 
   const updateGeoJson = useCallback((event: any) => {
-    const fg = L.featureGroup();
+    const fg = L.layerGroup();
+    const multiPolygon: MultiPolygon = {
+      type: 'MultiPolygon',
+      coordinates: []
+    };
 
     context.map.eachLayer((layer)=>{
       if(layer instanceof L.Polygon){
-
-        fg.addLayer(layer);
+        const coordinates = layer.toGeoJSON().geometry.coordinates as Position[][];
+        multiPolygon.coordinates.push(coordinates)
       }
     });
-    console.log(fg.toGeoJSON());
-    props.setGeoJson(fg.toGeoJSON());
-    console.log("huhu");
+    props.setGeoJson(multiPolygon);
   }, []);
 
   useEffect(() => {
