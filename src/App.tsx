@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { type ReactElement, useContext } from 'react'
 import {
   Admin,
   defaultTheme, type RaThemeOptions, Resource
@@ -6,7 +6,6 @@ import {
 
 import HttpClientContext from './context/HttpClientContext'
 import jsonApidataProvider from './dataProvider'
-import FormGuesser from './jsonapi/components/FormGuesser'
 import EditGuesser from './jsonapi/components/FormGuesser'
 import ListGuesser from './jsonapi/components/ListGuesser'
 
@@ -14,7 +13,7 @@ import ListGuesser from './jsonapi/components/ListGuesser'
 const lightTheme = defaultTheme
 const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
-export const App = () => {
+export const App = (): ReactElement => {
   const httpClient = useContext(HttpClientContext)
 
   // TODO: get api url from env
@@ -27,8 +26,8 @@ export const App = () => {
       darkTheme={darkTheme}
       dataProvider={jsonApiDataProvider}
     >
-      <Resource name={'WebMapService'} list={ListGuesser} create={FormGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true}/>
-      <Resource name={'Layer'} list={ListGuesser} create={FormGuesser} hasCreate={true} hasEdit={true} hasShow={true}/>
+      <Resource name={'WebMapService'} list={ListGuesser} create={<EditGuesser operationBaseName={'create_'} />} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
+      <Resource name={'Layer'} list={ListGuesser} create={<EditGuesser operationBaseName={'create_'} />} hasCreate={true} hasEdit={true} hasShow={true} />
 
     </Admin>
 

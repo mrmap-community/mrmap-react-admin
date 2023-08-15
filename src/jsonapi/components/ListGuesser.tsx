@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react'
-import { Datagrid, EditButton, type HttpError, List, type ListProps, ShowButton, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
+import { DatagridConfigurable, EditButton, type HttpError, List, type ListProps, ShowButton, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
 import { type OpenAPIV3, type ParameterObject } from 'openapi-client-axios'
@@ -96,11 +96,11 @@ const ListGuesser = ({
 
       {...props}
     >
-      <Datagrid>
+      <DatagridConfigurable rowClick="edit">
         {...fields ?? []}
         {(hasShow ?? false) && <ShowButton />}
         {(hasEdit ?? false) && <EditButton />}
-      </Datagrid>
+      </DatagridConfigurable>
 
     </List>
   )
