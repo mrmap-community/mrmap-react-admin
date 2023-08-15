@@ -1,158 +1,154 @@
-import { OpenAPIV3 } from "openapi-types";
+import { required } from 'react-admin'
 
-import OpenAPIClientAxios, { Operation as AxiosOperation } from "openapi-client-axios";
-import  { Api, Operation, Resource, Parameter, Field, FieldType } from "@api-platform/api-doc-parser"
-import inflection from "inflection";
-import { required } from "react-admin";
+import { Api, Field, type FieldType, Operation, Parameter, Resource } from '@api-platform/api-doc-parser'
+import inflection from 'inflection'
+import OpenAPIClientAxios, { type Operation as AxiosOperation } from 'openapi-client-axios'
+import { type OpenAPIV3 } from 'openapi-types'
 
 export interface ParsedOpenApi3Documentation {
-  api: Api;
-  document: OpenAPIV3.Document;
+  api: Api
+  document: OpenAPIV3.Document
 }
 
 const mergeResources = (resourceA: Resource, resourceB: Resource) => {
   resourceB.fields?.forEach((fieldB) => {
     if (!resourceA.fields?.some((fieldA) => fieldA.name === fieldB.name)) {
-      resourceA.fields?.push(fieldB);
+      resourceA.fields?.push(fieldB)
     }
-  });
+  })
   resourceB.readableFields?.forEach((fieldB) => {
     if (
       !resourceA.readableFields?.some((fieldA) => fieldA.name === fieldB.name)
     ) {
-      resourceA.readableFields?.push(fieldB);
+      resourceA.readableFields?.push(fieldB)
     }
-  });
+  })
   resourceB.writableFields?.forEach((fieldB) => {
     if (
       !resourceA.writableFields?.some((fieldA) => fieldA.name === fieldB.name)
     ) {
-      resourceA.writableFields?.push(fieldB);
+      resourceA.writableFields?.push(fieldB)
     }
-  });
+  })
   resourceB.operations?.forEach((operationB) => {
     if (
-      !resourceA.operations?.some((operationA => operationA.name === operationB.name))
+      !resourceA.operations?.some(operationA => operationA.name === operationB.name)
     ) {
       resourceA.operations?.push(operationB)
     }
-  });
+  })
 
-  return resourceA;
-};
+  return resourceA
+}
 
 const getType = (openApiType: string, format?: string): FieldType => {
   if (format) {
     switch (format) {
-      case "int32":
-      case "int64":
-        return "integer";
-      case "geojson":
-        return "geojson";
+      case 'int32':
+      case 'int64':
+        return 'integer'
+      case 'geojson':
+        return 'geojson'
       default:
-        return inflection.camelize(format.replace("-", "_"), true);
+        return inflection.camelize(format.replace('-', '_'), true)
     }
   }
 
-  return openApiType;
-};
+  return openApiType
+}
 
 const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operation: AxiosOperation) => {
-
-  const description = schema.description;
+  const description = schema.description
   const fieldNames: string[] = []
-  const readableFields: Field[] = [];
-  const writableFields: Field[] = [];
-  const isList = schema?.properties?.data?.hasOwnProperty("items");
+  const readableFields: Field[] = []
+  const writableFields: Field[] = []
+  const isList = schema?.properties?.data?.hasOwnProperty('items')
 
-  const jsonApiPrimaryData = getEncapsulatedSchema(operation);
-  const jsonApiPrimaryDataProperties = jsonApiPrimaryData?.properties as {[key: string]: OpenAPIV3.NonArraySchemaObject};
-  
-  const requiredFields = jsonApiPrimaryData?.required ?? [];
+  const jsonApiPrimaryData = getEncapsulatedSchema(operation)
+  const jsonApiPrimaryDataProperties = jsonApiPrimaryData?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
 
-  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as {[key: string]: OpenAPIV3.NonArraySchemaObject};
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes as OpenAPIV3.NonArraySchemaObject;
-  const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships as OpenAPIV3.NonArraySchemaObject;
-  
-  const properties ={
-    ...jsonApiResourceAttributes?.properties,
+  const requiredFields = jsonApiPrimaryData?.required ?? []
 
-    //...jsonApiResourceRelationships?.properties // FIXME: encapsulate relations
-  };
-  
-  if (jsonApiResourceId){
-    properties["id"] = jsonApiResourceId;
+  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
+  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes
+  const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships
+
+  const properties = {
+    ...jsonApiResourceAttributes?.properties
+
+    // ...jsonApiResourceRelationships?.properties // FIXME: encapsulate relations
   }
 
-  const jsonApiResourceType = jsonApiPrimaryDataProperties?.type as OpenAPIV3.NonArraySchemaObject;
-  const typeRef = jsonApiResourceType?.allOf as [OpenAPIV3.SchemaObject];
-  const name = typeRef?.[0]?.enum?.[0] ?? jsonApiResourceType?.enum?.[0] ?? "";
-  fieldNames.push(...Object.keys(properties ?? {}));
-  
+  if (jsonApiResourceId) {
+    properties.id = jsonApiResourceId
+  }
+
+  const jsonApiResourceType = jsonApiPrimaryDataProperties?.type
+  const typeRef = jsonApiResourceType?.allOf as [OpenAPIV3.SchemaObject]
+  const name = typeRef?.[0]?.enum?.[0] ?? jsonApiResourceType?.enum?.[0] ?? ''
+  fieldNames.push(...Object.keys(properties ?? {}))
 
   const fields = fieldNames.map((fieldName) => {
-    const property = properties[fieldName] as OpenAPIV3.SchemaObject;
+    const property = properties[fieldName] as OpenAPIV3.SchemaObject
 
-    const type = getType(property.type ?? "string", property.format);
-    
+    const type = getType(property.type ?? 'string', property.format)
 
     const field = new Field(fieldName, {
       id: null,
       range: null,
       type,
       arrayType:
-        type === "array" && "items" in property
+        type === 'array' && 'items' in property
           ? getType(
-              (property.items as OpenAPIV3.SchemaObject).type ?? "string",
-              (property.items as OpenAPIV3.SchemaObject).format
-            )
-          : null,
-      enum: property.enum
-        ? Object.fromEntries(
-            // Object.values is used because the array is annotated: it contains the __meta symbol used by jsonref.
-            Object.values<string | number>(property.enum).map((enumValue) => [
-              typeof enumValue === "string"
-                ? inflection.humanize(enumValue)
-                : enumValue,
-              enumValue,
-            ])
+            (property.items as OpenAPIV3.SchemaObject).type ?? 'string',
+            (property.items as OpenAPIV3.SchemaObject).format
           )
+          : null,
+      enum: (property.enum != null)
+        ? Object.fromEntries(
+          // Object.values is used because the array is annotated: it contains the __meta symbol used by jsonref.
+          Object.values<string | number>(property.enum).map((enumValue) => [
+            typeof enumValue === 'string'
+              ? inflection.humanize(enumValue)
+              : enumValue,
+            enumValue
+          ])
+        )
         : null,
       reference: null,
       embedded: null,
       nullable: property.nullable ?? false,
       required: !!requiredFields.find((value) => value === fieldName),
-      description: property.description ?? "",
-    });
+      description: property.description ?? ''
+    })
 
     if (!property.writeOnly) {
-      readableFields.push(field);
+      readableFields.push(field)
     }
     if (!property.readOnly) {
-      writableFields.push(field);
+      writableFields.push(field)
     }
 
-
-    return field;
-  });
+    return field
+  })
 
   const getOperationType = (operation: AxiosOperation) => {
-    if (operation.method === "get" && isList) {
-      return "list";
-    } else if (operation.method === "get") {
-      return "show";
-    } else if (operation.method === "post") {
-      return "create";
-    } else if (operation.method === "delete") {
-      return "delete";
-    } else if (operation.method === "patch") {
-      return "edit";
+    if (operation.method === 'get' && isList) {
+      return 'list'
+    } else if (operation.method === 'get') {
+      return 'show'
+    } else if (operation.method === 'post') {
+      return 'create'
+    } else if (operation.method === 'delete') {
+      return 'delete'
+    } else if (operation.method === 'patch') {
+      return 'edit'
     } else {
-      return "show";
+      return 'show'
     }
   }
 
-  const operationType = getOperationType(operation);
+  const operationType = getOperationType(operation)
 
   const operations = [
     new Operation(
@@ -168,173 +164,146 @@ const buildResourceFromOpenApiSchema = (schema: OpenAPIV3.SchemaObject, operatio
   const parameters: Parameter[] = []
   const parametersSchema = operation.parameters as OpenAPIV3.ParameterObject[]
   parametersSchema?.forEach((schema) => {
-
-
-    
-    if (schema.name.includes("sort")){
+    if (schema.name.includes('sort')) {
       // provide sort parameter as order[id], order[lastModifiedAt] and so on
-      const sortFieldSchema = schema?.schema as OpenAPIV3.ArraySchemaObject;
+      const sortFieldSchema = schema?.schema as OpenAPIV3.ArraySchemaObject
       const sortFieldParams = sortFieldSchema.items as OpenAPIV3.NonArraySchemaObject
-      sortFieldParams?.enum?.filter((sortableField) => !sortableField.includes("-")).forEach((sortableField) => 
-      
-      
-      {
+      sortFieldParams?.enum?.filter((sortableField) => !sortableField.includes('-')).forEach((sortableField) => {
         parameters.push(
           new Parameter(
             `order[${sortableField}]`,
             null,
-            schema.required?? false,
+            schema.required ?? false,
             `order by ${sortableField}`,
-            schema.deprecated?? false,
+            schema.deprecated ?? false
           )
         )
-      });
-    } else if (schema.name.includes("filter")){
-
-
-      if (schema.name.includes(".")) {
-
-
-        const parameterSchema = schema.schema as OpenAPIV3.SchemaObject;
+      })
+    } else if (schema.name.includes('filter')) {
+      if (schema.name.includes('.')) {
+        const parameterSchema = schema.schema as OpenAPIV3.SchemaObject
 
         // cause api platform InputGuesser will search for a field source name we need to add a dummy field, so it can be founded by the guesser.
-        const splitted = schema.name.replace("filter[", "").replace("]", "").split(".")
+        const splitted = schema.name.replace('filter[', '').replace(']', '').split('.')
         const fieldName = splitted[0]
         const lookup = splitted[1]
 
         const dummyName = `${fieldName}_filter_lookup_${lookup}`
-        
+
         // FIXME: if it is a nested field filter the field is not found inside this resource
         const baseField = fields.find((field) => field.name === fieldName)
-        
-        const parameterType = getType(parameterSchema.type ?? "string", parameterSchema.format)
 
-        if (baseField){
-          const dummyBaseField = {...baseField, type: parameterType};
+        const parameterType = getType(parameterSchema.type ?? 'string', parameterSchema.format)
+
+        if (baseField != null) {
+          const dummyBaseField = { ...baseField, type: parameterType }
 
           delete dummyBaseField.name
-          fields.push(new Field(dummyName, {...dummyBaseField}))
+          fields.push(new Field(dummyName, { ...dummyBaseField }))
           parameters.push(
             new Parameter(
               dummyName,
               null,
-              schema.required?? false,
+              schema.required ?? false,
               `filter by ${schema.description}`,
-              schema.deprecated?? false,
+              schema.deprecated ?? false
             )
           )
         }
-        
-        
       } else {
         parameters.push(
           new Parameter(
             schema.name,
             null,
-            schema.required?? false,
+            schema.required ?? false,
             `filter by ${schema.description}`,
-            schema.deprecated?? false,
+            schema.deprecated ?? false
           )
         )
-
       }
-
-     
     } else {
       parameters.push(
         new Parameter(
           schema.name,
           null,
-          schema.required?? false,
-          operation.description?? "",
-          schema.deprecated?? false,
+          schema.required ?? false,
+          operation.description ?? '',
+          schema.deprecated ?? false
         )
       )
     }
+  })
 
-  });
-
-
-  return new Resource(name, "url", {
+  return new Resource(name, 'url', {
     id: null,
     title: name,
     description,
     fields,
     readableFields,
     writableFields,
-    parameters: parameters,
-    getParameters: () => Promise.resolve([]),
-    operations: operations
-  });
-
-};
-
+    parameters,
+    getParameters: async () => await Promise.resolve([]),
+    operations
+  })
+}
 
 export const getResourceSchema = (operation?: AxiosOperation): OpenAPIV3.SchemaObject | undefined => {
-  if (operation?.method === "get") {
-    const responseObject = operation?.responses?.['200'] as OpenAPIV3.ResponseObject;
-    return responseObject?.content?.['application/vnd.api+json']?.schema as OpenAPIV3.SchemaObject;
-  } else if (operation?.method === "put" || "post") {
-    const requestObject = operation?.requestBody as OpenAPIV3.RequestBodyObject;
-    return requestObject?.content?.['application/vnd.api+json']?.schema as OpenAPIV3.SchemaObject;
+  if (operation?.method === 'get') {
+    const responseObject = operation?.responses?.['200'] as OpenAPIV3.ResponseObject
+    return responseObject?.content?.['application/vnd.api+json']?.schema as OpenAPIV3.SchemaObject
+  } else if (operation?.method === 'put' || 'post') {
+    const requestObject = operation?.requestBody as OpenAPIV3.RequestBodyObject
+    return requestObject?.content?.['application/vnd.api+json']?.schema as OpenAPIV3.SchemaObject
   }
-};
+}
 
 export const getEncapsulatedSchema = (operation?: AxiosOperation): OpenAPIV3.NonArraySchemaObject => {
   /** helper function to return the encapsulated openapi schema of the jsonapi resource
-   * 
+   *
    */
-  const schema = getResourceSchema(operation);
-  const isList = schema?.properties?.data?.hasOwnProperty("items");
+  const schema = getResourceSchema(operation)
+  const isList = schema?.properties?.data?.hasOwnProperty('items')
 
-  const jsonApiPrimaryDataList = schema?.properties?.data as OpenAPIV3.ArraySchemaObject;
-  return isList ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject;
-};
+  const jsonApiPrimaryDataList = schema?.properties?.data as OpenAPIV3.ArraySchemaObject
+  return isList ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject
+}
 
-export const collectJsonApiResourcesFromOpenApi3Documentation = (
-    docEntrypoint: string
-  ): Promise<ParsedOpenApi3Documentation> => {
+export const collectJsonApiResourcesFromOpenApi3Documentation = async (
+  docEntrypoint: string
+): Promise<ParsedOpenApi3Documentation> => {
+  const axiosClient = new OpenAPIClientAxios({ definition: docEntrypoint })
 
-  const axiosClient = new OpenAPIClientAxios({ definition: docEntrypoint });
-
-  return axiosClient.init()
+  return await axiosClient.init()
     .then((client) => client.api.getOperations())
     .then((operations) => {
       const resources: Resource[] = []
-      
+
       operations.forEach((operation) => {
-        
-        if (operation?.operationId?.includes("_related_")) return; // nested resources urls represents not a full resource
+        if (operation?.operationId?.includes('_related_')) return // nested resources urls represents not a full resource
 
-        const schema = getResourceSchema(operation);
-        if (!schema) return;
+        const schema = getResourceSchema(operation)
+        if (schema == null) return
 
-        const resource = buildResourceFromOpenApiSchema(schema, operation);
-        if (!resource) return;
+        const resource = buildResourceFromOpenApiSchema(schema, operation)
+        if (!resource) return
 
-
-        const existingResource = resources.find(collectedResource => collectedResource.name == resource.name)
-        if (existingResource) {
+        const existingResource = resources.find(collectedResource => collectedResource.name === resource.name)
+        if (existingResource != null) {
           // FIXME: how to handle different model forms?
           const mergedResource = mergeResources(existingResource, resource)
-          resources[resources.indexOf(existingResource)] = mergedResource;
+          resources[resources.indexOf(existingResource)] = mergedResource
         } else {
-          resources.push(resource);
-
+          resources.push(resource)
         }
-
-      });
-      return resources;
+      })
+      return resources
     })
     .then((resources) => {
       return {
-        api: new Api(docEntrypoint, {title: axiosClient.document.info.title, resources: resources}),
-        document: axiosClient.document as OpenAPIV3.Document,
+        api: new Api(docEntrypoint, { title: axiosClient.document.info.title, resources }),
+        document: axiosClient.document as OpenAPIV3.Document
       }
     })
-  }
-  
+}
 
-
-
-export default collectJsonApiResourcesFromOpenApi3Documentation;
+export default collectJsonApiResourcesFromOpenApi3Documentation

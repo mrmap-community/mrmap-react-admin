@@ -1,15 +1,13 @@
-import { TextInput, TextInputProps, useInput } from "react-admin";
-import {Modal, Box, Typography} from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { GeoJSON,  FeatureGroup, MapContainer, TileLayer } from "react-leaflet";
-import { EditControl } from "react-leaflet-draw";
-import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson';
-import {  useForm} from 'react-hook-form';
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { TextInput, type TextInputProps, useInput } from 'react-admin'
+import { useForm } from 'react-hook-form'
+import { FeatureGroup, GeoJSON, MapContainer, TileLayer } from 'react-leaflet'
+import { EditControl } from 'react-leaflet-draw'
 
-import { useLeafletContext } from '@react-leaflet/core';
-
-import L, { Polygon } from "leaflet";
-
+import { Box, Modal, Typography } from '@mui/material'
+import { useLeafletContext } from '@react-leaflet/core'
+import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson'
+import L, { Polygon } from 'leaflet'
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -18,53 +16,51 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: '80%',
   height: '80%',
-  //bgcolor: 'background.paper',
-  //border: '2px solid #000',
-  boxShadow: 24,
-  //pt: 2,
-  //px: 4,
-  //pb: 3,
-};
-
+  // bgcolor: 'background.paper',
+  // border: '2px solid #000',
+  boxShadow: 24
+  // pt: 2,
+  // px: 4,
+  // pb: 3,
+}
 
 export interface EditorProps {
-  geoJson?: GeoJSONType;
-  setGeoJson: Function;
+  geoJson?: GeoJSONType
+  setGeoJson: Function
 };
 
 const Editor = (props: EditorProps) => {
-
-  const context = useLeafletContext();
+  const context = useLeafletContext()
 
   const updateGeoJson = useCallback((event: any) => {
     const multiPolygon: MultiPolygon = {
       type: 'MultiPolygon',
       coordinates: []
-    };
+    }
 
-    context.map.eachLayer((layer)=>{
-      if(layer instanceof L.Polygon){
-        const coordinates = layer.toGeoJSON().geometry.coordinates as Position[][];
+    context.map.eachLayer((layer) => {
+      if (layer instanceof L.Polygon) {
+        const coordinates = layer.toGeoJSON().geometry.coordinates as Position[][]
         multiPolygon.coordinates.push(coordinates)
       }
-    });
-    props.setGeoJson(multiPolygon);
-  }, []);
+    })
+    props.setGeoJson(multiPolygon)
+  }, [])
 
   useEffect(() => {
-    if (props.geoJson){
-      const bounds = L.geoJSON(props.geoJson).getBounds();
+    if (props.geoJson != null) {
+      const bounds = L.geoJSON(props.geoJson).getBounds()
       if (Object.keys(bounds).length > 1) {
-        context.map.flyToBounds(bounds, {duration: 0.3});
+        context.map.flyToBounds(bounds, { duration: 0.3 })
       }
     }
   }, [props.geoJson])
 
-  const geoJsonObject = props.geoJson ? <GeoJSON data={props.geoJson} />: <div></div>;
+  const geoJsonObject = (props.geoJson != null) ? <GeoJSON data={props.geoJson} /> : <div></div>
 
   return (
     <FeatureGroup
-      
+
     >
       {geoJsonObject}
       <EditControl
@@ -72,60 +68,53 @@ const Editor = (props: EditorProps) => {
         onEdited={updateGeoJson}
         onCreated={updateGeoJson}
         onDeleted={updateGeoJson}
-        //onDrawStop={onEdit}
+        // onDrawStop={onEdit}
         draw={{
           marker: false,
           circlemarker: false,
-          circle: false,
+          circle: false
         }}
       />
     </FeatureGroup>
   )
-};
-
+}
 
 const GeoJsonInput = (props: TextInputProps) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
 
-    
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [geoJson, setGeoJson] = useState<GeoJSONType>()
+  const [geoJsonString, setGeoJsonString] = useState((geoJson != null) ? JSON.stringify(geoJson) : 'huhu')
+  const {
+    field: { value, onChange },
+    fieldState: { isTouched, error },
+    formState: { isSubmitted },
+    isRequired
+  } = useInput(props)
 
-    const [geoJson, setGeoJson] = useState<GeoJSONType>();
-    const [geoJsonString, setGeoJsonString]= useState(geoJson ? JSON.stringify(geoJson): "huhu")
-    const {
-      field: { value, onChange },
-      fieldState: { isTouched, error },
-      formState: { isSubmitted },
-      isRequired,
-    } = useInput(props);    
-    
+  useEffect(() => {
+    setGeoJsonString((geoJson != null) ? JSON.stringify(geoJson) : '')
+  }, [geoJson])
 
+  useEffect(() => {
+    onChange(geoJsonString)
+  }, [geoJsonString])
 
+  console.log('geojson', geoJson, geoJsonString)
 
-    useEffect(() => {
-      setGeoJsonString(geoJson ? JSON.stringify(geoJson): "");
-    }, [geoJson]);
-
-
-    useEffect(() => {
-      onChange(geoJsonString);
-    }, [geoJsonString]);
-
-    console.log("geojson", geoJson, geoJsonString);
-    
-
-    return (
+  return (
       <div>
       <TextInput
         {...props}
         onClick={() => {
-          setIsOpen(true)}
+          setIsOpen(true)
+        }
         }
         contentEditable={false}
         onChange={onChange}
       />
       <Modal
             open={isOpen}
-            onClose={() => setIsOpen(false)}
+            onClose={() => { setIsOpen(false) }}
             aria-labelledby="modal-modal-title"
         >
         <Box sx={{ ...style }}>
@@ -133,12 +122,12 @@ const GeoJsonInput = (props: TextInputProps) => {
             {props.title ?? props.label} huhu
             </Typography>
 
-            <MapContainer 
-              center={ [51.505, -0.09] } 
-              zoom={2} 
+            <MapContainer
+              center={ [51.505, -0.09] }
+              zoom={2}
               scrollWheelZoom={true}
               style={{ height: '100%', width: '100wh' }}
-              
+
             >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -153,7 +142,7 @@ const GeoJsonInput = (props: TextInputProps) => {
         </Box>
         </Modal>
       </div>
-    );
-  };
-  
-  export default GeoJsonInput;
+  )
+}
+
+export default GeoJsonInput

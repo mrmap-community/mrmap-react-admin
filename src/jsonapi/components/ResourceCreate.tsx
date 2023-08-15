@@ -1,18 +1,16 @@
-import { Create, SimpleForm, TextInput, DateInput, required, useResourceDefinition } from 'react-admin';
+import { Create, DateInput, required, SimpleForm, TextInput, useResourceDefinition } from 'react-admin'
 
 export const ResourceCreate = () => {
-    
-    const def = useResourceDefinition();
-    const jsonApiType = def.options?.type;
-    
-    const onError = (error) => {
-        // TODO: handle jsonapi errors 
-    };
-    
-    
-    return (
+  const def = useResourceDefinition()
+  const jsonApiType = def.options?.type
+
+  const onError = (error) => {
+    // TODO: handle jsonapi errors
+  }
+
+  return (
         <Create
-            mutationOptions={ {onError, meta: {type: jsonApiType} } }
+            mutationOptions={ { onError, meta: { type: jsonApiType } } }
         >
             <SimpleForm>
                 <TextInput source="title" validate={[required()]} fullWidth />
@@ -20,5 +18,5 @@ export const ResourceCreate = () => {
                 <DateInput label="Publication date" source="published_at" defaultValue={new Date()} />
             </SimpleForm>
         </Create>
-    )
-};
+  )
+}

@@ -1,101 +1,89 @@
-import type { Field, Resource } from '@api-platform/api-doc-parser';
 import type { FilterParameter } from '@api-platform/admin'
-import { SchemaAnalyzer } from "@api-platform/admin";
-import {openApiSchemaAnalyzer} from "@api-platform/admin";
+import { openApiSchemaAnalyzer } from '@api-platform/admin'
+import type { Parameter, Resource } from '@api-platform/api-doc-parser'
 
-
-const ORDER_MARKER = "order"
+const ORDER_MARKER = 'order'
 
 /**
  * @param schema The schema of a resource
  *
  * @returns The name of the reference field
  */
-const getFieldNameFromSchema = (schema: Resource) => {
-  if (!schema.fields || !schema.fields[0]) {
-    return '';
+const getFieldNameFromSchema = (schema: Resource): string => {
+  if ((schema.fields == null) || !schema.fields[0]) {
+    return ''
   }
 
-  if (schema.fields.find((schemaField) => schemaField.name === 'id')) {
-    return 'id';
+  if (schema.fields.find((schemaField) => schemaField.name === 'id') != null) {
+    return 'id'
   }
 
-  return schema.fields[0].name;
-};
-
+  return schema.fields[0].name
+}
 
 /**
  * @param schema The schema of a resource
  *
  * @returns The filter parameters
  */
-export const resolveSchemaParameters = (schema: Resource) => {
-    if (!schema.parameters || !schema.getParameters) {
-      return Promise.resolve([]);
-    }
-  
-    return !schema.parameters.length
-      ? schema.getParameters()
-      : Promise.resolve(schema.parameters);
-  };
+export const resolveSchemaParameters = async (schema: Resource): Promise<Parameter[]> => {
+  if ((schema.parameters == null) || (schema.getParameters == null)) {
+    return await Promise.resolve([])
+  }
 
+  return (schema.parameters.length === 0)
+    ? await schema.getParameters()
+    : await Promise.resolve(schema.parameters)
+}
 
 /**
  * @param schema The schema of a resource
  *
  * @returns The filter parameters without the order ones
  */
-export const getFiltersParametersFromSchema = (
-    schema: Resource,
-  ): Promise<FilterParameter[]> => {
-    if (!schema.fields) {
-      return Promise.resolve([]);
-    }
-  
-    const authorizedFields = schema.fields.map((field) => field.name);
+export const getFiltersParametersFromSchema = async (
+  schema: Resource
+): Promise<FilterParameter[]> => {
+  if (schema.fields == null) {
+    return await Promise.resolve([])
+  }
 
-    // TODO: what about global search parameter?
-    return resolveSchemaParameters(schema).then((parameters) => {
-      const filters = parameters
-        .map((filter) => {
-          const filterName = filter.variable.replace("filter[", "").replace("]", "")
+  const authorizedFields = schema.fields.map((field) => field.name)
 
-          if (filterName.includes("_filter_lookup_")){
-            const splitted = filterName.split("_filter_lookup_")
-            const fieldName = splitted[0]
-            const lookup = splitted[1]
-              return {
-                name: `${fieldName}_filter_lookup_${lookup}`,
-                isRequired: filter.required,
-              }
-          } else {
-            return {
-              name: filterName,
-              isRequired: filter.required,
-            }
+  // TODO: what about global search parameter?
+  return await resolveSchemaParameters(schema).then((parameters) => {
+    const filters = parameters
+      .map((filter) => {
+        const filterName = filter.variable.replace('filter[', '').replace(']', '')
+
+        if (filterName.includes('_filter_lookup_')) {
+          const splitted = filterName.split('_filter_lookup_')
+          const fieldName = splitted[0]
+          const lookup = splitted[1]
+          return {
+            name: `${fieldName}_filter_lookup_${lookup}`,
+            isRequired: filter.required
           }
-        
-          
-          
-        })
-        .filter((filter) => {
-          return !filter.name.includes(ORDER_MARKER) 
-        })
-        .filter((filter) => {
-          return authorizedFields.some((fieldName) => filter.name.includes(fieldName))
-        })
-      return filters
+        } else {
+          return {
+            name: filterName,
+            isRequired: filter.required
+          }
+        }
+      })
+      .filter((filter) => {
+        return !filter.name.includes(ORDER_MARKER)
+      })
+      .filter((filter) => {
+        return authorizedFields.some((fieldName) => filter.name.includes(fieldName))
+      })
+    return filters
+  })
+}
 
+const analyzer = openApiSchemaAnalyzer()
 
-      });
-  };
-
-
-  
-  
-const analyzer = openApiSchemaAnalyzer();
-
-analyzer.getFieldNameFromSchema = getFieldNameFromSchema;
-analyzer.getFiltersParametersFromSchema = getFiltersParametersFromSchema;
+analyzer.getFieldNameFromSchema = getFieldNameFromSchema
+analyzer.getFiltersParametersFromSchema = getFiltersParametersFromSchema
 
 export default analyzer
