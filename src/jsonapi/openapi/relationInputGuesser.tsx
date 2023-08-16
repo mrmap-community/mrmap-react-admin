@@ -11,13 +11,13 @@ const relationInputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObje
   const resource = type?.enum?.[0]
 
   return <SchemaAutocompleteInput
-        key={name}
-        source={name}
-        resource={resource}
-        isRequired={isRequired}
-    // disabled={schema.readOnly ?? false}
-    // helperText={schema.description}
-    />
+    key={name}
+    source={name}
+    isRequired={isRequired}
+    reference={resource}
+  // disabled={schema.readOnly ?? false}
+  // helperText={schema.description}
+  />
 }
 
 export default relationInputGuesser

@@ -6,22 +6,17 @@ import { type OpenAPIV3 } from 'openapi-client-axios'
 import HttpClientContext from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../../openapi/parser'
 
-export interface SchemaAutocompleteInputProps extends ReferenceInputProps {
-  resource: string
-  source: string
-}
-
 const filterToQuery = (searchText: string): any => ({ search: `${searchText}` })
 
 const SchemaAutocompleteInput = (
-  props: SchemaAutocompleteInputProps
+  props: ReferenceInputProps
 ): ReactNode => {
   const httpClient = useContext(HttpClientContext)
   const [optionText, setOptionText] = useState('id')
 
   useEffect(() => {
     httpClient
-      .then((client) => client.api.getOperation(`list_${props.resource}`))
+      .then((client) => client.api.getOperation(`list_${props.reference}`))
       .then((operation) => getEncapsulatedSchema(operation))
       .then((schema) => {
         const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
@@ -41,7 +36,7 @@ const SchemaAutocompleteInput = (
   // stringRepresentation || title || name
 
   return (
-    <ReferenceInput reference={props.resource} source={props.source} >
+    <ReferenceInput {...props}>
       <AutocompleteInput
         filterToQuery={filterToQuery}
         optionText={optionText}
