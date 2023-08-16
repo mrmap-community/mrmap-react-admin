@@ -6,6 +6,7 @@ import { type OpenAPIClient, type OpenAPIV3, type UnknownOperationMethods, type 
 import HttpClientContext from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../../openapi/parser'
 import inputGuesser from '../openapi/inputGuesser'
+import relationInputGuesser from '../openapi/relationInputGuesser'
 
 const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperationMethods, UnknownPathsDictionary>>, operationId: string, record?: RaRecord): ReactNode[] => {
   const fields: ReactNode[] = []
@@ -30,7 +31,11 @@ const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperatio
       })
 
       // TODO:
-      const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships
+      const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
+      Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
+        const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
+        fields.push(relationInputGuesser(name, schema, isRequired, record))
+      })
     })
     .catch(() => { })
     .finally(() => { })
@@ -85,6 +90,7 @@ export const CreateGuesser = (
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
+    // handle error messages from backend like json pointer to a specific field for helptexting
   }
 
   return (
