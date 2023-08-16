@@ -19,7 +19,7 @@ const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRe
   if (['integer', 'number'].includes(schema.type ?? '')) {
     return <NumberInput {...commonProps} />
   } else if (schema.type === 'boolean') {
-    return <BooleanInput {...commonProps} />
+    return <BooleanInput {...commonProps} defaultValue={schema.default ?? false} />
   } else if (schema.type === 'string') {
     // Time specific fields
     if (schema.format === 'date-time') {
