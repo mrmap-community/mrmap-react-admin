@@ -1,14 +1,14 @@
 import { type ReactNode } from 'react'
-import { BooleanInput, DateInput, DateTimeInput, NumberInput, TextInput, TimeInput } from 'react-admin'
+import { BooleanInput, DateInput, DateTimeInput, NumberInput, type RaRecord, TextInput, TimeInput } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import GeoJsonInput from '../../components/GeoJsonInput'
 
-const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: any): ReactNode => {
+const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactNode => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
-
   const commonProps = {
+    key: name,
     source: name,
     label: schema.title ?? name,
     required: isRequired,

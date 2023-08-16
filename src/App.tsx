@@ -6,7 +6,7 @@ import {
 
 import HttpClientContext from './context/HttpClientContext'
 import jsonApidataProvider from './dataProvider'
-import EditGuesser from './jsonapi/components/FormGuesser'
+import { CreateGuesser, EditGuesser } from './jsonapi/components/FormGuesser'
 import ListGuesser from './jsonapi/components/ListGuesser'
 
 // const authProvider = tokenAuthProvider({loginUrl: `${apiEntryPoint}auth/login/`, logoutUrl:`${apiEntryPoint}auth/login/`});
@@ -26,8 +26,8 @@ export const App = (): ReactElement => {
       darkTheme={darkTheme}
       dataProvider={jsonApiDataProvider}
     >
-      <Resource name={'WebMapService'} list={ListGuesser} create={<EditGuesser operationBaseName={'create_'} />} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
-      <Resource name={'Layer'} list={ListGuesser} create={<EditGuesser operationBaseName={'create_'} />} hasCreate={true} hasEdit={true} hasShow={true} />
+      <Resource name={'WebMapService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
+      <Resource name={'Layer'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
 
     </Admin>
 

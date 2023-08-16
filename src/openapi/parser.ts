@@ -265,7 +265,7 @@ export const getEncapsulatedSchema = (operation?: AxiosOperation): OpenAPIV3.Non
   const isList = schema?.properties?.data?.hasOwnProperty('items')
 
   const jsonApiPrimaryDataList = schema?.properties?.data as OpenAPIV3.ArraySchemaObject
-  return isList ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject
+  return (isList ?? false) ? jsonApiPrimaryDataList?.items as OpenAPIV3.NonArraySchemaObject : schema?.properties?.data as OpenAPIV3.NonArraySchemaObject
 }
 
 export const collectJsonApiResourcesFromOpenApi3Documentation = async (

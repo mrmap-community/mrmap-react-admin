@@ -7,7 +7,7 @@ import HttpClientContext from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../../openapi/parser'
 import inputGuesser from '../openapi/inputGuesser'
 
-const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperationMethods, UnknownPathsDictionary>>, operationId: string, record: RaRecord): ReactNode[] => {
+const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperationMethods, UnknownPathsDictionary>>, operationId: string, record?: RaRecord): ReactNode[] => {
   const fields: ReactNode[] = []
 
   httpClient
@@ -18,9 +18,12 @@ const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperatio
 
       const requiredFields = schema?.required ?? []
       const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-      fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
-
+      if (jsonApiResourceId !== undefined) {
+        // on create operations there is no id
+        fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
+      }
       const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
+
       Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
         const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
         fields.push(inputGuesser(name, schema, isRequired, record))
@@ -31,11 +34,10 @@ const getFieldsForOperation = (httpClient: Promise<OpenAPIClient<UnknownOperatio
     })
     .catch(() => { })
     .finally(() => { })
-
   return fields
 }
 
-const EditGuesser = (
+export const EditGuesser = (
   props: EditProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
@@ -45,12 +47,10 @@ const EditGuesser = (
   const [fields, setFields] = useState<ReactNode[]>()
 
   useEffect(() => {
-    if (name !== '') {
+    if ((fields === undefined || fields.length === 0) && name !== '' && name !== undefined) {
       setFields(getFieldsForOperation(httpClient, `partial_update_${name}`, record))
     }
-  }, [name, httpClient])
-
-  const jsonApiType = options?.type
+  }, [name])
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
@@ -60,7 +60,7 @@ const EditGuesser = (
     <Edit
       {...props}
       queryOptions={{ refetchOnReconnect: true }}
-      mutationOptions={{ onError, meta: { type: jsonApiType } }}
+      mutationOptions={{ onError, meta: { type: options?.type } }}
       mutationMode='pessimistic'
     >
       <SimpleForm>
@@ -70,24 +70,18 @@ const EditGuesser = (
   )
 }
 
-export default EditGuesser
-
-const CreateGuesser = (
+export const CreateGuesser = (
   props: CreateProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
-  const record = useRecordContext(props)
-
   const httpClient = useContext(HttpClientContext)
   const [fields, setFields] = useState<ReactNode[]>()
 
   useEffect(() => {
-    if (name !== '') {
-      setFields(getFieldsForOperation(httpClient, `partial_update_${name}`, record))
+    if ((fields === undefined || fields.length === 0) && name !== '' && name !== undefined) {
+      setFields(getFieldsForOperation(httpClient, `create_${name}`))
     }
-  }, [name, httpClient])
-
-  const jsonApiType = options?.type
+  }, [name])
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
@@ -96,7 +90,7 @@ const CreateGuesser = (
   return (
     <Create
       {...props}
-      mutationOptions={{ onError, meta: { type: jsonApiType } }}
+      mutationOptions={{ onError, meta: { type: options?.type } }}
     >
       <SimpleForm>
         {fields}
