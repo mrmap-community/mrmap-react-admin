@@ -25,7 +25,7 @@ const ListGuesser = ({
     if (name !== '' && name !== undefined && client !== undefined) {
       const operation = client.api.getOperation(`list_${name}`)
       const schema = getEncapsulatedSchema(operation)
-      console.log(name, operation, schema)
+
       const _fields: ReactNode[] = []
 
       const parameters = operation?.parameters as ParameterObject[]

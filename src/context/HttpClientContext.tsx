@@ -19,9 +19,7 @@ export const HttpClientProvider = ({ children }: any): ReactNode => {
   const [isLoading, setLoading] = useState<any>()
 
   useEffect(() => {
-    console.log('context effect called')
     if (client === undefined && isLoading === undefined) {
-      console.log('callGetClient')
       setLoading(true)
 
       const httpClient = new OpenAPIClientAxios({ definition: 'http://localhost:8001/api/schema' })
@@ -31,7 +29,6 @@ export const HttpClientProvider = ({ children }: any): ReactNode => {
       }).catch(() => { })
       return () => { }
     }
-    console.log('stored client', client)
   }, [client])
 
   return (
