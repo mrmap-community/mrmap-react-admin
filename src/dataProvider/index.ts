@@ -1,25 +1,20 @@
-import { type CreateParams, DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type UpdateManyParams, type UpdateParams, useStore } from 'react-admin'
+import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type UpdateManyParams, type UpdateParams } from 'react-admin'
 
-import { type ApiPlatformAdminDataProvider, type ApiPlatformAdminRecord } from '@api-platform/admin/lib/types'
 import jsonpointer from 'jsonpointer'
-import OpenAPIClientAxios, { AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
-import { stringify } from 'query-string'
+import { AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
 
-import { introspect } from '../introspect'
 import { type JsonApiDocument, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 
 export interface JsonApiDataProviderOptions extends Options {
   entrypoint: string
-  docUrl: string
-  httpClient?: Promise<OpenAPIClient>
+  httpClient: Promise<OpenAPIClient>
   total?: string
   headers?: AxiosHeaders
 }
 
-export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvider => {
+export default (options: JsonApiDataProviderOptions): DataProvider => {
   const opts = {
-    httpClient: new OpenAPIClientAxios({ definition: options.docUrl }).init(),
     headers: new AxiosHeaders(
       {
         Accept: JsonApiMimeType,
@@ -42,7 +37,7 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
     return total
   }
 
-  const updateResource = async (resource: string, params: UpdateParams) =>
+  const updateResource = async (resource: string, params: UpdateParams): Promise<{ data: any }> =>
     await httpClient.then(async (client) => {
       const operationId = `partial_update_${resource}`
       const operation = client.api.getOperation(operationId)
@@ -57,7 +52,7 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
     })
 
-  const deleteResource = async (resource: string, params: DeleteParams) =>
+  const deleteResource = async (resource: string, params: DeleteParams): Promise<{ data: any }> =>
     await httpClient.then(async (client) => {
       const conf = client.api.getAxiosConfigForOperation(`delete_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
       return await client.request(conf)
@@ -74,7 +69,7 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       const parameters: ParamsArray = [
         { name: 'page[number]', value: page },
         { name: 'page[size]', value: perPage },
-        { name: 'sort', value: `${order == 'ASC' ? '' : '-'}${field}` },
+        { name: 'sort', value: `${order === 'ASC' ? '' : '-'}${field}` },
         { name: 'include', value: params.meta?.include }
       ]
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
@@ -117,13 +112,13 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       // return httpClient(url, options).then(({ json }) => ({ data: json }));
     },
 
-    getManyReference: (resource: string, params: GetManyReferenceParams) => {
+    getManyReference: async (resource: string, params: GetManyReferenceParams) => {
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
       const query: any = {
         'page[number]': page,
         'page[size]': perPage,
-        sort: `${order == 'ASC' ? '' : '-'}${field}`
+        sort: `${order === 'ASC' ? '' : '-'}${field}`
       }
 
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
@@ -132,16 +127,8 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
 
       query[`filter[${params.target}]`] = params.id
 
-      return httpClient(`${opts.entrypoint}/${resource}?${stringify(query)}`, { headers: opts.headers }
-      ).then(({ json }: { json: JsonApiDocument }) => {
-        const resources = json.data as JsonApiPrimaryData[]
-        return {
-          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-            encapsulateJsonApiPrimaryData(json, data)
-          )),
-          total: getTotal(json)
-        }
-      })
+      // TODO:
+      return Promise
     },
 
     create: async (resource: string, params: CreateParams) =>
@@ -192,12 +179,6 @@ export default (options: JsonApiDataProviderOptions): ApiPlatformAdminDataProvid
       }
       )
       return await Promise.resolve({ data: results })
-    },
-    introspect: introspect.bind(undefined, opts.docUrl),
-    subscribe: async (
-      resourceIds: string[],
-      callback: (document: ApiPlatformAdminRecord) => void
-    ) => await Promise.resolve({ data: null }),
-    unsubscribe: async (_resource: string, resourceIds: string[]) => await Promise.resolve({ data: null })
+    }
   }
 }

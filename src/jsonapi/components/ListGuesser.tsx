@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { type OpenAPIV3, type ParameterObject } from 'openapi-client-axios'
 
-import HttpClientContext from '../../context/HttpClientContext'
+import { HttpClientContext } from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../../openapi/parser'
 import fieldGuesser from '../openapi/fieldGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
@@ -14,7 +14,7 @@ const ListGuesser = ({
   ...props
 }: ListProps): ReactElement => {
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
-  const httpClient = useContext(HttpClientContext)
+  const { client } = useContext(HttpClientContext)
   const [fields, setFields] = useState<ReactNode[]>()
   const resource = useResourceContext()
 
@@ -22,39 +22,34 @@ const ListGuesser = ({
   const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
-    if (name !== '') {
-      httpClient
-        .then((client) => client.api.getOperation(`list_${name}`))
-        .then((operation) => { return { operation, schema: getEncapsulatedSchema(operation) } })
-        .then(({ operation, schema }) => {
-          const _fields: ReactNode[] = []
+    if (name !== '' && name !== undefined && client !== undefined) {
+      const operation = client.api.getOperation(`list_${name}`)
+      const schema = getEncapsulatedSchema(operation)
+      console.log(name, operation, schema)
+      const _fields: ReactNode[] = []
 
-          const parameters = operation?.parameters as ParameterObject[]
-          const sortParameterSchema = parameters.find((parameter) => parameter.name === 'sort')?.schema as OpenAPIV3.ArraySchemaObject
-          const sortParameterItemsSchema = sortParameterSchema.items as OpenAPIV3.SchemaObject
-          const sortParameterValues = sortParameterItemsSchema.enum?.filter((value) => value.includes('-') === false)
+      const parameters = operation?.parameters as ParameterObject[]
+      const sortParameterSchema = parameters?.find((parameter) => parameter.name === 'sort')?.schema as OpenAPIV3.ArraySchemaObject
+      const sortParameterItemsSchema = sortParameterSchema?.items as OpenAPIV3.SchemaObject
+      const sortParameterValues = sortParameterItemsSchema?.enum?.filter((value) => value.includes('-') === false)
 
-          const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
+      const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
 
-          const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-          _fields.push(fieldGuesser('id', jsonApiResourceId, sortParameterValues?.includes('id')))
+      const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
+      _fields.push(fieldGuesser('id', jsonApiResourceId, sortParameterValues?.includes('id')))
 
-          const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
-          Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
-            const isSortable = sortParameterValues?.includes(name)
-            _fields.push(fieldGuesser(name, schema, isSortable))
-          })
+      const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
+      Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
+        const isSortable = sortParameterValues?.includes(name)
+        _fields.push(fieldGuesser(name, schema, isSortable))
+      })
 
-          // TODO:
-          const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships
+      // TODO:
+      const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships
 
-          return _fields
-        })
-        .then((_fields) => { setFields(_fields) })
-        .catch((_) => { })
-        .finally(() => { })
+      setFields(_fields)
     }
-  }, [name, httpClient])
+  }, [name, client])
 
   const isInvalidSort = (error: JsonApiErrorObject): boolean => {
     if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
@@ -91,7 +86,7 @@ const ListGuesser = ({
 
   return (
     <List
-      filters={<FilterGuesser />}
+      // TODO: filters={<FilterGuesser />}
       queryOptions={{ onError, meta: { include: 'keywords' } }}
 
       {...props}

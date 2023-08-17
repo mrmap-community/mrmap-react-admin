@@ -99,10 +99,8 @@ const GeoJsonInput = (props: TextInputProps) => {
     onChange(geoJsonString)
   }, [geoJsonString])
 
-  console.log('geojson', geoJson, geoJsonString)
-
   return (
-      <div>
+    <div>
       <TextInput
         {...props}
         onClick={() => {
@@ -113,22 +111,22 @@ const GeoJsonInput = (props: TextInputProps) => {
         onChange={onChange}
       />
       <Modal
-            open={isOpen}
-            onClose={() => { setIsOpen(false) }}
-            aria-labelledby="modal-modal-title"
-        >
+        open={isOpen}
+        onClose={() => { setIsOpen(false) }}
+        aria-labelledby="modal-modal-title"
+      >
         <Box sx={{ ...style }}>
-            <Typography id="modal-modal-title" variant="h6" component="h2" >
+          <Typography id="modal-modal-title" variant="h6" component="h2" >
             {props.title ?? props.label} huhu
-            </Typography>
+          </Typography>
 
-            <MapContainer
-              center={ [51.505, -0.09] }
-              zoom={2}
-              scrollWheelZoom={true}
-              style={{ height: '100%', width: '100wh' }}
+          <MapContainer
+            center={[51.505, -0.09]}
+            zoom={2}
+            scrollWheelZoom={true}
+            style={{ height: '100%', width: '100wh' }}
 
-            >
+          >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -140,8 +138,8 @@ const GeoJsonInput = (props: TextInputProps) => {
           </MapContainer>
 
         </Box>
-        </Modal>
-      </div>
+      </Modal>
+    </div>
   )
 }
 
