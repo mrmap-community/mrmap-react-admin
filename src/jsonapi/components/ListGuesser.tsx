@@ -86,7 +86,7 @@ const ListGuesser = ({
 
   return (
     <List
-      // TODO: filters={<FilterGuesser />}
+      filters={<FilterGuesser />}
       queryOptions={{ onError, meta: { include: 'keywords' } }}
 
       {...props}
