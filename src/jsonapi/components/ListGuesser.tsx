@@ -9,23 +9,23 @@ import { getEncapsulatedSchema } from '../../openapi/parser'
 import fieldGuesser from '../openapi/fieldGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import FilterGuesser from './FilterGuesser'
+import useOperationSchema from '../hooks/useOperationSchema'
 
 const ListGuesser = ({
   ...props
 }: ListProps): ReactElement => {
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
-  const { client } = useContext(HttpClientContext)
   const [fields, setFields] = useState<ReactNode[]>()
   const resource = useResourceContext()
+
+  const { schema, operation } = useOperationSchema(`list_${name}`)
 
   const [listParams, setListParams] = useStore(`${resource}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
-    if (name !== '' && name !== undefined && client !== undefined) {
-      const operation = client.api.getOperation(`list_${name}`)
-      const schema = getEncapsulatedSchema(operation)
-
+    if (schema !== undefined && operation !== undefined) {
+      console.log("huhu")
       const _fields: ReactNode[] = []
 
       const parameters = operation?.parameters as ParameterObject[]
@@ -49,7 +49,7 @@ const ListGuesser = ({
 
       setFields(_fields)
     }
-  }, [name, client])
+  }, [schema, operation])
 
   const isInvalidSort = (error: JsonApiErrorObject): boolean => {
     if (error.code === 'invalid' && error.detail.includes('sort parameter')) {

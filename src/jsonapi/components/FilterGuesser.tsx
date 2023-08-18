@@ -49,13 +49,13 @@ const FilterGuesser = ({
     }
   }, [client])
 
-  if (filtersParameters.length === 0) {
+  if (filtersParameters?.length === 0) {
     return null
   }
 
   return (
     <Filter {...props}>
-      {filtersParameters.map((filterParam) => {
+      {filtersParameters?.map((filterParam) => {
         return filterParam.inputComponent
       })}
     </Filter>
