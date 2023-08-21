@@ -6,10 +6,10 @@ import { type OpenAPIV3, type ParameterObject } from 'openapi-client-axios'
 
 import { HttpClientContext } from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../../openapi/parser'
+import useOperationSchema from '../hooks/useOperationSchema'
 import fieldGuesser from '../openapi/fieldGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import FilterGuesser from './FilterGuesser'
-import useOperationSchema from '../hooks/useOperationSchema'
 
 const ListGuesser = ({
   ...props
@@ -25,7 +25,7 @@ const ListGuesser = ({
 
   useEffect(() => {
     if (schema !== undefined && operation !== undefined) {
-      console.log("huhu")
+      console.log('huhu')
       const _fields: ReactNode[] = []
 
       const parameters = operation?.parameters as ParameterObject[]
@@ -87,7 +87,11 @@ const ListGuesser = ({
   return (
     <List
       filters={<FilterGuesser />}
-      queryOptions={{ onError, meta: { include: 'keywords' } }}
+      queryOptions={{
+        onError
+        // TODO: calculate includes on the fly based on the schema
+        // meta: { include: 'keywords' }
+      }}
 
       {...props}
     >

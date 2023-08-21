@@ -1,17 +1,24 @@
-import { type AuthProvider, fetchUtils } from 'ra-core'
+import { type AuthProvider } from 'ra-core'
 
 export interface Options {
   loginUrl?: string
   logoutUrl?: string
+
 }
 
-function tokenAuthProvider (options: Options = {}): AuthProvider {
+export interface LoginParams {
+  username: string
+  password: string
+}
+
+const tokenAuthProvider = (options: Options = {}): AuthProvider => {
   const opts = {
-    loginUrl: '/api-token-auth/',
+    loginUrl: 'https://mrmap.geospatial-interoperability-solutions.eu/api/auth/login',
+    logoutUrl: 'https://mrmap.geospatial-interoperability-solutions.eu/api/auth/logout',
     ...options
   }
   return {
-    login: async ({ username, password }) => {
+    login: async ({ username, password }: LoginParams) => {
       const request = new Request(opts.loginUrl, {
         method: 'POST',
         headers: new Headers({ Authorization: 'Basic ' + btoa(username + ':' + password) })
@@ -27,18 +34,19 @@ function tokenAuthProvider (options: Options = {}): AuthProvider {
 
       const json = await response.json()
       const error = json.non_field_errors
-      throw new Error(error || response.statusText)
+      throw new Error(error ?? response.statusText)
     },
     logout: async () => {
+      // TODO: call logoutUrl with token
       localStorage.removeItem('token')
       await Promise.resolve()
     },
-    checkAuth: async () => { localStorage.getItem('token') ? await Promise.resolve() : await Promise.reject() },
+    checkAuth: async () => { (localStorage.getItem('token') != null) ? await Promise.resolve() : await Promise.reject(new Error('No token found')) },
     checkError: async error => {
       const status = error.status
       if (status === 401 || status === 403) {
         localStorage.removeItem('token')
-        await Promise.reject(); return
+        await Promise.reject(new Error('unauthorized')); return
       }
       await Promise.resolve()
     },
@@ -54,26 +62,6 @@ function tokenAuthProvider (options: Options = {}): AuthProvider {
       // }
     }
   }
-}
-
-export function createOptionsFromToken () {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    return {}
-  }
-  return {
-    user: {
-      authenticated: true,
-      token: 'Token ' + token
-    }
-  }
-}
-
-export async function fetchJsonWithAuthToken (url: string, options: object) {
-  return await fetchUtils.fetchJson(
-    url,
-    Object.assign(createOptionsFromToken(), options)
-  )
 }
 
 export default tokenAuthProvider

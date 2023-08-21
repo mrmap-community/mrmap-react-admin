@@ -22,7 +22,7 @@ export const HttpClientProvider = ({ children }: any): ReactNode => {
     if (client === undefined && isLoading === undefined) {
       setLoading(true)
 
-      const httpClient = new OpenAPIClientAxios({ definition: 'https://mrmap.geospatial-interoperability-solutions.eu/api/schema/' })
+      const httpClient = new OpenAPIClientAxios({ definition: 'https://mrmap.geospatial-interoperability-solutions.eu/api/schema' })
       httpClient.init().then((client) => {
         setClient({ ...client })
         setLoading(false)

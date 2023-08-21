@@ -10,28 +10,36 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
      *
      */
   const { id, ...attributes } = data
-
+  console.log('attributes', attributes)
   const relationships: Record<string, ResourceLinkage> = {}
 
   const resourceSchema = getEncapsulatedSchema(operation)
 
   const jsonApiPrimaryDataProperties = resourceSchema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
   const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-
+  console.log('relationships', jsonApiResourceRelationships)
   for (const [relationName, resourceLinkageSchema] of Object.entries(jsonApiResourceRelationships)) {
+    console.log('relationName', relationName)
     if (relationName in attributes) {
+      console.log('found')
       // need to capsulate data of relationship as well
-      const relationData = attributes[relationName]
       const isList = Object.prototype.hasOwnProperty.call(resourceLinkageSchema.properties.data, 'items')
       const relationSchema = isList ? resourceLinkageSchema?.properties?.data?.items as OpenAPIV3.NonArraySchemaObject : resourceLinkageSchema.properties.data as OpenAPIV3.NonArraySchemaObject
       const relationResourceType = relationSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
 
       if (isList) {
+        console.log('is list')
         const newData: ResourceIdentifierObject[] = []
+        const relationData = attributes[relationName] as Identifier[]
+
         relationData.forEach((id: Identifier) => newData.push({ id, type: relationResourceType?.enum?.[0] }))
         relationships[relationName] = { data: newData }
       } else {
-        relationships[relationName] = { data: { id, type: relationResourceType?.enum?.[0] } }
+        console.log('no list')
+        const relationData = attributes[relationName] as Identifier
+        if (relationData !== undefined) {
+          relationships[relationName] = { data: { id: relationData, type: relationResourceType?.enum?.[0] } }
+        }
       }
       delete attributes.relationName
     }
@@ -43,6 +51,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
     attributes,
     relationships
   }
+  console.log('primaryData', primaryData)
   return primaryData
 }
 

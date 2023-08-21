@@ -19,10 +19,16 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       {
         Accept: JsonApiMimeType,
         'Content-Type': JsonApiMimeType
+
       }
     ),
     total: '/meta/pagination/count',
     ...options
+  }
+  const token = localStorage.getItem('token') ?? ''
+
+  if (token !== '') {
+    opts.headers.setAuthorization(`Token ${token}`)
   }
 
   // TODO: get baseURL from open api client
@@ -44,7 +50,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
 
       // FIXME: only post the edited fields for partial update
 
-      const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{ id: params.id }, capsulateJsonApiPrimaryData(params.data, resource, operation), axiosRequestConf])
+      const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
       return await client.request(conf)
     }).then((response) => {
       const jsonApiDocument = response.data as JsonApiDocument
@@ -137,7 +143,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         const operationId = `create_${resource}`
         const operation = client.api.getOperation(operationId)
 
-        const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, capsulateJsonApiPrimaryData(params.data, resource, operation), axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
         return await client.request(conf)
       }).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument

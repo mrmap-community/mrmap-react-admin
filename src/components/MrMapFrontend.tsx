@@ -6,9 +6,10 @@ import {
 } from 'react-admin'
 
 import { HttpClientContext } from '../context/HttpClientContext'
-import jsonApidataProvider from '../dataProvider'
 import { CreateGuesser, EditGuesser } from '../jsonapi/components/FormGuesser'
 import ListGuesser from '../jsonapi/components/ListGuesser'
+import authProvider from '../providers/authProvider'
+import jsonApidataProvider from '../providers/dataProvider'
 
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
@@ -22,13 +23,14 @@ const MrMapFrontend = (): ReactElement => {
     )
   } else {
     const asyncClient = client.api.getClient()
-    const jsonApiDataProvider = jsonApidataProvider({ entrypoint: 'http://localhost:8001', httpClient: asyncClient })
+    const jsonApiDataProvider = jsonApidataProvider({ entrypoint: 'https://mrmap.geospatial-interoperability-solutions.eu/', httpClient: asyncClient })
 
     return (
       <Admin
         theme={lightTheme}
         darkTheme={darkTheme}
         dataProvider={jsonApiDataProvider}
+        authProvider={authProvider()}
       >
         <Resource name={'WebMapService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
         <Resource name={'Layer'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
