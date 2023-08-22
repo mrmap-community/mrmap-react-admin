@@ -21,7 +21,6 @@ const FilterGuesser = ({
 
   const filtersParameters = useMemo(() => {
     const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
-    // TODO: what about global search parameter?
     return parameters?.filter((parameter) => parameter.name.includes('filter'))
       .filter((filter) => !filter.name.includes(orderMarker))
       .map((filter) => {
