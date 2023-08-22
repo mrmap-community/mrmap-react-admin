@@ -9,6 +9,7 @@ const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
 
   const commonProps = {
+    key: name,
     source: name,
     label: schema?.title ?? name,
     sortable: isSortable

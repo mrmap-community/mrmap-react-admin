@@ -71,7 +71,6 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
 
   return {
     getList: async (resource: string, params: GetListParams) => {
-      console.log(resource, params)
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
       const parameters: ParamsArray = [
