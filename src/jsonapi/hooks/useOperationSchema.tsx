@@ -22,7 +22,6 @@ const useOperationSchema = (operationId: string): OperationSchema => {
         return
       }
       const encapsulatedSchema = getEncapsulatedSchema(_operation)
-
       setOperation(_operation)
       setSchema({ ...encapsulatedSchema })
     }

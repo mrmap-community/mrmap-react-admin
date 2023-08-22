@@ -90,16 +90,17 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       return await httpClient.then(async (client) => {
         const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
         return await client.request(conf)
-      }).then((response) => {
-        const jsonApiDocument = response.data as JsonApiDocument
-        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-        return {
-          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-          )),
-          total: getTotal(jsonApiDocument)
-        }
       })
+        .then((response) => {
+          const jsonApiDocument = response.data as JsonApiDocument
+          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+          return {
+            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+            )),
+            total: getTotal(jsonApiDocument)
+          }
+        })
     },
 
     getOne: async (resource: string, params: GetOneParams) => await httpClient.then(async (client) => {

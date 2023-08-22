@@ -1,40 +1,39 @@
-import { type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react'
+import { type ReactElement, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { Create, type CreateProps, Edit, type EditProps, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
-import { type OpenAPIClient, type OpenAPIV3, type UnknownOperationMethods, type UnknownPathsDictionary } from 'openapi-client-axios'
+import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import { HttpClientContext } from '../../context/HttpClientContext'
-import { getEncapsulatedSchema } from '../../openapi/parser'
+import useOperationSchema from '../hooks/useOperationSchema'
 import inputGuesser from '../openapi/inputGuesser'
 import relationInputGuesser from '../openapi/relationInputGuesser'
 
-const getFieldsForOperation = (openapiClient: OpenAPIClient<UnknownOperationMethods, UnknownPathsDictionary>, operationId: string, record?: RaRecord): ReactNode[] => {
+const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactNode[] => {
   const fields: ReactNode[] = []
+  console.log('called')
+  if (schema !== undefined) {
+    const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
 
-  const operation = openapiClient.api.getOperation(operationId)
-  const schema = getEncapsulatedSchema(operation)
+    const requiredFields = schema?.required ?? []
+    const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
+    if (jsonApiResourceId !== undefined) {
+      // on create operations there is no id
+      fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
+    }
+    const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
 
-  const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
+    Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
+      const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
+      fields.push(inputGuesser(name, schema, isRequired, record))
+    })
 
-  const requiredFields = schema?.required ?? []
-  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-  if (jsonApiResourceId !== undefined) {
-    // on create operations there is no id
-    fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
+    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
+    Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
+      const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
+      fields.push(relationInputGuesser(name, schema, isRequired, record))
+    })
+    console.log('fields', fields)
   }
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
-
-  Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
-    const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
-    fields.push(inputGuesser(name, schema, isRequired, record))
-  })
-
-  const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-  Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
-    const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
-    fields.push(relationInputGuesser(name, schema, isRequired, record))
-  })
-
   return fields
 }
 
@@ -42,17 +41,17 @@ export const EditGuesser = (
   props: EditProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
-  const record = useRecordContext(props)
+  const record = useRecordContext()
 
-  const { client } = useContext(HttpClientContext)
-  const [fields, setFields] = useState<ReactNode[]>()
+  const [operationId, setOperationId] = useState('')
+  const { schema } = useOperationSchema(operationId)
+  console.log('schema', schema)
+  console.log('record', record)
+  const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema, record) : [], [schema, record])
 
   useEffect(() => {
-    if ((fields === undefined || fields.length === 0) && name !== '' && name !== undefined && client !== undefined) {
-      const _getFieldsForOperation = async (): Promise<void> => {
-        setFields(getFieldsForOperation(client, `partial_update_${name}`, record))
-      }
-      _getFieldsForOperation().catch(console.error)
+    if (name !== undefined) {
+      setOperationId(`partial_update_${name}`)
     }
   }, [name])
 
@@ -98,6 +97,7 @@ export const CreateGuesser = (
   return (
     <Create
       {...props}
+      redirect="list" // default is edit... but this is not possible on async created resources
       mutationOptions={{ onError, meta: { type: options?.type } }}
     >
       <SimpleForm>

@@ -8,10 +8,15 @@ import useOperationSchema from '../hooks/useOperationSchema'
 import fieldGuesser from '../openapi/fieldGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import FilterGuesser from './FilterGuesser'
+const isInvalidSort = (error: JsonApiErrorObject): boolean => {
+  if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
+    return true
+  }
+  return false
+}
 
 const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
   const fields: ReactNode[] = []
-
   if (schema !== undefined && operation !== undefined) {
     const parameters = operation?.parameters as ParameterObject[]
     const sortParameterSchema = parameters?.find((parameter) => parameter.name === 'sort')?.schema as OpenAPIV3.ArraySchemaObject
@@ -54,13 +59,6 @@ const ListGuesser = ({
     }
   }, [name])
 
-  const isInvalidSort = (error: JsonApiErrorObject): boolean => {
-    if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
-      return true
-    }
-    return false
-  }
-
   const onError = (error: any): void => {
     /** Custom error handler for jsonApi bad request response
      *
@@ -94,7 +92,7 @@ const ListGuesser = ({
 
   return (
     <List
-      // filters={<FilterGuesser />}
+      filters={<FilterGuesser />}
       queryOptions={{
         onError
         // TODO: calculate includes on the fly based on the schema
