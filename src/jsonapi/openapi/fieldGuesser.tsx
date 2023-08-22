@@ -4,6 +4,7 @@ import { BooleanField, DateField, EmailField, NumberField, TextField, UrlField }
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import GeoJsonInput from '../../components/GeoJsonInput'
+import { ReferenceManyCount } from '../components/ReferenceManyCount'
 
 const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true): ReactNode => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
@@ -28,6 +29,21 @@ const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
       return <EmailField {...commonProps} />
     } else if (schema?.format === 'geojson') {
       return <GeoJsonInput {...commonProps} />
+    }
+  } else if (schema?.type === 'object') {
+    const primaryDataSchema = schema?.properties?.data as OpenAPIV3.SchemaObject
+    if (primaryDataSchema?.type === 'object') {
+      // single related object
+      const typeSchema = primaryDataSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
+      const related = typeSchema?.enum?.[0]
+      // TODO
+      // return <ReferenceOneField {...commonProps} reference={related} target={resource} />
+    } else if (primaryDataSchema?.type === 'array') {
+      // multiple related objects
+      const arraySchema = primaryDataSchema?.items as OpenAPIV3.NonArraySchemaObject
+      const typeSchema = arraySchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
+      const related = typeSchema?.enum?.[0]
+      return <ReferenceManyCount {...commonProps} reference={related} source={name} />
     }
   }
 

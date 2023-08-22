@@ -112,12 +112,25 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
     }),
 
-    getMany: (resource: string, params: GetManyParams) => {
-      // const query = {
-      //     filter: JSON.stringify({ ids: params.ids }),
-      // };
-      // const url = `${apiUrl}/${resource}?${stringify(query)}`;
-      // return httpClient(url, options).then(({ json }) => ({ data: json }));
+    getMany: async (resource: string, params: GetManyParams) => {
+      const parameters: ParamsArray = [
+        { name: 'filter[id.in]', value: params.ids.map(_id => _id.id).join(',') },
+        { name: 'include', value: params.meta?.include }
+      ]
+
+      return await httpClient.then(async (client) => {
+        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
+        return await client.request(conf)
+      })
+        .then((response) => {
+          const jsonApiDocument = response.data as JsonApiDocument
+          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+          return {
+            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+            ))
+          }
+        })
     },
 
     getManyReference: async (resource: string, params: GetManyReferenceParams) => {
@@ -128,15 +141,28 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         'page[size]': perPage,
         sort: `${order === 'ASC' ? '' : '-'}${field}`
       }
-
+      console.log('resource', resource)
+      console.log('params', params)
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
         query[`filter[${filterName}]`] = filterValue
       }
 
       query[`filter[${params.target}]`] = params.id
 
-      // TODO:
-      return Promise
+      return await httpClient.then(async (client) => {
+        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, axiosRequestConf])
+        return await client.request(conf)
+      })
+        .then((response) => {
+          const jsonApiDocument = response.data as JsonApiDocument
+          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+          return {
+            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+            )),
+            total: getTotal(jsonApiDocument)
+          }
+        })
     },
 
     create: async (resource: string, params: CreateParams) =>

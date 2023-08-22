@@ -2,6 +2,7 @@ import { type ReactElement, useContext } from 'react'
 import {
   Admin,
   defaultTheme, Loading,
+  type RaRecord,
   type RaThemeOptions, Resource
 } from 'react-admin'
 
@@ -32,10 +33,10 @@ const MrMapFrontend = (): ReactElement => {
         dataProvider={jsonApiDataProvider}
         authProvider={authProvider()}
       >
-        <Resource name={'WebMapService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
-        <Resource name={'Layer'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
-        <Resource name={'WebFeatureService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
-        <Resource name={'FeatureType'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} />
+        <Resource name={'WebMapService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} recordRepresentation={(record: RaRecord) => record.stringRepresentation} />
+        <Resource name={'Layer'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} recordRepresentation={(record: RaRecord) => record.stringRepresentation} />
+        <Resource name={'WebFeatureService'} list={ListGuesser} create={CreateGuesser} edit={EditGuesser} hasCreate={true} hasEdit={true} hasShow={true} recordRepresentation={(record: RaRecord) => record.stringRepresentation} />
+        <Resource name={'FeatureType'} list={ListGuesser} create={CreateGuesser} hasCreate={true} hasEdit={true} hasShow={true} recordRepresentation={(record: RaRecord) => record.stringRepresentation} />
 
       </Admin>
     )

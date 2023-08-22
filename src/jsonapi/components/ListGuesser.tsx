@@ -15,6 +15,13 @@ const isInvalidSort = (error: JsonApiErrorObject): boolean => {
   return false
 }
 
+interface FieldWrapperProps {
+  children: ReactNode[]
+  label: string
+}
+
+const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
+
 const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
   const fields: ReactNode[] = []
   if (schema !== undefined && operation !== undefined) {
@@ -35,9 +42,33 @@ const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: O
     })
 
     // TODO:
-    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships
+    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
+    Object.entries(jsonApiResourceRelationships ?? {}).forEach(([name, schema]) => {
+      const isSortable = sortParameterValues?.includes(name)
+      fields.push(fieldGuesser(name, schema, isSortable))
+    })
   }
   return fields
+}
+
+const getIncludeOptions = (operation: Operation): string[] => {
+  if (operation !== undefined) {
+    const parameters = operation.parameters as ParameterObject[]
+    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('include'))?.schema as OpenAPIV3.ArraySchemaObject
+    const includeParameterArraySchema = includeParameterSchema.items as OpenAPIV3.SchemaObject
+    return includeParameterArraySchema.enum ?? []
+  }
+  return []
+}
+
+const getSparseFieldOptions = (operation: Operation): string[] => {
+  if (operation !== undefined) {
+    const parameters = operation.parameters as ParameterObject[]
+    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('fields['))?.schema as OpenAPIV3.ArraySchemaObject
+    const includeParameterArraySchema = includeParameterSchema.items as OpenAPIV3.SchemaObject
+    return includeParameterArraySchema.enum ?? []
+  }
+  return []
 }
 
 const ListGuesser = ({
@@ -49,6 +80,9 @@ const ListGuesser = ({
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(schema, operation) : [], [schema, operation])
+
+  const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
+  const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
   const [listParams, setListParams] = useStore(`${resource}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -65,9 +99,10 @@ const ListGuesser = ({
      * possible if:
      *   - attribute is not sortable
      *   - attribute is not filterable
+     *   - wrong sparseField
+     *   - wrong include option
      *
     */
-
     if (error?.status === 400) {
       const jsonApiDocument: JsonApiDocument = error.body
 
@@ -101,11 +136,14 @@ const ListGuesser = ({
 
       {...props}
     >
+
       {/* rowClick='edit' only if the resource provide edit operations */}
       <DatagridConfigurable rowClick="edit">
-        {...fields ?? []}
-        {(hasShow ?? false) && <ShowButton />}
-        {(hasEdit ?? false) && <EditButton />}
+        {...fields ?? <div />}
+        <FieldWrapper label="Actions">
+          {(hasShow ?? false) && <ShowButton />}
+          {(hasEdit ?? false) && <EditButton />}
+        </FieldWrapper>
       </DatagridConfigurable>
 
     </List>
