@@ -28,7 +28,8 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
   const token = localStorage.getItem('token') ?? ''
 
   if (token !== '') {
-    opts.headers.setAuthorization(`Token ${token}`)
+    const tokenValue: string = JSON.parse(token).token ?? ''
+    opts.headers.setAuthorization(`Token ${tokenValue}`)
   }
 
   // TODO: get baseURL from open api client
