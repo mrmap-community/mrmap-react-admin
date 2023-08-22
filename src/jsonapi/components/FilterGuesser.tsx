@@ -41,7 +41,7 @@ const FilterGuesser = ({
 
   return (
     <Filter {...props}>
-      {...filtersParameters}
+      {...filtersParameters ?? []}
     </Filter>
   )
 }
