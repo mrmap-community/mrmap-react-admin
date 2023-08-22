@@ -1,11 +1,9 @@
-import { type ReactElement, type ReactNode, useContext, useEffect, useState } from 'react'
+import { type ReactElement, type ReactNode, useEffect, useState } from 'react'
 import { DatagridConfigurable, EditButton, type HttpError, List, type ListProps, ShowButton, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
 import { type OpenAPIV3, type ParameterObject } from 'openapi-client-axios'
 
-import { HttpClientContext } from '../../context/HttpClientContext'
-import { getEncapsulatedSchema } from '../../openapi/parser'
 import useOperationSchema from '../hooks/useOperationSchema'
 import fieldGuesser from '../openapi/fieldGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
@@ -25,7 +23,6 @@ const ListGuesser = ({
 
   useEffect(() => {
     if (schema !== undefined && operation !== undefined) {
-      console.log('huhu')
       const _fields: ReactNode[] = []
 
       const parameters = operation?.parameters as ParameterObject[]

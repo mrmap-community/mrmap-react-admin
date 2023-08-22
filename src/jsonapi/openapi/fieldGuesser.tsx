@@ -10,22 +10,22 @@ const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
 
   const commonProps = {
     source: name,
-    label: schema.title ?? name,
+    label: schema?.title ?? name,
     sortable: isSortable
   }
-  if (['integer', 'number'].includes(schema.type ?? '')) {
+  if (['integer', 'number'].includes(schema?.type ?? '')) {
     return <NumberField {...commonProps} />
-  } else if (schema.type === 'boolean') {
+  } else if (schema?.type === 'boolean') {
     return <BooleanField {...commonProps} />
-  } else if (schema.type === 'string') {
+  } else if (schema?.type === 'string') {
     // Time specific fields
-    if (['date', 'time', 'duration', 'date-time'].includes(schema.format ?? '')) {
-      return <DateField {...commonProps} showTime={['time', 'date-time'].includes(schema.format ?? '')} />
-    } else if (schema.format === 'uri') {
+    if (['date', 'time', 'duration', 'date-time'].includes(schema?.format ?? '')) {
+      return <DateField {...commonProps} showTime={['time', 'date-time'].includes(schema?.format ?? '')} />
+    } else if (schema?.format === 'uri') {
       return <UrlField {...commonProps} />
-    } else if (schema.format === 'email') {
+    } else if (schema?.format === 'email') {
       return <EmailField {...commonProps} />
-    } else if (schema.format === 'geojson') {
+    } else if (schema?.format === 'geojson') {
       return <GeoJsonInput {...commonProps} />
     }
   }

@@ -11,6 +11,8 @@ export interface LoginParams {
   password: string
 }
 
+const TOKENNAME = 'token'
+
 const tokenAuthProvider = (options: Options = {}): AuthProvider => {
   const opts = {
     loginUrl: 'https://mrmap.geospatial-interoperability-solutions.eu/api/auth/login',
@@ -25,7 +27,9 @@ const tokenAuthProvider = (options: Options = {}): AuthProvider => {
       })
       const response = await fetch(request)
       if (response.ok) {
-        localStorage.setItem('token', (await response.json()).token)
+        const responseJson = await response.json()
+        const token = JSON.stringify(responseJson)
+        localStorage.setItem(TOKENNAME, token)
         return
       }
       if (response.headers.get('content-type') !== 'application/json') {
@@ -38,10 +42,18 @@ const tokenAuthProvider = (options: Options = {}): AuthProvider => {
     },
     logout: async () => {
       // TODO: call logoutUrl with token
-      localStorage.removeItem('token')
+      localStorage.removeItem(TOKENNAME)
       await Promise.resolve()
     },
-    checkAuth: async () => { (localStorage.getItem('token') != null) ? await Promise.resolve() : await Promise.reject(new Error('No token found')) },
+    checkAuth: async () => {
+      const storedAuthToken = localStorage.getItem(TOKENNAME)
+      const authToken = (storedAuthToken != null) ? JSON.parse(storedAuthToken) : undefined
+      const validAuth = (authToken !== undefined) && !(new Date(authToken.tokenExpiry) > new Date())
+
+      validAuth
+        ? await Promise.resolve()
+        : await Promise.reject(new Error('Your Session has expired. Please authenticate again.'))
+    },
     checkError: async error => {
       const status = error.status
       if (status === 401 || status === 403) {
