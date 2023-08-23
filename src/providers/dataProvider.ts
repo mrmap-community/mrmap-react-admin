@@ -5,6 +5,7 @@ import { AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-clie
 
 import { type JsonApiDocument, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
+import { TOKENNAME } from './authProvider'
 
 export interface JsonApiDataProviderOptions extends Options {
   entrypoint: string
@@ -25,11 +26,15 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     total: '/meta/pagination/count',
     ...options
   }
-  const token = localStorage.getItem('token') ?? ''
+  const token = localStorage.getItem(TOKENNAME) ?? ''
 
   if (token !== '') {
-    const tokenValue: string = JSON.parse(token).token ?? ''
-    opts.headers.setAuthorization(`Token ${tokenValue}`)
+    try {
+      const tokenValue: string = JSON.parse(token).token ?? ''
+      opts.headers.setAuthorization(`Token ${tokenValue}`)
+    } catch (error) {
+      localStorage.removeItem(TOKENNAME)
+    }
   }
 
   // TODO: get baseURL from open api client

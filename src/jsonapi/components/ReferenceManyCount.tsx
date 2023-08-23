@@ -30,7 +30,7 @@ export const ReferenceManyCount = (
       variant="body2"
       onClick={e => { e.stopPropagation() }}
     >
-      {record[props.source].length}
+      {record[props.source]?.length}
     </Link>
   )
 }

@@ -11,7 +11,7 @@ export interface LoginParams {
   password: string
 }
 
-const TOKENNAME = 'token'
+export const TOKENNAME = 'token'
 
 const tokenAuthProvider = (options: Options = {}): AuthProvider => {
   const opts = {

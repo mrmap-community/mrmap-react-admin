@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { DatagridConfigurable, EditButton, List, type ListProps, ShowButton, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
@@ -31,19 +31,10 @@ const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: O
     const sortParameterValues = sortParameterItemsSchema?.enum?.filter((value) => value.includes('-') === false)
 
     const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-
-    const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-    fields.push(fieldGuesser('id', jsonApiResourceId, sortParameterValues?.includes('id')))
-
     const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties as OpenAPIV3.NonArraySchemaObject
-    Object.entries(jsonApiResourceAttributes ?? {}).forEach(([name, schema]) => {
-      const isSortable = sortParameterValues?.includes(name)
-      fields.push(fieldGuesser(name, schema, isSortable))
-    })
-
-    // TODO:
     const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-    Object.entries(jsonApiResourceRelationships ?? {}).forEach(([name, schema]) => {
+
+    Object.entries({ id: jsonApiPrimaryDataProperties?.id, ...jsonApiResourceAttributes ?? {}, ...jsonApiResourceRelationships ?? {} }).forEach(([name, schema]) => {
       const isSortable = sortParameterValues?.includes(name)
       fields.push(fieldGuesser(name, schema, isSortable))
     })
@@ -93,7 +84,7 @@ const ListGuesser = ({
     }
   }, [name])
 
-  const onError = (error: any): void => {
+  const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
      *
      * possible if:
@@ -123,6 +114,13 @@ const ListGuesser = ({
     } else if (error.status === 403) {
       // TODO
     }
+  }, [])
+
+  if (fields === undefined || fields?.length === 0) {
+    // if fields are empty the table will be initial rendered only with the default index column.
+    // when fields are filled after that render cyclus, the datagrid will be stuck with this single column
+    // untill a new full render cyclus becomes started for the datagrid. (for example page change)
+    return <div />
   }
 
   return (
@@ -139,7 +137,7 @@ const ListGuesser = ({
 
       {/* rowClick='edit' only if the resource provide edit operations */}
       <DatagridConfigurable rowClick="edit">
-        {...fields ?? <div />}
+        {...fields}
         <FieldWrapper label="Actions">
           {(hasShow ?? false) && <ShowButton />}
           {(hasEdit ?? false) && <EditButton />}
