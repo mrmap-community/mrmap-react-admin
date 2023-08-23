@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { DatagridConfigurable, EditButton, List, type ListProps, ShowButton, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
+import { CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
@@ -61,6 +61,15 @@ const getSparseFieldOptions = (operation: Operation): string[] => {
   }
   return []
 }
+
+const ListActions = (): ReactNode => (
+  <TopToolbar>
+    <SelectColumnsButton />
+    <FilterButton />
+    <CreateButton />
+    <ExportButton />
+  </TopToolbar>
+)
 
 const ListGuesser = ({
   ...props
@@ -125,6 +134,7 @@ const ListGuesser = ({
 
   return (
     <List
+      actions={<ListActions />}
       filters={<FilterGuesser />}
       queryOptions={{
         onError
