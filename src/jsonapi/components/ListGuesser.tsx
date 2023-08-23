@@ -5,15 +5,9 @@ import { useSearchParams } from 'react-router-dom'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
 import useOperationSchema from '../hooks/useOperationSchema'
-import fieldGuesser from '../openapi/fieldGuesser'
+import inputGuesser from '../openapi/inputGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
-import FilterGuesser from './FilterGuesser'
-const isInvalidSort = (error: JsonApiErrorObject): boolean => {
-  if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
-    return true
-  }
-  return false
-}
+import FieldGuesser from './FieldGuesser'
 
 interface FieldWrapperProps {
   children: ReactNode[]
@@ -21,6 +15,13 @@ interface FieldWrapperProps {
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
+
+const isInvalidSort = (error: JsonApiErrorObject): boolean => {
+  if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
+    return true
+  }
+  return false
+}
 
 const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
   const fields: ReactNode[] = []
@@ -36,7 +37,7 @@ const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: O
 
     Object.entries({ id: jsonApiPrimaryDataProperties?.id, ...jsonApiResourceAttributes ?? {}, ...jsonApiResourceRelationships ?? {} }).forEach(([name, schema]) => {
       const isSortable = sortParameterValues?.includes(name)
-      fields.push(fieldGuesser(name, schema, isSortable))
+      fields.push(FieldGuesser(name, schema, isSortable))
     })
   }
   return fields
@@ -62,14 +63,32 @@ const getSparseFieldOptions = (operation: Operation): string[] => {
   return []
 }
 
-const ListActions = (): ReactNode => (
-  <TopToolbar>
-    <SelectColumnsButton />
-    <FilterButton />
-    <CreateButton />
-    <ExportButton />
-  </TopToolbar>
-)
+const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
+  const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
+  return parameters?.filter((parameter) => parameter.name.includes('filter'))
+    .filter((filter) => !filter.name.includes(orderMarker))
+    .map((filter) => {
+      const schema = filter.schema as OpenAPIV3.NonArraySchemaObject
+      return inputGuesser(filter.name.replace('filter[', '').replace(']', '').replace('.', '_filter_lookup_'), schema, filter.required ?? false)
+    }) ?? []
+}
+
+interface ListActionsProps {
+  filters: ReactNode[]
+}
+
+const ListActions = (
+  { filters }: ListActionsProps
+): ReactNode => {
+  return (
+    <TopToolbar>
+      <SelectColumnsButton />
+      <FilterButton filters={filters} />
+      <CreateButton />
+      <ExportButton />
+    </TopToolbar>
+  )
+}
 
 const ListGuesser = ({
   ...props
@@ -80,6 +99,8 @@ const ListGuesser = ({
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(schema, operation) : [], [schema, operation])
+
+  const filters = useMemo(() => { return (operation !== undefined) ? getFilters(operation) : [] }, [operation])
 
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
@@ -125,7 +146,7 @@ const ListGuesser = ({
     }
   }, [])
 
-  if (fields === undefined || fields?.length === 0) {
+  if (operation === undefined || fields === undefined || fields?.length === 0) {
     // if fields are empty the table will be initial rendered only with the default index column.
     // when fields are filled after that render cyclus, the datagrid will be stuck with this single column
     // untill a new full render cyclus becomes started for the datagrid. (for example page change)
@@ -134,8 +155,8 @@ const ListGuesser = ({
 
   return (
     <List
-      actions={<ListActions />}
-      filters={<FilterGuesser />}
+      filters={filters}
+      actions={<ListActions filters={filters} />}
       queryOptions={{
         onError
         // TODO: calculate includes on the fly based on the schema

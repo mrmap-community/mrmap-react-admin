@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactElement, useMemo } from 'react'
 import { AutocompleteArrayInput, AutocompleteInput, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
@@ -28,7 +28,7 @@ const getOptionText = (schema: OpenAPIV3.NonArraySchemaObject): string => {
 
 export const SchemaAutocompleteInput = (
   props: ReferenceInputProps
-): ReactNode => {
+): ReactElement => {
   const { schema } = useOperationSchema(`list_${props.reference}`)
   const optionText = useMemo(() => (schema !== undefined) ? getOptionText(schema) : 'id', [schema])
 
@@ -47,7 +47,7 @@ export const SchemaAutocompleteInput = (
 
 export const SchemaAutocompleteArrayInput = (
   props: ReferenceArrayInputProps
-): ReactNode => {
+): ReactElement => {
   const { schema } = useOperationSchema(`list_${props.reference}`)
   const optionText = useMemo(() => (schema !== undefined) ? getOptionText(schema) : 'id', [schema])
 

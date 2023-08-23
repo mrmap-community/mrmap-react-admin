@@ -10,7 +10,6 @@
     "format": "prettier --write ./src"
   },
   "dependencies": {
-    "@api-platform/admin": "^3.4.3",
     "@types/inflection": "^1.13.0",
     "jsonpointer": "^5.0.1",
     "leaflet": "^1.9.4",

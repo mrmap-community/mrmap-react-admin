@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { type ReactElement, useContext, useEffect, useMemo, useState } from 'react'
 import { Create, type CreateProps, Edit, type EditProps, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
@@ -6,10 +6,10 @@ import { type OpenAPIV3 } from 'openapi-client-axios'
 import { HttpClientContext } from '../../context/HttpClientContext'
 import useOperationSchema from '../hooks/useOperationSchema'
 import inputGuesser from '../openapi/inputGuesser'
-import relationInputGuesser from '../openapi/relationInputGuesser'
+import RelationInputGuesser from './RelationInputGuesser'
 
-const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactNode[] => {
-  const fields: ReactNode[] = []
+const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactElement[] => {
+  const fields: ReactElement[] = []
   console.log('called')
   if (schema !== undefined) {
     const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
@@ -30,7 +30,7 @@ const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: 
     const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
     Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
       const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
-      fields.push(relationInputGuesser(name, schema, isRequired, record))
+      fields.push(RelationInputGuesser(name, schema, isRequired, record))
     })
     console.log('fields', fields)
   }
@@ -78,7 +78,7 @@ export const CreateGuesser = (
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
   const { client } = useContext(HttpClientContext)
-  const [fields, setFields] = useState<ReactNode[]>()
+  const [fields, setFields] = useState<ReactElement[]>()
 
   useEffect(() => {
     if ((fields === undefined || fields.length === 0) && name !== '' && name !== undefined && client !== undefined) {

@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react'
 import { type OpenAPIV3, type Operation } from 'openapi-client-axios'
 
 import { HttpClientContext } from '../../context/HttpClientContext'
-import { getEncapsulatedSchema } from '../../openapi/parser'
+import { getEncapsulatedSchema } from '../openapi/parser'
 
 export interface OperationSchema {
   schema?: OpenAPIV3.NonArraySchemaObject

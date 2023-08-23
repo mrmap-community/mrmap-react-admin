@@ -1,11 +1,11 @@
-import { type ReactNode } from 'react'
+import { type ReactElement } from 'react'
 import { type RaRecord } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
-import { SchemaAutocompleteArrayInput, SchemaAutocompleteInput } from '../components/AutocompleteInput'
+import { SchemaAutocompleteArrayInput, SchemaAutocompleteInput } from './AutocompleteInput'
 
-const relationInputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactNode => {
+const RelationInputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactElement => {
   const relationSchema = schema?.properties?.data as OpenAPIV3.SchemaObject
 
   if (relationSchema.type === 'array') {
@@ -37,4 +37,4 @@ const relationInputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObje
   }
 }
 
-export default relationInputGuesser
+export default RelationInputGuesser

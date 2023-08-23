@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { type ReactElement } from 'react'
 import { Link } from 'react-admin'
 
 import {
@@ -13,7 +13,7 @@ export interface ReferenceManyCountProps {
 
 export const ReferenceManyCount = (
   props: ReferenceManyCountProps
-): ReactNode => {
+): ReactElement => {
   const record = useRecordContext(props)
   const createPath = useCreatePath()
 

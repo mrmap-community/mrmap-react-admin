@@ -1,12 +1,12 @@
-import { type ReactNode } from 'react'
+import { type ReactElement } from 'react'
 import { BooleanField, DateField, EmailField, NumberField, TextField, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import GeoJsonInput from '../../components/GeoJsonInput'
-import { ReferenceManyCount } from '../components/ReferenceManyCount'
+import { ReferenceManyCount } from './ReferenceManyCount'
 
-const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true): ReactNode => {
+const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true): ReactElement => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
 
   const commonProps = {
@@ -51,4 +51,4 @@ const fieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
   return <TextField {...commonProps} />
 }
 
-export default fieldGuesser
+export default FieldGuesser

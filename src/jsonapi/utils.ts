@@ -2,7 +2,7 @@ import type { Identifier, RaRecord } from 'react-admin'
 
 import { type OpenAPIV3, type Operation } from 'openapi-client-axios'
 
-import { getEncapsulatedSchema } from '../openapi/parser'
+import { getEncapsulatedSchema } from './openapi/parser'
 import { type JsonApiDocument, type JsonApiPrimaryData, type ResourceIdentifierObject, type ResourceLinkage } from './types/jsonapi'
 
 export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operation: Operation): JsonApiPrimaryData => {
@@ -54,7 +54,7 @@ export const findIncludedData = (document: JsonApiDocument, resourceIdentifierOb
   const returnVal = founded ?? resourceIdentifierObject as JsonApiPrimaryData
   return returnVal
 }
-// concrete the return value; it should be `ApiPlatformAdminRecord`
+// concrete the return value;
 export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: JsonApiPrimaryData): any => {
   /** helper to transform json:api primary data object to react admin record
      *
