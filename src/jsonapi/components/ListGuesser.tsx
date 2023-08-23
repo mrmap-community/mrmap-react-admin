@@ -194,7 +194,6 @@ const ListGuesser = ({
       actions={<ListActions filters={filters} />}
       queryOptions={{
         onError,
-        // TODO: calculate includes on the fly based on the schema
         meta: { ...jsonApiQuery }
       }}
 
