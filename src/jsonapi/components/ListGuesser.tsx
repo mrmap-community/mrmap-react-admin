@@ -2,6 +2,7 @@ import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, use
 import { CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
+import { snakeCase } from 'lodash'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
 import useOperationSchema from '../hooks/useOperationSchema'
@@ -94,19 +95,53 @@ const ListGuesser = ({
   ...props
 }: ListProps): ReactElement => {
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
-  const resource = useResourceContext()
-
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
+
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(schema, operation) : [], [schema, operation])
-
-  const filters = useMemo(() => { return (operation !== undefined) ? getFilters(operation) : [] }, [operation])
-
+  const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
-  const [listParams, setListParams] = useStore(`${resource}.listParams`)
+  const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
+  const [availableColumns] = useStore(`preferences.${name}.datagrid.availableColumns`, [])
+  const [selectedColumnsIdxs] = useStore(`preferences.${name}.datagrid.columns`, [])
+
+  const sparseFieldsQueryValue = useMemo(
+    () => availableColumns.filter(
+      column => selectedColumnsIdxs.includes(column.index) &&
+        column.source !== undefined && sparseFieldOptions.includes(column.source)
+    ).map(column =>
+      // TODO: django jsonapi has an open issue where no snake to cammel case translation are made
+      // See https://github.com/django-json-api/django-rest-framework-json-api/issues/1053
+      snakeCase(column.source)
+    )
+    , [sparseFieldOptions, availableColumns, selectedColumnsIdxs]
+  )
+
+  const includeQueryValue = useMemo(
+    () => includeOptions.filter(includeOption => sparseFieldsQueryValue.includes(includeOption))
+    , [sparseFieldsQueryValue, includeOptions]
+  )
+
+  const jsonApiQuery = useMemo(
+    () => {
+      const query: any = {}
+
+      if (sparseFieldsQueryValue !== undefined) {
+        query[`fields[${name}]`] = sparseFieldsQueryValue.join(',')
+      }
+      if (includeQueryValue !== undefined) {
+        query.include = includeQueryValue.join(',')
+      }
+
+      return query
+    }
+    , [sparseFieldsQueryValue]
+  )
+
+  console.log(sparseFieldsQueryValue)
 
   useEffect(() => {
     if (name !== undefined) {
@@ -158,9 +193,9 @@ const ListGuesser = ({
       filters={filters}
       actions={<ListActions filters={filters} />}
       queryOptions={{
-        onError
+        onError,
         // TODO: calculate includes on the fly based on the schema
-        // meta: { include: 'keywords' }
+        meta: { ...jsonApiQuery }
       }}
 
       {...props}

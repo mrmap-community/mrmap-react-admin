@@ -78,12 +78,16 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     getList: async (resource: string, params: GetListParams) => {
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
+
       const parameters: ParamsArray = [
         { name: 'page[number]', value: page },
         { name: 'page[size]', value: perPage },
-        { name: 'sort', value: `${order === 'ASC' ? '' : '-'}${field}` },
-        { name: 'include', value: params.meta?.include }
+        { name: 'sort', value: `${order === 'ASC' ? '' : '-'}${field}` }
       ]
+
+      // json:api specific stuff like 'include' or 'fields[Resource]'
+      Object.entries(params.meta ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
         const _filterValue = filterValue as string
 
