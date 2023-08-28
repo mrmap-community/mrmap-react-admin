@@ -11,8 +11,9 @@ import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentatio
 import MouseOverPopover from './MouseOverPopover'
 
 export interface ReferenceManyCountProps {
+  resource: string
+  relatedType: string
   source: string
-  reference: string
 }
 
 export const ReferenceManyCount = (
@@ -26,11 +27,11 @@ export const ReferenceManyCount = (
   // if dataprovider collected the data by json:api include query, we will find more data instead of only id key in the array to present
   const isWellDescribedRefernce = useMemo(() => references !== undefined && (Object.entries(references).find(([name, schema]) => name !== 'id') != null), [references])
 
-  const recordRepresentation = useSchemaRecordRepresentation(`list_${props.reference}`)
+  const recordRepresentation = useSchemaRecordRepresentation(`list_${props.relatedType}`)
   console.log('recordRepresentation', recordRepresentation, references)
   const RefLink = useMemo(() => <Link
     to={{
-      pathname: createPath({ resource: props.reference, type: 'list' })
+      pathname: createPath({ resource: props.resource, id: record.id, type: 'list' }) + `/${props.relatedType}`
       // TODO:
       // search: `filter=${JSON.stringify({
       //       ...(filter || {}),

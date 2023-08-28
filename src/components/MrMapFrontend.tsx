@@ -35,6 +35,7 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'Layer'} />
         <ResourceGuesser name={'WebFeatureService'} />
         <ResourceGuesser name={'FeatureType'} />
+        <ResourceGuesser name={'Keyword'} />
 
       </Admin>
     )

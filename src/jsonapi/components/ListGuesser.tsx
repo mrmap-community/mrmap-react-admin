@@ -1,6 +1,6 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
-import { useSearchParams } from 'react-router-dom'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, type Identifier, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
@@ -18,6 +18,10 @@ interface ListActionsProps {
   filters: ReactNode[]
 }
 
+interface ListGuesserProps extends ListProps {
+  relatedResource: string
+}
+
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
 
 const isInvalidSort = (error: JsonApiErrorObject): boolean => {
@@ -27,7 +31,7 @@ const isInvalidSort = (error: JsonApiErrorObject): boolean => {
   return false
 }
 
-const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
+const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
   const fields: ReactNode[] = []
   if (schema !== undefined && operation !== undefined) {
     const parameters = operation?.parameters as ParameterObject[]
@@ -41,7 +45,7 @@ const getFieldsForSchema = (schema: OpenAPIV3.NonArraySchemaObject, operation: O
 
     Object.entries({ id: jsonApiPrimaryDataProperties?.id, ...jsonApiResourceAttributes ?? {}, ...jsonApiResourceRelationships ?? {} }).forEach(([name, schema]) => {
       const isSortable = sortParameterValues?.includes(name)
-      fields.push(FieldGuesser(name, schema, isSortable))
+      fields.push(FieldGuesser(name, schema, isSortable, currentResource))
     })
   }
   return fields
@@ -51,8 +55,8 @@ const getIncludeOptions = (operation: Operation): string[] => {
   if (operation !== undefined) {
     const parameters = operation.parameters as ParameterObject[]
     const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('include'))?.schema as OpenAPIV3.ArraySchemaObject
-    const includeParameterArraySchema = includeParameterSchema.items as OpenAPIV3.SchemaObject
-    return includeParameterArraySchema.enum ?? []
+    const includeParameterArraySchema = includeParameterSchema?.items as OpenAPIV3.SchemaObject
+    return includeParameterArraySchema?.enum ?? []
   }
   return []
 }
@@ -92,12 +96,13 @@ const ListActions = (
 
 const ListGuesser = ({
   ...props
-}: ListProps): ReactElement => {
+}: ListGuesserProps): ReactElement => {
+  const { id } = useParams()
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
-
-  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(schema, operation) : [], [schema, operation])
+  console.log('operationId', operationId)
+  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
@@ -142,7 +147,11 @@ const ListGuesser = ({
 
   useEffect(() => {
     if (name !== undefined) {
-      setOperationId(`list_${name}`)
+      if (props.relatedResource !== undefined && props.relatedResource !== '') {
+        setOperationId(`list_related_${name}_of_${props.relatedResource}`)
+      } else {
+        setOperationId(`list_${name}`)
+      }
     }
   }, [name])
 
@@ -191,7 +200,17 @@ const ListGuesser = ({
       actions={<ListActions filters={filters} />}
       queryOptions={{
         onError,
-        meta: { ...jsonApiQuery }
+        meta: (props.relatedResource !== '')
+          ? {
+            relatedResource: {
+              resource: props.relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
+          : {
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
 
       {...props}

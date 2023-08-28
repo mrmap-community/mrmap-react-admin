@@ -89,6 +89,8 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
 
   return {
     getList: async (resource: string, params: GetListParams) => {
+      const relatedResource = params.meta?.relatedResource
+
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
 
@@ -99,7 +101,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       ]
 
       // json:api specific stuff like 'include' or 'fields[Resource]'
-      Object.entries(params.meta ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+      Object.entries(params.meta.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
         const _filterValue = filterValue as string
@@ -109,8 +111,11 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         )
       }
 
+      console.log('relatedResource', relatedResource.id)
+
       return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
+        const conf = (relatedResource !== undefined) ? client.api.getAxiosConfigForOperation(`list_related_${resource}_of_${relatedResource.resource}`, [{ ...{ name: 'parent_lookup_webmapservice_metadata', value: relatedResource.id, in: 'path' }, ...parameters }, undefined, axiosRequestConf]) : client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
+        console.log('conf', conf)
         return await client.request(conf)
       })
         .then((response) => {
@@ -158,6 +163,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     },
 
     getManyReference: async (resource: string, params: GetManyReferenceParams) => {
+      console.log('getManyReference', resource, params)
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
       const query: any = {

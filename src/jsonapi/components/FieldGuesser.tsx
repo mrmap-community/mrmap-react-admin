@@ -1,12 +1,12 @@
 import { type ReactElement } from 'react'
-import { BooleanField, DateField, EmailField, NumberField, TextField, UrlField } from 'react-admin'
+import { BooleanField, DateField, EmailField, NumberField, type RaRecord, TextField, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import GeoJsonInput from '../../components/GeoJsonInput'
 import { ReferenceManyCount } from './ReferenceManyCount'
 
-const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true): ReactElement => {
+const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true, currentResource: string): ReactElement => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
 
   const commonProps = {
@@ -43,7 +43,7 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
       const arraySchema = primaryDataSchema?.items as OpenAPIV3.NonArraySchemaObject
       const typeSchema = arraySchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
       const related = typeSchema?.enum?.[0]
-      return <ReferenceManyCount {...commonProps} reference={related} source={name} />
+      return <ReferenceManyCount {...commonProps} resource={currentResource} relatedType={related} source={name} />
     }
   }
 
