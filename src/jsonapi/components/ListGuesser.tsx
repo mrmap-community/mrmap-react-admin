@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceContext, useResourceDefinition, useStore } from 'react-admin'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
 import { useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
@@ -13,6 +13,9 @@ import FieldGuesser from './FieldGuesser'
 interface FieldWrapperProps {
   children: ReactNode[]
   label: string
+}
+interface ListActionsProps {
+  filters: ReactNode[]
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
@@ -74,10 +77,6 @@ const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[]
     }) ?? []
 }
 
-interface ListActionsProps {
-  filters: ReactNode[]
-}
-
 const ListActions = (
   { filters }: ListActionsProps
 ): ReactNode => {
@@ -105,13 +104,13 @@ const ListGuesser = ({
 
   const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [availableColumns] = useStore(`preferences.${name}.datagrid.availableColumns`, [])
-  const [selectedColumnsIdxs] = useStore(`preferences.${name}.datagrid.columns`, [])
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
+  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   const sparseFieldsQueryValue = useMemo(
     () => availableColumns.filter(
-      column => selectedColumnsIdxs.includes(column.index) &&
-        column.source !== undefined && sparseFieldOptions.includes(column.source)
+      column => (selectedColumnsIdxs.includes(column.index) &&
+        column.source !== undefined && sparseFieldOptions.includes(column.source)) || selectedColumnsIdxs.length === 0
     ).map(column =>
       // TODO: django jsonapi has an open issue where no snake to cammel case translation are made
       // See https://github.com/django-json-api/django-rest-framework-json-api/issues/1053

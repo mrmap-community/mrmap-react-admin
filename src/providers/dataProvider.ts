@@ -1,9 +1,9 @@
 import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type UpdateManyParams, type UpdateParams } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
-import { AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
+import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
 
-import { type JsonApiDocument, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
+import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 import { TOKENNAME } from './authProvider'
 
@@ -47,6 +47,19 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       return parseInt(total, 10)
     }
     return total
+  }
+
+  const handleApiError = (error: AxiosError): void => {
+    if (error.response?.status === 403) {
+      const apiErrors = error.response?.data as JsonApiDocument
+      apiErrors?.errors?.forEach(
+        (apiError: JsonApiErrorObject) => {
+          if (apiError.detail === 'Invalid token.') {
+            localStorage.removeItem(TOKENNAME)
+          }
+        }
+      )
+    }
   }
 
   const updateResource = async (resource: string, params: UpdateParams): Promise<{ data: any }> =>
@@ -109,7 +122,9 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
             )),
             total: getTotal(jsonApiDocument)
           }
-        })
+        }).catch((error: AxiosError) => {
+          handleApiError(error)
+        }).finally(() => { return { data: [], total: 0 } })
     },
 
     getOne: async (resource: string, params: GetOneParams) => await httpClient.then(async (client) => {
