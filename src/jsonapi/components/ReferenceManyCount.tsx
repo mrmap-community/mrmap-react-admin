@@ -1,5 +1,5 @@
-import { type ReactElement, useEffect, useMemo, useState } from 'react'
-import { Link, type RaRecord, useResourceDefinition } from 'react-admin'
+import { type ReactElement, useMemo } from 'react'
+import { Link, type RaRecord } from 'react-admin'
 
 import Chip from '@mui/material/Chip'
 import {
@@ -7,7 +7,6 @@ import {
   useRecordContext
 } from 'ra-core'
 
-import useOperationSchema from '../hooks/useOperationSchema'
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
 import MouseOverPopover from './MouseOverPopover'
 
@@ -29,7 +28,7 @@ export const ReferenceManyCount = (
 
   const recordRepresentation = useSchemaRecordRepresentation(props.reference)
 
-  const RefLink = useMemo(() => <div><Link
+  const RefLink = useMemo(() => <Link
     to={{
       pathname: createPath({ resource: props.reference, type: 'list' })
       // TODO:
@@ -42,13 +41,14 @@ export const ReferenceManyCount = (
     onClick={e => { e.stopPropagation() }}
   >
     {references?.length}
-  </Link></div>, [references])
+  </Link>, [references])
 
-  const PopOverContent = useMemo(() => <div>
-    {references?.map((reference: RaRecord) => {
+  const PopOverContent = useMemo(() => {
+    return references?.map((reference: RaRecord) => {
       return (<Chip key={`${record.id}.${reference[recordRepresentation]}`} label={reference[recordRepresentation]} />)
-    })}
-  </div>, [references])
+    })
+  }
+    , [references])
 
   return isWellDescribedRefernce
     ? <MouseOverPopover

@@ -1,5 +1,6 @@
 import { type MouseEvent, type ReactElement, useState } from 'react'
 
+import Box from '@mui/material/Box'
 import Popover from '@mui/material/Popover'
 import Typography from '@mui/material/Typography'
 
@@ -24,7 +25,7 @@ const MouseOverPopover = (props: MouseOverPopoverProps): ReactElement => {
   // TODO: dynamic id?
 
   return (
-    <div>
+    <Box>
       <Typography
         aria-owns={open ? 'mouse-over-popover' : undefined}
         aria-haspopup="true"
@@ -53,7 +54,7 @@ const MouseOverPopover = (props: MouseOverPopoverProps): ReactElement => {
       >
         <Typography sx={{ p: 1 }}>{props.content}</Typography>
       </Popover>
-    </div>
+    </Box>
   )
 }
 
