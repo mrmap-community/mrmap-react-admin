@@ -10,7 +10,6 @@ import RelationInputGuesser from './RelationInputGuesser'
 
 const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactElement[] => {
   const fields: ReactElement[] = []
-  console.log('called')
   if (schema !== undefined) {
     const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
 
@@ -32,7 +31,6 @@ const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: 
       const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
       fields.push(RelationInputGuesser(name, schema, isRequired, record))
     })
-    console.log('fields', fields)
   }
   return fields
 }
@@ -45,8 +43,7 @@ export const EditGuesser = (
 
   const [operationId, setOperationId] = useState('')
   const { schema } = useOperationSchema(operationId)
-  console.log('schema', schema)
-  console.log('record', record)
+
   const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema, record) : [], [schema, record])
 
   useEffect(() => {

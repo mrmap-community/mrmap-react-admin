@@ -1,10 +1,15 @@
-import { type ReactElement } from 'react'
-import { Link } from 'react-admin'
+import { type ReactElement, useEffect, useMemo, useState } from 'react'
+import { Link, type RaRecord, useResourceDefinition } from 'react-admin'
 
+import Chip from '@mui/material/Chip'
 import {
   useCreatePath,
   useRecordContext
 } from 'ra-core'
+
+import useOperationSchema from '../hooks/useOperationSchema'
+import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
+import MouseOverPopover from './MouseOverPopover'
 
 export interface ReferenceManyCountProps {
   source: string
@@ -14,23 +19,41 @@ export interface ReferenceManyCountProps {
 export const ReferenceManyCount = (
   props: ReferenceManyCountProps
 ): ReactElement => {
-  const record = useRecordContext(props)
   const createPath = useCreatePath()
 
-  return (
-    <Link
-      to={{
-        pathname: createPath({ resource: props.reference, type: 'list' })
-        // TODO:
-        // search: `filter=${JSON.stringify({
-        //       ...(filter || {}),
-        //       [target]: record[source]
-        //   })}`
-      }}
-      variant="body2"
-      onClick={e => { e.stopPropagation() }}
-    >
-      {record[props.source]?.length}
-    </Link>
-  )
+  const record = useRecordContext(props)
+
+  const references = useMemo(() => record[props.source] ?? undefined, [record])
+  // if dataprovider collected the data by json:api include query, we will find more data instead of only id key in the array to present
+  const isWellDescribedRefernce = useMemo(() => references !== undefined && (Object.entries(references).find(([name, schema]) => name !== 'id') != null), [references])
+
+  const recordRepresentation = useSchemaRecordRepresentation(props.reference)
+
+  const RefLink = useMemo(() => <div><Link
+    to={{
+      pathname: createPath({ resource: props.reference, type: 'list' })
+      // TODO:
+      // search: `filter=${JSON.stringify({
+      //       ...(filter || {}),
+      //       [target]: record[source]
+      //   })}`
+    }}
+    variant="body2"
+    onClick={e => { e.stopPropagation() }}
+  >
+    {references?.length}
+  </Link></div>, [references])
+
+  const PopOverContent = useMemo(() => <div>
+    {references?.map((reference: RaRecord) => {
+      return (<Chip key={`${record.id}.${reference[recordRepresentation]}`} label={reference[recordRepresentation]} />)
+    })}
+  </div>, [references])
+
+  return isWellDescribedRefernce
+    ? <MouseOverPopover
+      content={PopOverContent}
+    >{RefLink}</MouseOverPopover>
+
+    : RefLink
 }

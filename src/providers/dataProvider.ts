@@ -69,7 +69,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
 
       // FIXME: only post the edited fields for partial update
 
-      const conf = client.api.getAxiosConfigForOperation(`partial_update_${resource}`, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
+      const conf = client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
       return await client.request(conf)
     }).then((response) => {
       const jsonApiDocument = response.data as JsonApiDocument
@@ -165,8 +165,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         'page[size]': perPage,
         sort: `${order === 'ASC' ? '' : '-'}${field}`
       }
-      console.log('resource', resource)
-      console.log('params', params)
+
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
         query[`filter[${filterName}]`] = filterValue
       }

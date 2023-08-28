@@ -140,8 +140,6 @@ const ListGuesser = ({
     , [sparseFieldsQueryValue]
   )
 
-  console.log(sparseFieldsQueryValue)
-
   useEffect(() => {
     if (name !== undefined) {
       setOperationId(`list_${name}`)

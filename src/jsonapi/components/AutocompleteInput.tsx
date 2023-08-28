@@ -1,36 +1,14 @@
-import { type ReactElement, useMemo } from 'react'
+import { type ReactElement } from 'react'
 import { AutocompleteArrayInput, AutocompleteInput, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps } from 'react-admin'
 
-import { type OpenAPIV3 } from 'openapi-client-axios'
-
-import useOperationSchema from '../hooks/useOperationSchema'
+import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
 
 const filterToQuery = (searchText: string): any => ({ search: `${searchText}` })
-
-const getOptionText = (schema: OpenAPIV3.NonArraySchemaObject): string => {
-  let optionText = 'id'
-
-  const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties as OpenAPIV3.NonArraySchemaObject
-  // TODO: change the check to a simpler way
-  if (jsonApiResourceAttributes !== undefined) {
-    if (Object.entries(jsonApiResourceAttributes).find(([key, value]) => key === 'stringRepresentation') != null) {
-      optionText = 'stringRepresentation'
-    } else if (Object.entries(jsonApiResourceAttributes).find(([key, value]) => key === 'title') != null) {
-      optionText = 'title'
-    } else if (Object.entries(jsonApiResourceAttributes).find(([key, value]) => key === 'name') != null) {
-      optionText = 'name'
-    }
-  }
-
-  return optionText
-}
 
 export const SchemaAutocompleteInput = (
   props: ReferenceInputProps
 ): ReactElement => {
-  const { schema } = useOperationSchema(`list_${props.reference}`)
-  const optionText = useMemo(() => (schema !== undefined) ? getOptionText(schema) : 'id', [schema])
+  const optionText = useSchemaRecordRepresentation()
 
   return (
     <ReferenceInput {...props}>
@@ -48,8 +26,7 @@ export const SchemaAutocompleteInput = (
 export const SchemaAutocompleteArrayInput = (
   props: ReferenceArrayInputProps
 ): ReactElement => {
-  const { schema } = useOperationSchema(`list_${props.reference}`)
-  const optionText = useMemo(() => (schema !== undefined) ? getOptionText(schema) : 'id', [schema])
+  const optionText = useSchemaRecordRepresentation()
 
   return (
     <ReferenceArrayInput {...props}>
