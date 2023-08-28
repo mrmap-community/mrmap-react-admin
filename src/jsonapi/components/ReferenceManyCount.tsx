@@ -26,8 +26,8 @@ export const ReferenceManyCount = (
   // if dataprovider collected the data by json:api include query, we will find more data instead of only id key in the array to present
   const isWellDescribedRefernce = useMemo(() => references !== undefined && (Object.entries(references).find(([name, schema]) => name !== 'id') != null), [references])
 
-  const recordRepresentation = useSchemaRecordRepresentation(props.reference)
-
+  const recordRepresentation = useSchemaRecordRepresentation(`list_${props.reference}`)
+  console.log('recordRepresentation', recordRepresentation, references)
   const RefLink = useMemo(() => <Link
     to={{
       pathname: createPath({ resource: props.reference, type: 'list' })
@@ -43,17 +43,11 @@ export const ReferenceManyCount = (
     {references?.length}
   </Link>, [references])
 
-  const PopOverContent = useMemo(() => {
-    return references?.map((reference: RaRecord) => {
-      return (<Chip key={`${record.id}.${reference[recordRepresentation]}`} label={reference[recordRepresentation]} />)
-    })
-  }
-    , [references])
+  const PopOverContent = useMemo(() => references?.map((reference: RaRecord) => (<Chip key={`${record.id}.${reference.id}`} label={reference[recordRepresentation]} />)), [recordRepresentation, references])
 
   return isWellDescribedRefernce
     ? <MouseOverPopover
       content={PopOverContent}
     >{RefLink}</MouseOverPopover>
-
     : RefLink
 }

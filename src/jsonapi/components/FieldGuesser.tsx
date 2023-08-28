@@ -43,7 +43,6 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
       const arraySchema = primaryDataSchema?.items as OpenAPIV3.NonArraySchemaObject
       const typeSchema = arraySchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
       const related = typeSchema?.enum?.[0]
-      console.log('related', related)
       return <ReferenceManyCount {...commonProps} reference={related} source={name} />
     }
   }

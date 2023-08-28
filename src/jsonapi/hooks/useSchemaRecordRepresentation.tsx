@@ -25,11 +25,11 @@ const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObjec
 }
 
 const useSchemaRecordRepresentation = (
-  resource?: string
+  operationId?: string
 ): string => {
-  const { name } = useResourceDefinition({ resource })
-  const { schema } = useOperationSchema(`list_${name}`)
-
+  const { name } = useResourceDefinition()
+  const { schema } = useOperationSchema(operationId ?? `list_${name}`)
+  console.log('schema', schema, 'for', name, operationId)
   const [representation, setRepresentation] = useState<string>('id')
 
   useEffect(() => {
