@@ -89,6 +89,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
 
   return {
     getList: async (resource: string, params: GetListParams) => {
+      let operationId = `list_${resource}`
       const relatedResource = params.meta?.relatedResource
 
       const { page, perPage } = params.pagination
@@ -111,11 +112,13 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         )
       }
 
-      console.log('relatedResource', relatedResource.id)
+      if (relatedResource !== undefined) {
+        parameters.push({ name: `${relatedResource.resource}Id`, value: relatedResource.id, in: 'path' })
+        operationId = `list_related_${resource}_of_${relatedResource.resource}`
+      }
 
       return await httpClient.then(async (client) => {
-        const conf = (relatedResource !== undefined) ? client.api.getAxiosConfigForOperation(`list_related_${resource}_of_${relatedResource.resource}`, [{ ...{ name: 'parent_lookup_webmapservice_metadata', value: relatedResource.id, in: 'path' }, ...parameters }, undefined, axiosRequestConf]) : client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
-        console.log('conf', conf)
+        const conf = client.api.getAxiosConfigForOperation(operationId, [parameters, undefined, axiosRequestConf])
         return await client.request(conf)
       })
         .then((response) => {
@@ -163,7 +166,6 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     },
 
     getManyReference: async (resource: string, params: GetManyReferenceParams) => {
-      console.log('getManyReference', resource, params)
       const { page, perPage } = params.pagination
       const { field, order } = params.sort
       const query: any = {

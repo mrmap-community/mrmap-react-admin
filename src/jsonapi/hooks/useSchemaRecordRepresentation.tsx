@@ -29,7 +29,7 @@ const useSchemaRecordRepresentation = (
 ): string => {
   const { name } = useResourceDefinition()
   const { schema } = useOperationSchema(operationId ?? `list_${name}`)
-  console.log('schema', schema, 'for', name, operationId)
+
   const [representation, setRepresentation] = useState<string>('id')
 
   useEffect(() => {

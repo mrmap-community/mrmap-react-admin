@@ -28,21 +28,15 @@ export const ReferenceManyCount = (
   const isWellDescribedRefernce = useMemo(() => references !== undefined && (Object.entries(references).find(([name, schema]) => name !== 'id') != null), [references])
 
   const recordRepresentation = useSchemaRecordRepresentation(`list_${props.relatedType}`)
-  console.log('recordRepresentation', recordRepresentation, references)
   const RefLink = useMemo(() => <Link
     to={{
-      pathname: createPath({ resource: props.resource, id: record.id, type: 'list' }) + `/${props.relatedType}`
-      // TODO:
-      // search: `filter=${JSON.stringify({
-      //       ...(filter || {}),
-      //       [target]: record[source]
-      //   })}`
+      pathname: createPath({ resource: props.resource, id: record.id, type: 'edit' }) + `/${props.relatedType}`
     }}
     variant="body2"
     onClick={e => { e.stopPropagation() }}
   >
     {references?.length}
-  </Link>, [references])
+  </Link>, [record, references])
 
   const PopOverContent = useMemo(() => references?.map((reference: RaRecord) => (<Chip key={`${record.id}.${reference.id}`} label={reference[recordRepresentation]} />)), [recordRepresentation, references])
 

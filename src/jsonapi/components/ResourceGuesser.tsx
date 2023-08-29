@@ -34,7 +34,6 @@ const ResourceGuesser = ({
   const relatedRoutes = useMemo(() => relatedResources?.map((resource) => <Route key={''} path={`:id/${resource}`} element={<ListGuesser resource={resource} relatedResource={rest.name}> </ListGuesser>}></Route>)
     , [relatedResources])
 
-  console.log('relatedRoutes', relatedRoutes)
   return (
     <Resource list={list} create={create} edit={edit} recordRepresentation={recordRepresentation} {...rest} >
       {relatedRoutes}

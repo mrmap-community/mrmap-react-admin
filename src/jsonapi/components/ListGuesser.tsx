@@ -101,7 +101,7 @@ const ListGuesser = ({
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
-  console.log('operationId', operationId)
+
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
@@ -200,7 +200,7 @@ const ListGuesser = ({
       actions={<ListActions filters={filters} />}
       queryOptions={{
         onError,
-        meta: (props.relatedResource !== '')
+        meta: (props.relatedResource !== undefined && props.relatedResource !== '')
           ? {
             relatedResource: {
               resource: props.relatedResource,
