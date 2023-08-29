@@ -102,7 +102,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       ]
 
       // json:api specific stuff like 'include' or 'fields[Resource]'
-      Object.entries(params.meta.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
         const _filterValue = filterValue as string
@@ -136,7 +136,16 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     },
 
     getOne: async (resource: string, params: GetOneParams) => await httpClient.then(async (client) => {
-      const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
+      const parameters: ParamsArray = [{
+        name: 'id',
+        value: params.id,
+        in: 'path'
+      }]
+      console.log('params', params)
+      // json:api specific stuff like 'include' or 'fields[Resource]'
+      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+
+      const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, axiosRequestConf])
       return await client.request(conf)
     }).then((response) => {
       const jsonApiDocument = response.data as JsonApiDocument
@@ -145,6 +154,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     }),
 
     getMany: async (resource: string, params: GetManyParams) => {
+      // TODO: pk is not always id...
       const parameters: ParamsArray = [
         { name: 'filter[id.in]', value: params.ids.map(_id => _id.id).join(',') },
         { name: 'include', value: params.meta?.include }

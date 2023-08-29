@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, type Identifier, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
@@ -8,6 +8,7 @@ import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-cl
 import useOperationSchema from '../hooks/useOperationSchema'
 import inputGuesser from '../openapi/inputGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
+import { getIncludeOptions, getSparseFieldOptions } from '../utils'
 import FieldGuesser from './FieldGuesser'
 
 interface FieldWrapperProps {
@@ -49,26 +50,6 @@ const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArrayS
     })
   }
   return fields
-}
-
-const getIncludeOptions = (operation: Operation): string[] => {
-  if (operation !== undefined) {
-    const parameters = operation.parameters as ParameterObject[]
-    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('include'))?.schema as OpenAPIV3.ArraySchemaObject
-    const includeParameterArraySchema = includeParameterSchema?.items as OpenAPIV3.SchemaObject
-    return includeParameterArraySchema?.enum ?? []
-  }
-  return []
-}
-
-const getSparseFieldOptions = (operation: Operation): string[] => {
-  if (operation !== undefined) {
-    const parameters = operation.parameters as ParameterObject[]
-    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('fields['))?.schema as OpenAPIV3.ArraySchemaObject
-    const includeParameterArraySchema = includeParameterSchema.items as OpenAPIV3.SchemaObject
-    return includeParameterArraySchema.enum ?? []
-  }
-  return []
 }
 
 const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
@@ -142,7 +123,7 @@ const ListGuesser = ({
 
       return query
     }
-    , [sparseFieldsQueryValue]
+    , [sparseFieldsQueryValue, includeQueryValue]
   )
 
   useEffect(() => {

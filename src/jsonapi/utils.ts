@@ -1,7 +1,10 @@
+import { type ReactElement } from 'react'
 import type { Identifier, RaRecord } from 'react-admin'
 
-import { type OpenAPIV3, type Operation } from 'openapi-client-axios'
+import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
+import RelationInputGuesser from './components/RelationInputGuesser'
+import inputGuesser from './openapi/inputGuesser'
 import { getEncapsulatedSchema } from './openapi/parser'
 import { type JsonApiDocument, type JsonApiPrimaryData, type ResourceIdentifierObject, type ResourceLinkage } from './types/jsonapi'
 
@@ -92,3 +95,52 @@ export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: J
     ...relationships
   }
 }
+
+export const getIncludeOptions = (operation: Operation): string[] => {
+  if (operation !== undefined) {
+    const parameters = operation.parameters as ParameterObject[]
+    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('include'))?.schema as OpenAPIV3.ArraySchemaObject
+    const includeParameterArraySchema = includeParameterSchema?.items as OpenAPIV3.SchemaObject
+    return includeParameterArraySchema?.enum ?? []
+  }
+  return []
+}
+
+export const getSparseFieldOptions = (operation: Operation): string[] => {
+  if (operation !== undefined) {
+    const parameters = operation.parameters as ParameterObject[]
+    const includeParameterSchema = parameters?.find((parameter) => parameter.name.includes('fields['))?.schema as OpenAPIV3.ArraySchemaObject
+    const includeParameterArraySchema = includeParameterSchema.items as OpenAPIV3.SchemaObject
+    return includeParameterArraySchema.enum ?? []
+  }
+  return []
+}
+
+export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactElement[] => {
+  const fields: ReactElement[] = []
+  if (schema !== undefined) {
+    const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
+
+    const requiredFields = schema?.required ?? []
+    const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
+    if (jsonApiResourceId !== undefined) {
+      // on create operations there is no id
+      fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
+    }
+    const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
+
+    Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
+      const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
+      fields.push(inputGuesser(name, schema, isRequired, record))
+    })
+
+    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
+    Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
+      const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
+      fields.push(RelationInputGuesser(name, schema, isRequired, record))
+    })
+  }
+  return fields
+}
+
+export const hasIncludedData = (references: RaRecord): boolean => (Object.entries(references).find(([name, schema]) => name !== 'id') != null)

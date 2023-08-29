@@ -8,6 +8,7 @@ import {
 } from 'ra-core'
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
+import { hasIncludedData } from '../utils'
 import MouseOverPopover from './MouseOverPopover'
 
 export interface ReferenceManyCountProps {
@@ -25,7 +26,7 @@ export const ReferenceManyCount = (
 
   const references = useMemo(() => record[props.source] ?? undefined, [record])
   // if dataprovider collected the data by json:api include query, we will find more data instead of only id key in the array to present
-  const isWellDescribedRefernce = useMemo(() => references !== undefined && (Object.entries(references).find(([name, schema]) => name !== 'id') != null), [references])
+  const isWellDescribedRefernce = useMemo(() => references !== undefined && hasIncludedData(references), [references])
 
   const recordRepresentation = useSchemaRecordRepresentation(`list_${props.relatedType}`)
   const RefLink = useMemo(() => <Link

@@ -1,39 +1,10 @@
-import { type ReactElement, useContext, useEffect, useMemo, useState } from 'react'
-import { Create, type CreateProps, Edit, type EditProps, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
+import { type ReactElement, useMemo } from 'react'
+import { Create, type CreateProps, Edit, type EditProps, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
-import { type OpenAPIV3 } from 'openapi-client-axios'
+import { snakeCase } from 'lodash'
 
-import { HttpClientContext } from '../../context/HttpClientContext'
 import useOperationSchema from '../hooks/useOperationSchema'
-import inputGuesser from '../openapi/inputGuesser'
-import RelationInputGuesser from './RelationInputGuesser'
-
-const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactElement[] => {
-  const fields: ReactElement[] = []
-  if (schema !== undefined) {
-    const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-
-    const requiredFields = schema?.required ?? []
-    const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-    if (jsonApiResourceId !== undefined) {
-      // on create operations there is no id
-      fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
-    }
-    const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
-
-    Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
-      const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
-      fields.push(inputGuesser(name, schema, isRequired, record))
-    })
-
-    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-    Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
-      const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
-      fields.push(RelationInputGuesser(name, schema, isRequired, record))
-    })
-  }
-  return fields
-}
+import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils'
 
 export const EditGuesser = (
   props: EditProps
@@ -41,16 +12,45 @@ export const EditGuesser = (
   const { name, options } = useResourceDefinition()
   const record = useRecordContext()
 
-  const [operationId, setOperationId] = useState('')
-  const { schema } = useOperationSchema(operationId)
+  const editOperationId = useMemo(() => (name !== undefined) ? `partial_update_${name}` : '', [name])
+  const showOperationId = useMemo(() => (name !== undefined) ? `retrieve_${name}` : '', [name])
 
-  const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema, record) : [], [schema, record])
+  const { schema: editSchema, operation: editOperation } = useOperationSchema(editOperationId)
+  const { schema: showSchema, operation: showOperation } = useOperationSchema(showOperationId)
 
-  useEffect(() => {
-    if (name !== undefined) {
-      setOperationId(`partial_update_${name}`)
+  const fields = useMemo(() => (editSchema !== undefined) ? getFieldsForOperation(editSchema, record) : [], [editSchema, record])
+  const includeOptions = useMemo(() => (showOperation !== undefined) ? getIncludeOptions(showOperation) : [], [showOperation])
+  const sparseFieldOptions = useMemo(() => (showOperation !== undefined) ? getSparseFieldOptions(showOperation) : [], [showOperation])
+
+  const sparseFieldsQueryValue = useMemo(
+    () => fields.filter(field => sparseFieldOptions.includes(field.props.source)).map(field =>
+      // TODO: django jsonapi has an open issue where no snake to cammel case translation are made
+      // See https://github.com/django-json-api/django-rest-framework-json-api/issues/1053
+      snakeCase(field.props.source)
+    )
+    , [sparseFieldOptions, fields]
+  )
+
+  const includeQueryValue = useMemo(
+    () => includeOptions.filter(includeOption => sparseFieldsQueryValue.includes(includeOption))
+    , [sparseFieldsQueryValue, includeOptions]
+  )
+
+  const jsonApiQuery = useMemo(
+    () => {
+      const query: any = {}
+
+      if (sparseFieldsQueryValue !== undefined) {
+        query[`fields[${name}]`] = sparseFieldsQueryValue.join(',')
+      }
+      if (includeQueryValue !== undefined) {
+        query.include = includeQueryValue.join(',')
+      }
+
+      return query
     }
-  }, [name])
+    , [sparseFieldsQueryValue, includeQueryValue]
+  )
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
@@ -58,10 +58,15 @@ export const EditGuesser = (
 
   return (
     <Edit
-      {...props}
-      queryOptions={{ refetchOnReconnect: true }}
+      queryOptions={{
+        refetchOnReconnect: true,
+        meta: {
+          jsonApiParams: { ...jsonApiQuery }
+        }
+      }}
       mutationOptions={{ onError, meta: { type: options?.type } }}
       mutationMode='pessimistic'
+      {...props}
     >
       <SimpleForm>
         {fields}
@@ -74,17 +79,10 @@ export const CreateGuesser = (
   props: CreateProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
-  const { client } = useContext(HttpClientContext)
-  const [fields, setFields] = useState<ReactElement[]>()
+  const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
+  const { schema } = useOperationSchema(createOperationId)
 
-  useEffect(() => {
-    if ((fields === undefined || fields.length === 0) && name !== '' && name !== undefined && client !== undefined) {
-      const _getFieldsForOperation = async (): Promise<void> => {
-        setFields(getFieldsForOperation(client, `create_${name}`))
-      }
-      _getFieldsForOperation().catch(console.error)
-    }
-  }, [name])
+  const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema) : [], [schema])
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
@@ -93,9 +91,9 @@ export const CreateGuesser = (
 
   return (
     <Create
-      {...props}
       redirect="list" // default is edit... but this is not possible on async created resources
       mutationOptions={{ onError, meta: { type: options?.type } }}
+      {...props}
     >
       <SimpleForm>
         {fields}
