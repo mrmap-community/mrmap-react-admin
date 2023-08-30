@@ -1,5 +1,5 @@
 import { type ReactElement, useMemo } from 'react'
-import { Create, type CreateProps, Edit, type EditProps, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
+import { Create, type CreateProps, Edit, type EditProps, Loading, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
 import { snakeCase } from 'lodash'
 
@@ -54,6 +54,10 @@ export const EditGuesser = (
 
   const onError = (error) => {
     // TODO: handle jsonapi errors
+  }
+
+  if (Object.keys(jsonApiQuery).length === 0) {
+    return <Loading />
   }
 
   return (

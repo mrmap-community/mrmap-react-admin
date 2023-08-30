@@ -28,17 +28,18 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
 
       if (isList) {
         const newData: ResourceIdentifierObject[] = []
-        const relationData = attributes[relationName] as Identifier[]
+        const relationData: RaRecord[] = attributes[relationName]
 
-        relationData.forEach((id: Identifier) => newData.push({ id, type: relationResourceType?.enum?.[0] }))
+        relationData.forEach((record: RaRecord) => newData.push({ id: record.id, type: relationResourceType?.enum?.[0] }))
         relationships[relationName] = { data: newData }
       } else {
-        const relationData = attributes[relationName] as Identifier
+        const relationData: RaRecord = attributes[relationName]
         if (relationData !== undefined) {
-          relationships[relationName] = { data: { id: relationData, type: relationResourceType?.enum?.[0] } }
+          relationships[relationName] = { data: { id: relationData.id, type: relationResourceType?.enum?.[0] } }
         }
       }
-      delete attributes.relationName
+      // TODO: delete attributes.relationName does not work
+      delete attributes[relationName]
     }
   }
 
@@ -48,6 +49,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
     attributes,
     relationships
   }
+  console.log('primarydata', primaryData)
   return primaryData
 }
 

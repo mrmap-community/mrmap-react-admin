@@ -1,4 +1,4 @@
-import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type UpdateManyParams, type UpdateParams } from 'react-admin'
+import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetListResult, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
 import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
@@ -132,7 +132,8 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
           }
         }).catch((error: AxiosError) => {
           handleApiError(error)
-        }).finally(() => { return { data: [], total: 0 } })
+          return { data: [], total: 0 }
+        })
     },
 
     getOne: async (resource: string, params: GetOneParams) => await httpClient.then(async (client) => {
@@ -141,7 +142,6 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         value: params.id,
         in: 'path'
       }]
-      console.log('params', params)
       // json:api specific stuff like 'include' or 'fields[Resource]'
       Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 

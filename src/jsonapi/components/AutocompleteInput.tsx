@@ -1,9 +1,9 @@
-import { type ReactElement, useMemo, useState } from 'react'
-import { AutocompleteArrayInput, AutocompleteInput, type RaRecord, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps, useGetList, useGetOne, useRecordContext } from 'react-admin'
+import { type ReactElement, useEffect, useMemo, useState } from 'react'
+import { AutocompleteArrayInput, AutocompleteInput, type Identifier, type RaRecord, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps, useGetList, useRecordContext } from 'react-admin'
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
-import { hasIncludedData } from '../utils'
 
+// TODO: check query param by schema ...
 const filterToQuery = (searchText: string): any => ({ search: `${searchText}` })
 
 export const SchemaAutocompleteInput = (
@@ -12,15 +12,14 @@ export const SchemaAutocompleteInput = (
   const optionText = useSchemaRecordRepresentation()
 
   return (
-    <ReferenceInput {...props}>
-      <AutocompleteInput
-        filterToQuery={filterToQuery}
-        optionText={optionText}
-        isRequired={props.isRequired}
-        disabled={props.disabled}
-      />
-    </ReferenceInput>
-
+    <AutocompleteInput
+      name={props.reference}
+      source={props.source}
+      filterToQuery={filterToQuery}
+      optionText={optionText}
+      isRequired={props.isRequired}
+      disabled={props.disabled}
+    />
   )
 }
 
@@ -28,31 +27,44 @@ export const SchemaAutocompleteArrayInput = (
   props: ReferenceArrayInputProps
 ): ReactElement => {
   const [filter, setFilter] = useState({ search: '' })
-  console.log('props', props)
+  const { data: fetchedChoices, isLoading, error } = useGetList(props.reference, { filter })
+
+  const record = useRecordContext(props.record)
 
   const optionText = useSchemaRecordRepresentation()
   // const { data: choices, isLoading: isLoadingChoices } = useGetList(props.reference, { filter })
-  const choices: RaRecord[] = []
-  const record = useRecordContext(props.record)
-  const references = useMemo(() => record[props.source] ?? undefined, [record])
+  const references = useMemo(() => record[props.source] ?? [], [record])
+  const referenceIds = useMemo(() => references?.map((ref: RaRecord) => ref.id) ?? [], [references])
+  const [selectedChoices, setSelectedChoices] = useState(references)
 
-  const isIncluded = useMemo(() => references !== undefined && hasIncludedData(references), [references])
-
-  const choicesWithIncluded = (choices != null)
-    ? [...references, ...choices?.filter((choice: RaRecord) => references.find((ref: RaRecord) => ref.id === choice.id))]
+  // TODO: remove duplicates of fetched choices and current selections
+  const availableChoices = (fetchedChoices != null)
+    ? [...selectedChoices, ...fetchedChoices]
     : references
-  console.log(isIncluded, references, choicesWithIncluded, choices)
+
+  useEffect(() => {
+    if (references !== undefined) {
+      setSelectedChoices(references)
+    }
+  }, [references])
 
   return (
     <AutocompleteArrayInput
-      name={props.reference}
+      name={props.resource}
       source={props.source}
+      parse={(value: RaRecord) => value?.map((v: Identifier) => ({ id: v }))}
+      format={(value: RaRecord) => value?.map((v: RaRecord) => v.id)}
+      isLoading={isLoading}
       // filterToQuery={filterToQuery}
       optionText={optionText}
       isRequired={props.isRequired}
       disabled={props.disabled}
-      choices={choicesWithIncluded}
-      onInputChange={e => { setFilter({ search: e.target.value }) }}
+      choices={availableChoices}
+      setFilter={value => { setFilter({ search: value }) }}
+      onChange={(ids: Identifier[]) => {
+        const newSelections = ids.map((id) => availableChoices.find((choice: RaRecord) => choice.id === id))
+        setSelectedChoices(newSelections)
+      }}
     />
 
   )
