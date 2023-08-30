@@ -29,7 +29,6 @@ const RelationInputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObje
       source={name}
       isRequired={isRequired}
       reference={resource}
-      record={record}
       disabled={schema.readOnly ?? false}
       helperText={schema.description}
     />
