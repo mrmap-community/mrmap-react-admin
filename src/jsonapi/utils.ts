@@ -49,7 +49,6 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
     attributes,
     relationships
   }
-  console.log('primarydata', primaryData)
   return primaryData
 }
 

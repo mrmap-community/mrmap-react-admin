@@ -1,5 +1,5 @@
 import { type ReactElement, useEffect, useMemo, useState } from 'react'
-import { AutocompleteArrayInput, AutocompleteInput, type Identifier, type RaRecord, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps, useGetList, useRecordContext } from 'react-admin'
+import { AutocompleteArrayInput, type AutocompleteArrayInputProps, AutocompleteInput, type Identifier, type RaRecord, ReferenceArrayInput, type ReferenceArrayInputProps, ReferenceInput, type ReferenceInputProps, useGetList, useRecordContext } from 'react-admin'
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
 
@@ -23,24 +23,31 @@ export const SchemaAutocompleteInput = (
   )
 }
 
+export interface SchemaAutocompleteArrayInputProps extends AutocompleteArrayInputProps {
+  reference: string
+  source: string
+}
+
 export const SchemaAutocompleteArrayInput = (
-  props: ReferenceArrayInputProps
+  {
+    reference,
+    source,
+    ...rest
+  }: SchemaAutocompleteArrayInputProps
 ): ReactElement => {
   const [filter, setFilter] = useState({ search: '' })
-  const { data: fetchedChoices, isLoading, error } = useGetList(props.reference, { filter })
+  const { data: fetchedChoices, isLoading, error } = useGetList(reference, { filter })
 
-  const record = useRecordContext(props.record)
+  const record = useRecordContext()
 
   const optionText = useSchemaRecordRepresentation()
-  // const { data: choices, isLoading: isLoadingChoices } = useGetList(props.reference, { filter })
-  const references = useMemo(() => record[props.source] ?? [], [record])
-  const referenceIds = useMemo(() => references?.map((ref: RaRecord) => ref.id) ?? [], [references])
+  const references = useMemo(() => record[source] ?? [], [record])
   const [selectedChoices, setSelectedChoices] = useState(references)
 
   // TODO: remove duplicates of fetched choices and current selections
-  const availableChoices = (fetchedChoices != null)
+  const availableChoices = useMemo(() => (fetchedChoices != null)
     ? [...selectedChoices, ...fetchedChoices]
-    : references
+    : references, [selectedChoices, fetchedChoices])
 
   useEffect(() => {
     if (references !== undefined) {
@@ -50,21 +57,20 @@ export const SchemaAutocompleteArrayInput = (
 
   return (
     <AutocompleteArrayInput
-      name={props.resource}
-      source={props.source}
+      name={source}
+      source={source}
       parse={(value: RaRecord) => value?.map((v: Identifier) => ({ id: v }))}
       format={(value: RaRecord) => value?.map((v: RaRecord) => v.id)}
       isLoading={isLoading}
       // filterToQuery={filterToQuery}
       optionText={optionText}
-      isRequired={props.isRequired}
-      disabled={props.disabled}
       choices={availableChoices}
       setFilter={value => { setFilter({ search: value }) }}
       onChange={(ids: Identifier[]) => {
         const newSelections = ids.map((id) => availableChoices.find((choice: RaRecord) => choice.id === id))
         setSelectedChoices(newSelections)
       }}
+      {...rest}
     />
 
   )
