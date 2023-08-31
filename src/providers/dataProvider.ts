@@ -56,6 +56,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         (apiError: JsonApiErrorObject) => {
           if (apiError.detail === 'Invalid token.') {
             localStorage.removeItem(TOKENNAME)
+            window.location.href = '/login'
           }
         }
       )
@@ -136,22 +137,27 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         })
     },
 
-    getOne: async (resource: string, params: GetOneParams) => await httpClient.then(async (client) => {
-      const parameters: ParamsArray = [{
-        name: 'id',
-        value: params.id,
-        in: 'path'
-      }]
-      // json:api specific stuff like 'include' or 'fields[Resource]'
-      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+    getOne: async (resource: string, params: GetOneParams) => {
+      if (params.id === undefined) {
+        return { data: { id: '' } }
+      }
+      return await httpClient.then(async (client) => {
+        const parameters: ParamsArray = [{
+          name: 'id',
+          value: params.id,
+          in: 'path'
+        }]
+        // json:api specific stuff like 'include' or 'fields[Resource]'
+        Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
-      const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, axiosRequestConf])
-      return await client.request(conf)
-    }).then((response) => {
-      const jsonApiDocument = response.data as JsonApiDocument
-      const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
-      return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
-    }),
+        const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, axiosRequestConf])
+        return await client.request(conf)
+      }).then((response) => {
+        const jsonApiDocument = response.data as JsonApiDocument
+        const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+        return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
+      })
+    },
 
     getMany: async (resource: string, params: GetManyParams) => {
       // TODO: pk is not always id...

@@ -144,4 +144,4 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
   return fields
 }
 
-export const hasIncludedData = (references: RaRecord): boolean => (Object.entries(references).find(([name, schema]) => name !== 'id') != null)
+export const hasIncludedData = (record: RaRecord): boolean => (Object.entries(record).find(([name, schema]) => name !== 'id') != null)

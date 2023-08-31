@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useResourceDefinition } from 'react-admin'
+import { useCallback, useEffect, useState } from 'react'
+import { type OptionTextFunc, useResourceDefinition } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
@@ -26,18 +26,19 @@ const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObjec
 
 const useSchemaRecordRepresentation = (
   operationId?: string
-): string => {
+): OptionTextFunc => {
   const { name } = useResourceDefinition()
   const { schema } = useOperationSchema(operationId ?? `list_${name}`)
 
   const [representation, setRepresentation] = useState<string>('id')
+  const optionTextFunc = useCallback((choice: any) => Object.hasOwn(choice, representation) ? choice[representation] : choice.id, [representation])
 
   useEffect(() => {
     if (schema !== undefined) {
       setRepresentation(getRecordRepresentationFromSchema(schema))
     }
   }, [schema])
-  return representation
+  return optionTextFunc
 }
 
 export default useSchemaRecordRepresentation
