@@ -7,7 +7,6 @@ import GeoJsonInput from '../../components/GeoJsonInput'
 
 const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactElement => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
-
   const commonProps = {
     key: name,
     source: name,

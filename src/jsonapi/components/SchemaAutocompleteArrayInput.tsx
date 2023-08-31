@@ -4,6 +4,7 @@ import { AutocompleteArrayInput, type AutocompleteArrayInputProps, type Identifi
 import useGetRelatedOperationSchemas from '../hooks/useGetRelatedOperationSchemas'
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
 import { hasIncludedData } from '../utils'
+import CreateResourceDialog from './CreateResourceDialog'
 
 export interface SchemaAutocompleteArrayInputProps extends AutocompleteArrayInputProps {
   reference: string
@@ -140,6 +141,7 @@ const SchemaAutocompleteArrayInput = (
         const newSelections = ids.map((id) => availableChoices.find((choice: RaRecord) => choice.id === id)) as RaRecord[]
         setSelectedChoices(newSelections)
       }}
+      create={<CreateResourceDialog resource={reference} />}
       {...rest}
     />
 

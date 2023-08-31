@@ -19,7 +19,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
 
   const jsonApiPrimaryDataProperties = resourceSchema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
   const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-  for (const [relationName, resourceLinkageSchema] of Object.entries(jsonApiResourceRelationships)) {
+  for (const [relationName, resourceLinkageSchema] of Object.entries(jsonApiResourceRelationships ?? {})) {
     if (relationName in attributes) {
       // need to capsulate data of relationship as well
       const isList = Object.prototype.hasOwnProperty.call(resourceLinkageSchema.properties.data, 'items')
@@ -130,13 +130,13 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
     }
     const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
 
-    Object.entries(jsonApiResourceAttributes).forEach(([name, schema]) => {
+    Object.entries(jsonApiResourceAttributes ?? {}).forEach(([name, schema]) => {
       const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
       fields.push(inputGuesser(name, schema, isRequired, record))
     })
 
     const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-    Object.entries(jsonApiResourceRelationships).forEach(([name, schema]) => {
+    Object.entries(jsonApiResourceRelationships ?? {}).forEach(([name, schema]) => {
       const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
       fields.push(RelationInputGuesser(name, schema, isRequired, record))
     })

@@ -1,9 +1,11 @@
-import { type ReactElement, useMemo } from 'react'
-import { Create, type CreateProps, Edit, type EditProps, Loading, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
+import { type ReactElement, useCallback, useMemo, useState } from 'react'
+import { Create, type CreateProps, Edit, type EditProps, Loading, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
 import { snakeCase } from 'lodash'
+import { type AxiosError } from 'openapi-client-axios'
 
 import useOperationSchema from '../hooks/useOperationSchema'
+import { type JsonApiDocument } from '../types/jsonapi'
 import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils'
 
 export const EditGuesser = (
@@ -82,24 +84,40 @@ export const EditGuesser = (
 export const CreateGuesser = (
   props: CreateProps
 ): ReactElement => {
-  const { name, options } = useResourceDefinition()
+  const { name, options } = useResourceDefinition({ resource: props.resource })
   const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
   const { schema } = useOperationSchema(createOperationId)
-
   const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema) : [], [schema])
 
-  const onError = (error) => {
-    // TODO: handle jsonapi errors
-    // handle error messages from backend like json pointer to a specific field for helptexting
-  }
+  const [createdResource, setCreatedResource] = useState<RaRecord>()
+
+  const onSuccess = useCallback((data): void => {
+    // TODO: store response data to a ref object so that parent component can access the created object data
+    console.log('onSuccess', data)
+    setCreatedResource(data)
+  }, [])
 
   return (
     <Create
       redirect="list" // default is edit... but this is not possible on async created resources
-      mutationOptions={{ onError, meta: { type: options?.type } }}
+
+      mutationOptions={
+
+        {
+
+          onSuccess,
+          // onError,
+          meta: { type: options?.type }
+        }
+      }
+
       {...props}
     >
-      <SimpleForm>
+
+      <SimpleForm
+
+      // validate={validateForm}
+      >
         {fields}
       </SimpleForm>
     </Create>

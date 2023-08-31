@@ -1,7 +1,7 @@
-import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetListResult, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
+import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetListResult, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
-import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
+import { Axios, type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
 
 import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
@@ -228,6 +228,31 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
+      }).catch(error => {
+        if (error.response.status === 400) {
+          const jsonApiErrors: JsonApiErrorObject[] = error.response.data.errors
+          const fieldErrors: any = {}
+          const formErrors: string[] = []
+          jsonApiErrors?.forEach(e => {
+            const pointer = e.source?.pointer
+            if (['/data/attributes', '/data/relationships'].some(v => pointer?.includes(v))) {
+              // TODO: field error
+              const fieldName = pointer?.replace('/data/attributes/', '').replace('/data/relationships/', '')
+              if (fieldName !== undefined) {
+                fieldErrors[fieldName] = e.detail
+              } else {
+                formErrors.push(e.detail)
+              }
+            }
+          })
+          console.log('errors', { errors: fieldErrors })
+          // TODO: translate message
+          throw new HttpError(
+            'Bad Request',
+            error.response.status,
+            { errors: fieldErrors }
+          )
+        }
       }),
 
     update: async (resource: string, params: UpdateParams) =>
