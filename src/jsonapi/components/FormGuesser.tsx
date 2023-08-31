@@ -82,6 +82,7 @@ export const EditGuesser = (
 }
 
 export const CreateGuesser = (
+
   props: CreateProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition({ resource: props.resource })
@@ -93,7 +94,6 @@ export const CreateGuesser = (
 
   const onSuccess = useCallback((data): void => {
     // TODO: store response data to a ref object so that parent component can access the created object data
-    console.log('onSuccess', data)
     setCreatedResource(data)
   }, [])
 
