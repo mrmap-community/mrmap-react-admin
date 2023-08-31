@@ -183,15 +183,15 @@ const ListGuesser = ({
         onError,
         meta: (props.relatedResource !== undefined && props.relatedResource !== '')
           ? {
-            relatedResource: {
-              resource: props.relatedResource,
-              id
-            },
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              relatedResource: {
+                resource: props.relatedResource,
+                id
+              },
+              jsonApiParams: { ...jsonApiQuery }
+            }
           : {
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              jsonApiParams: { ...jsonApiQuery }
+            }
       }}
 
       {...props}

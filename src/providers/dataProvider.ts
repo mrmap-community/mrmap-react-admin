@@ -102,6 +102,11 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
         { name: 'sort', value: `${order === 'ASC' ? '' : '-'}${field}` }
       ]
 
+      for (const [filterName, filterValue] of Object.entries(params.filter)) {
+        const value = filterValue as string
+        parameters.push({ name: `filter[${filterName}]`, value })
+      }
+
       // json:api specific stuff like 'include' or 'fields[Resource]'
       Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
@@ -162,7 +167,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
     getMany: async (resource: string, params: GetManyParams) => {
       // TODO: pk is not always id...
       const parameters: ParamsArray = [
-        { name: 'filter[id.in]', value: params.ids.map(_id => _id.id).join(',') },
+        { name: 'filter[id.in]', value: params.ids.join(',') },
         { name: 'include', value: params.meta?.include }
       ]
 

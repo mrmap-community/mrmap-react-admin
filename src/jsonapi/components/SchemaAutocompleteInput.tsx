@@ -1,5 +1,5 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react'
-import { AutocompleteArrayInput, type AutocompleteArrayInputProps, AutocompleteInput, type AutocompleteInputProps, type Identifier, Loading, type RaRecord, useDataProvider, useGetList, useGetOne, useRecordContext } from 'react-admin'
+import { AutocompleteInput, type AutocompleteInputProps, type Identifier, Loading, type RaRecord, useDataProvider, useRecordContext } from 'react-admin'
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation'
 import { hasIncludedData } from '../utils'
@@ -17,7 +17,7 @@ export interface SchemaAutocompleteInputProps extends AutocompleteInputProps {
  * 4. Fetch available choices on input focus
  * 5. Merge available choices and completed initial data
  */
-export const SchemaAutocompleteInput = (
+const SchemaAutocompleteInput = (
   {
     reference,
     source,
@@ -48,7 +48,7 @@ export const SchemaAutocompleteInput = (
         setIsLoadingInitial(true)
         dataProvider.getOne(reference, { id: selectedChoice.id })
           .then(({ data }) => {
-            setSelectedChoice(data)
+            if (data !== undefined) { setSelectedChoice(data) }
             setIsLoadingInitial(false)
           })
           .catch(error => {
@@ -65,8 +65,7 @@ export const SchemaAutocompleteInput = (
       const params = {
         pagination: { page: 1, perPage: 25 },
         sort: { field: 'id', order: 'DESC' },
-        filter,
-        undefined
+        filter
       }
       dataProvider.getList(reference, params)
         .then(({ data }) => {
@@ -117,61 +116,4 @@ export const SchemaAutocompleteInput = (
   )
 }
 
-export interface SchemaAutocompleteArrayInputProps extends AutocompleteArrayInputProps {
-  reference: string
-  source: string
-}
-
-export const SchemaAutocompleteArrayInput = (
-  {
-    reference,
-    source,
-    ...rest
-  }: SchemaAutocompleteArrayInputProps
-): ReactElement => {
-  // TODO: check query param by schema ...
-  const [filter, setFilter] = useState({ search: '' })
-
-  // TODO: handle json:api field errors
-  const { data: fetchedChoices, isLoading, error } = useGetList(reference, { filter })
-
-  const record = useRecordContext()
-
-  const optionText = useSchemaRecordRepresentation()
-  const initial = useMemo<RaRecord[]>(() => record[source] ?? [], [record])
-
-  const [selectedChoices, setSelectedChoices] = useState(initial)
-
-  // TODO: if !isIncluded we need to fetch the data about the inital selection...
-  const isIncluded = useMemo(() => initial !== undefined && initial.find(record => (hasIncludedData(record)) !== undefined), [initial])
-
-  // TODO: remove duplicates of fetched choices and current selections
-  const availableChoices = useMemo(() => (fetchedChoices != null)
-    ? [...selectedChoices, ...fetchedChoices]
-    : initial, [selectedChoices, fetchedChoices])
-
-  useEffect(() => {
-    if (initial !== undefined) {
-      setSelectedChoices(initial)
-    }
-  }, [initial])
-
-  return (
-    <AutocompleteArrayInput
-      name={source}
-      source={source}
-      parse={(value: RaRecord) => value?.map((v: Identifier) => ({ id: v }))}
-      format={(value: RaRecord) => value?.map((v: RaRecord) => v.id)}
-      isLoading={isLoading}
-      optionText={optionText}
-      choices={availableChoices}
-      setFilter={value => { setFilter({ search: value }) }}
-      onChange={(ids: Identifier[]) => {
-        const newSelections = ids.map((id) => availableChoices.find((choice: RaRecord) => choice.id === id))
-        setSelectedChoices(newSelections)
-      }}
-      {...rest}
-    />
-
-  )
-}
+export default SchemaAutocompleteInput
