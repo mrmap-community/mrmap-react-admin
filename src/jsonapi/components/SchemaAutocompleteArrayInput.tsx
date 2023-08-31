@@ -61,6 +61,7 @@ const SchemaAutocompleteArrayInput = (
               setIsLoadingInitial(false)
             })
         } else {
+          console.warn(`your api does not provide a nested route for nested '${reference}' of '${name}'. We use the potential slower list endpoint with specific id filter instead.`)
           // fallback if nested resource list is not propagated by the api
           // TODO: check if the filter is available on this endpoint...
           const params = {
