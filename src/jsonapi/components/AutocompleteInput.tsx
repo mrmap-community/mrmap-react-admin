@@ -24,6 +24,8 @@ export const SchemaAutocompleteInput = (
     ...rest
   }: SchemaAutocompleteInputProps
 ): ReactElement => {
+  const dataProvider = useDataProvider()
+
   // TODO: check query param by schema ...
   const [filter, setFilter] = useState({ search: '' })
 
@@ -33,23 +35,15 @@ export const SchemaAutocompleteInput = (
   const [isLoadingChoices, setIsLoadingChoices] = useState(false)
   const [errorChoices, setErrorChoices] = useState()
 
-  // // TODO: handle json:api field errors
-  // const { data: fetchedChoices } = useGetList(reference, { filter })
-
   const record = useRecordContext()
-
-  const optionText = useSchemaRecordRepresentation()
   const [selectedChoice, setSelectedChoice] = useState<RaRecord | undefined>(record[source])
   const [fetchedChoices, setFetchedChoices] = useState<RaRecord[]>([])
 
-  // TODO: if !isIncluded && initial.id not in fetchedChoices, we need to fetch the data about the inital selection...
-  // const { data: initialData, isLoading: initialIsLoading, error: initialError } = useGetOne(reference, { id: (isIncluded !== undefined && !isIncluded && !fetchedChoices?.map(record => record.id)?.includes(initial?.id)) ? initial?.id : undefined })
-
-  const dataProvider = useDataProvider()
+  const optionText = useSchemaRecordRepresentation()
 
   useEffect(() => {
     if (selectedChoice !== undefined) {
-      if (!hasIncludedData(selectedChoice) && !isLoadingInitial && errorChoices === undefined) {
+      if (!hasIncludedData(selectedChoice) && !isLoadingInitial && errorInitial === undefined) {
         // collect completed relation data from remote api
         setIsLoadingInitial(true)
         dataProvider.getOne(reference, { id: selectedChoice.id })
@@ -118,7 +112,6 @@ export const SchemaAutocompleteInput = (
         setSelectedChoice(availableChoices.find((choice: RaRecord) => choice.id === id))
       }}
       onOpen={() => { fetchChoices() }}
-
       {...rest}
     />
   )
