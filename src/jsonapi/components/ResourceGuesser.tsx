@@ -1,5 +1,6 @@
 import { type ReactElement, useMemo } from 'react'
 import {
+  Loading,
   Resource, type ResourceProps
 } from 'react-admin'
 import { Route } from 'react-router-dom'
@@ -20,7 +21,7 @@ const ResourceGuesser = ({
 }: ResourceProps): ReactElement => {
   const recordRepresentation = useSchemaRecordRepresentation(rest.name)
 
-  const { schemas, operations } = useGetRelatedOperationSchemas(rest.name)
+  const { schemas } = useGetRelatedOperationSchemas(rest.name, undefined)
 
   const relatedResources = useMemo<string[]>(() => {
     return schemas?.map((schema) => {
@@ -33,6 +34,10 @@ const ResourceGuesser = ({
 
   const relatedRoutes = useMemo(() => relatedResources?.map((resource) => <Route key={''} path={`:id/${resource}`} element={<ListGuesser resource={resource} relatedResource={rest.name}> </ListGuesser>}></Route>)
     , [relatedResources])
+
+  if (schemas === undefined) {
+    return <Loading loadingSecondary={`'loading related resources of ${rest.name}`} />
+  }
 
   return (
     <Resource list={list} create={create} edit={edit} recordRepresentation={recordRepresentation} {...rest} >

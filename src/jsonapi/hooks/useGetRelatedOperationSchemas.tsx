@@ -10,15 +10,18 @@ export interface OperationSchema {
   operations?: Operation[]
 }
 
-const useGetRelatedOperationSchemas = (resource: string, related: string): OperationSchema => {
+const useGetRelatedOperationSchemas = (resource: string, related?: string): OperationSchema => {
   const { client } = useContext(HttpClientContext)
   const [schemas, setSchemas] = useState<OpenAPIV3.NonArraySchemaObject[]>()
   const [operations, setOperations] = useState<Operation[]>()
 
   useEffect(() => {
     if (resource !== undefined && resource !== '' && client !== undefined) {
-      const _operations = client.api.getOperations().filter((operation) => ((operation.operationId?.includes(`list_related_${related}`)) ?? false) && operation.operationId?.includes(`_of_${resource}`))
+      const _operations = client.api.getOperations().filter((operation) => ((related === undefined ? true : (operation.operationId?.includes(`list_related_${related}`)) ?? false)) && operation.operationId?.includes(`_of_${resource}`))
       if (_operations === undefined) {
+        // to signal that we are done and there are no related operations
+        setOperations([])
+        setSchemas([])
         return
       }
       const encapsulatedSchemas = _operations.map((operation) => getEncapsulatedSchema(operation))

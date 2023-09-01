@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, Loading, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
@@ -183,15 +183,15 @@ const ListGuesser = ({
         onError,
         meta: (props.relatedResource !== undefined && props.relatedResource !== '')
           ? {
-              relatedResource: {
-                resource: props.relatedResource,
-                id
-              },
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            relatedResource: {
+              resource: props.relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
           : {
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
 
       {...props}

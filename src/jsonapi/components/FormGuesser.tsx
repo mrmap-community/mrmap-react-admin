@@ -1,11 +1,9 @@
-import { type ReactElement, useCallback, useMemo, useState } from 'react'
+import { type ReactElement, useMemo } from 'react'
 import { Create, type CreateProps, Edit, type EditProps, Loading, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
 import { snakeCase } from 'lodash'
-import { type AxiosError } from 'openapi-client-axios'
 
 import useOperationSchema from '../hooks/useOperationSchema'
-import { type JsonApiDocument } from '../types/jsonapi'
 import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils'
 
 export const EditGuesser = (
@@ -58,7 +56,7 @@ export const EditGuesser = (
     // TODO: handle jsonapi errors
   }
 
-  if (Object.keys(jsonApiQuery).length === 0) {
+  if (Object.keys(jsonApiQuery).length === 0 || fields.length === 0) {
     return <Loading />
   }
 
@@ -82,42 +80,28 @@ export const EditGuesser = (
 }
 
 export const CreateGuesser = (
-
-  props: CreateProps
+  {
+    mutationOptions,
+    ...rest
+  }: CreateProps
 ): ReactElement => {
-  const { name, options } = useResourceDefinition({ resource: props.resource })
+  const { name, options } = useResourceDefinition({ resource: rest.resource })
   const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
   const { schema } = useOperationSchema(createOperationId)
   const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema) : [], [schema])
 
-  const [createdResource, setCreatedResource] = useState<RaRecord>()
-
-  const onSuccess = useCallback((data): void => {
-    // TODO: store response data to a ref object so that parent component can access the created object data
-    setCreatedResource(data)
-  }, [])
+  // be clear that json:api type is always part of mutationOptions so that the dataprovider has all information he needs
+  const _mutationOptions = useMemo(() => {
+    return (mutationOptions != null) ? { ...mutationOptions, meta: { type: options?.type } } : { meta: { type: options?.type } }
+  }, [mutationOptions])
 
   return (
     <Create
       redirect="list" // default is edit... but this is not possible on async created resources
-
-      mutationOptions={
-
-        {
-
-          onSuccess,
-          // onError,
-          meta: { type: options?.type }
-        }
-      }
-
-      {...props}
+      mutationOptions={_mutationOptions}
+      {...rest}
     >
-
-      <SimpleForm
-
-      // validate={validateForm}
-      >
+      <SimpleForm>
         {fields}
       </SimpleForm>
     </Create>

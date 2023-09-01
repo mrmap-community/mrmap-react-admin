@@ -119,6 +119,13 @@ const SchemaAutocompleteArrayInput = (
     return choices
   }, [selectedChoices, fetchedChoices])
 
+  const onCreateSuccess = useCallback((data: RaRecord) => {
+    console.log(data)
+    setSelectedChoices([...selectedChoices, data])
+  }, [])
+
+  console.log(selectedChoices)
+
   if (isLoadingInitial) {
     // cause AutocompleteInput component uses reference on the selectedChoice to prevent rerendering,
     // there will be no rerendering on completing the initial related data with the same id
@@ -141,7 +148,7 @@ const SchemaAutocompleteArrayInput = (
         const newSelections = ids.map((id) => availableChoices.find((choice: RaRecord) => choice.id === id)) as RaRecord[]
         setSelectedChoices(newSelections)
       }}
-      create={<CreateResourceDialog resource={reference} />}
+      create={<CreateResourceDialog creatProps={{ resource: reference, mutationOptions: { onSuccess: onCreateSuccess } }} dialogProps={{ open: true }} />}
       {...rest}
     />
 

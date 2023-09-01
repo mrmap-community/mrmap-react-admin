@@ -1,40 +1,31 @@
-import { type ReactElement, useState } from 'react'
-import { useCreateSuggestionContext } from 'react-admin'
+import { type ReactElement } from 'react'
+import { type CreateProps, useCreateSuggestionContext } from 'react-admin'
 
 import {
-  Dialog
+  Dialog,
+  type DialogProps
 } from '@mui/material'
 
 import { CreateGuesser } from './FormGuesser'
 
-interface CreateResourceDialogProps {
-  resource: string
+export interface CreateResourceDialogProps {
+  dialogProps: DialogProps
+  creatProps: CreateProps
 }
 
 const CreateResourceDialog = (
   {
-    resource
+    dialogProps,
+    creatProps
   }: CreateResourceDialogProps
 ): ReactElement => {
-  const responseRef = useRef()
-  const { filter, onCancel, onCreate } = useCreateSuggestionContext()
-  const [value, setValue] = useState(filter ?? '')
-
-  const handleSubmit = event => {
-    event.preventDefault()
-    const newOption = { id: value, name: value }
-    // choices.push(newOption)
-    setValue('')
-    onCreate(newOption)
-  }
+  const { onCancel } = useCreateSuggestionContext()
 
   return (
-    <Dialog open onClose={onCancel}>
+    <Dialog onClose={onCancel} {...dialogProps}>
       <CreateGuesser
-
-        resource={resource}
+        {...creatProps}
       />
-
     </Dialog>
   )
 }
