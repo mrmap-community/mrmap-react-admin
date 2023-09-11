@@ -1,15 +1,20 @@
-import { type ReactElement, useContext, useMemo } from 'react'
+import { type ReactElement, useContext } from 'react'
 import {
   Admin,
   defaultTheme, Loading,
   type RaThemeOptions
 } from 'react-admin'
 
+import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt'
+import LayersIcon from '@mui/icons-material/Layers'
+import LocalOfferIcon from '@mui/icons-material/LocalOffer'
+import MapIcon from '@mui/icons-material/Map'
+
 import { HttpClientContext } from '../context/HttpClientContext'
 import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
 import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
-
+import WmsList from './WmsList'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
@@ -31,11 +36,12 @@ const MrMapFrontend = (): ReactElement => {
         dataProvider={jsonApiDataProvider}
         authProvider={authProvider()}
       >
-        <ResourceGuesser name={'WebMapService'} />
-        <ResourceGuesser name={'Layer'} />
+        <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} />
+        <ResourceGuesser name={'Layer'} icon={LayersIcon} />
         <ResourceGuesser name={'WebFeatureService'} />
-        <ResourceGuesser name={'FeatureType'} />
-        <ResourceGuesser name={'Keyword'} />
+        <ResourceGuesser name={'FeatureType'} icon={AddLocationAltIcon} />
+        <ResourceGuesser name={'Keyword'} icon={LocalOfferIcon} />
+        <ResourceGuesser name={'BackgroundProcess'} />
 
       </Admin>
     )

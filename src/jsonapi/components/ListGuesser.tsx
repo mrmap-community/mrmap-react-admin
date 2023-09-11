@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, Loading, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
@@ -19,8 +19,8 @@ interface ListActionsProps {
   filters: ReactNode[]
 }
 
-interface ListGuesserProps extends ListProps {
-  relatedResource: string
+interface ListGuesserProps extends Partial<ListProps> {
+  relatedResource?: string
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
@@ -76,6 +76,7 @@ const ListActions = (
 }
 
 const ListGuesser = ({
+  relatedResource = '',
   ...props
 }: ListGuesserProps): ReactElement => {
   const { id } = useParams()
@@ -83,15 +84,15 @@ const ListGuesser = ({
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
 
-  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
+  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
-  const [listParams, setListParams] = useStore(`${name}.listParams`)
+  const [listParams, setListParams] = useStore(`${props.resource ?? name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
-  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${props.resource ?? name}.datagrid.availableColumns`, [])
+  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${props.resource ?? name}.datagrid.columns`, [])
 
   const sparseFieldsQueryValue = useMemo(
     () => availableColumns.filter(
@@ -127,14 +128,14 @@ const ListGuesser = ({
   )
 
   useEffect(() => {
-    if (name !== undefined) {
-      if (props.relatedResource !== undefined && props.relatedResource !== '') {
-        setOperationId(`list_related_${name}_of_${props.relatedResource}`)
+    if ((props.resource ?? name) !== undefined) {
+      if (relatedResource !== undefined && relatedResource !== '') {
+        setOperationId(`list_related_${props.resource ?? name}_of_${relatedResource}`)
       } else {
-        setOperationId(`list_${name}`)
+        setOperationId(`list_${props.resource ?? name}`)
       }
     }
-  }, [name])
+  }, [props.resource, name])
 
   const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
@@ -181,10 +182,10 @@ const ListGuesser = ({
       actions={<ListActions filters={filters} />}
       queryOptions={{
         onError,
-        meta: (props.relatedResource !== undefined && props.relatedResource !== '')
+        meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
             relatedResource: {
-              resource: props.relatedResource,
+              resource: relatedResource,
               id
             },
             jsonApiParams: { ...jsonApiQuery }
@@ -193,13 +194,16 @@ const ListGuesser = ({
             jsonApiParams: { ...jsonApiQuery }
           }
       }}
-
       {...props}
+
     >
 
       {/* rowClick='edit' only if the resource provide edit operations */}
-      <DatagridConfigurable rowClick="edit">
+      <DatagridConfigurable
+        rowClick="edit"
+      >
         {...fields}
+
         <FieldWrapper label="Actions">
           {(hasShow ?? false) && <ShowButton />}
           {(hasEdit ?? false) && <EditButton />}
