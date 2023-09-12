@@ -120,11 +120,8 @@ const SchemaAutocompleteArrayInput = (
   }, [selectedChoices, fetchedChoices])
 
   const onCreateSuccess = useCallback((data: RaRecord) => {
-    console.log(data)
     setSelectedChoices([...selectedChoices, data])
   }, [])
-
-  console.log(selectedChoices)
 
   if (isLoadingInitial) {
     // cause AutocompleteInput component uses reference on the selectedChoice to prevent rerendering,

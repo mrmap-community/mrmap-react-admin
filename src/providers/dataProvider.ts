@@ -1,7 +1,7 @@
-import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetListResult, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
+import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
-import { Axios, type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
+import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
 
 import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
@@ -9,59 +9,108 @@ import { TOKENNAME } from './authProvider'
 
 export interface JsonApiDataProviderOptions extends Options {
   entrypoint: string
+  realtimeBus?: string
+
   httpClient: Promise<OpenAPIClient>
   total?: string
   headers?: AxiosHeaders
 }
 
-export default (options: JsonApiDataProviderOptions): DataProvider => {
-  const opts = {
-    headers: new AxiosHeaders(
-      {
-        Accept: JsonApiMimeType,
-        'Content-Type': JsonApiMimeType
+type EventTypes = 'created' | 'updated' | 'deleted'
 
-      }
-    ),
-    total: '/meta/pagination/count',
-    ...options
-  }
+export interface CrudEvent {
+  type: EventTypes
+  payload: { ids: Identifier[] }
+}
+
+export interface Subscription {
+  topic: string
+  callback: (event: CrudEvent) => void
+}
+
+export interface MrMapMessagePayload {
+  payload: JsonApiPrimaryData
+  type: string
+}
+
+let subscriptions: Subscription[] = []
+
+const checkAuth = (headers: AxiosHeaders): string => {
   const token = localStorage.getItem(TOKENNAME) ?? ''
 
   if (token !== '') {
     try {
       const tokenValue: string = JSON.parse(token).token ?? ''
-      opts.headers.setAuthorization(`Token ${tokenValue}`)
+      headers.setAuthorization(`Token ${tokenValue}`)
+      return tokenValue
     } catch (error) {
       localStorage.removeItem(TOKENNAME)
+      // TODO: redirect to login page
     }
+  }
+  return token
+}
+
+const handleApiError = (error: AxiosError): void => {
+  if (error.response?.status === 403) {
+    const apiErrors = error.response?.data as JsonApiDocument
+    apiErrors?.errors?.forEach(
+      (apiError: JsonApiErrorObject) => {
+        if (apiError.detail === 'Invalid token.') {
+          localStorage.removeItem(TOKENNAME)
+          window.location.href = '/login'
+        }
+      }
+    )
+  }
+}
+
+const getTotal = (response: JsonApiDocument, total: string): number => {
+  const _total = jsonpointer.get(response, total)
+  if (typeof _total === 'string') {
+    return parseInt(_total, 10)
+  }
+  return _total
+}
+
+const realtimeOnMessage = (event: MessageEvent): void => {
+  console.log('reseved message', event)
+  const primaryData = JSON.parse(event?.data) as MrMapMessagePayload
+  const [_, type] = primaryData.type?.split('/')
+  const _type = type as EventTypes
+
+  const id = primaryData.payload.id
+
+  const viewers = subscriptions.filter(
+    subscription =>
+      subscription.topic !== primaryData.type)
+
+  viewers.forEach(viewer => { viewer.callback({ type: _type, payload: { ids: [id] } }) })
+}
+
+const dataProvider = ({
+  headers = new AxiosHeaders(
+    {
+      Accept: JsonApiMimeType,
+      'Content-Type': JsonApiMimeType
+
+    }
+  ),
+  total = '/meta/pagination/count',
+  realtimeBus = '',
+  httpClient,
+  ...rest
+}: JsonApiDataProviderOptions): DataProvider => {
+  const token = checkAuth(headers)
+
+  if (realtimeBus !== '') {
+    const socket = new WebSocket(`${realtimeBus}?token=${token}`)
+    socket.onopen = () => { console.log('websocket established') }
+    socket.onmessage = realtimeOnMessage
   }
 
   // TODO: get baseURL from open api client
-  const axiosRequestConf = { baseURL: opts.entrypoint, headers: opts.headers }
-  const httpClient = opts.httpClient
-
-  const getTotal = (response: JsonApiDocument): number => {
-    const total = jsonpointer.get(response, opts.total)
-    if (typeof total === 'string') {
-      return parseInt(total, 10)
-    }
-    return total
-  }
-
-  const handleApiError = (error: AxiosError): void => {
-    if (error.response?.status === 403) {
-      const apiErrors = error.response?.data as JsonApiDocument
-      apiErrors?.errors?.forEach(
-        (apiError: JsonApiErrorObject) => {
-          if (apiError.detail === 'Invalid token.') {
-            localStorage.removeItem(TOKENNAME)
-            window.location.href = '/login'
-          }
-        }
-      )
-    }
-  }
+  const axiosRequestConf = { baseURL: rest.entrypoint, headers }
 
   const updateResource = async (resource: string, params: UpdateParams): Promise<{ data: any }> =>
     await httpClient.then(async (client) => {
@@ -134,7 +183,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
             data: resources.map((data: JsonApiPrimaryData) => Object.assign(
               encapsulateJsonApiPrimaryData(jsonApiDocument, data)
             )),
-            total: getTotal(jsonApiDocument)
+            total: getTotal(jsonApiDocument, total)
           }
         }).catch((error: AxiosError) => {
           handleApiError(error)
@@ -212,7 +261,7 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
             data: resources.map((data: JsonApiPrimaryData) => Object.assign(
               encapsulateJsonApiPrimaryData(jsonApiDocument, data)
             )),
-            total: getTotal(jsonApiDocument)
+            total: getTotal(jsonApiDocument, total)
           }
         })
     },
@@ -245,7 +294,6 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
               }
             }
           })
-          console.log('errors', { errors: fieldErrors })
           // TODO: translate message
           throw new HttpError(
             'Bad Request',
@@ -290,6 +338,37 @@ export default (options: JsonApiDataProviderOptions): DataProvider => {
       }
       )
       return await Promise.resolve({ data: results })
+    },
+
+    // async realtime features
+    subscribe: async (topic: string, callback: (event: CrudEvent) => void) => {
+      subscriptions.push({ topic, callback })
+      return await Promise.resolve({ data: null })
+    },
+    unsubscribe: async (topic: string, callback: (event: CrudEvent) => void) => {
+      subscriptions = subscriptions.filter(
+        subscription =>
+          subscription.topic !== topic ||
+          subscription.callback !== callback
+      )
+      return await Promise.resolve({ data: null })
+    },
+    publish: async (topic: string, event: CrudEvent) => {
+      if (topic === undefined || topic === '') {
+        return await Promise.reject(new Error('missing topic'))
+      }
+      if (event.type === undefined) {
+        return await Promise.reject(new Error('missing event type'))
+      }
+      subscriptions.forEach(
+        subscription => {
+          topic === subscription.topic &&
+            subscription.callback(event)
+        }
+      )
+      return await Promise.resolve({ data: null })
     }
   }
 }
+
+export default dataProvider
