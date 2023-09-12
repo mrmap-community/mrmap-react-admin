@@ -194,23 +194,30 @@ const ListGuesser = ({
             jsonApiParams: { ...jsonApiQuery }
           }
       }}
+      sx={{
+        maxWidth: '100%'
+      }}
       {...props}
 
     >
 
       {/* rowClick='edit' only if the resource provide edit operations */}
-      <DatagridConfigurable
+      < DatagridConfigurable
         rowClick="edit"
+        sx={{
+          maxWidth: '200vh', width: '100%', overflowX: 'scroll', whiteSpace: 'nowrap'
+        }}
+
       >
         {...fields}
 
-        <FieldWrapper label="Actions">
+        < FieldWrapper label="Actions">
           {(hasShow ?? false) && <ShowButton />}
           {(hasEdit ?? false) && <EditButton />}
-        </FieldWrapper>
-      </DatagridConfigurable>
+        </FieldWrapper >
+      </DatagridConfigurable >
 
-    </List>
+    </List >
   )
 }
 

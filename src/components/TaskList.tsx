@@ -57,9 +57,12 @@ const TaskList = (): ReactNode => {
   }, [dataProvider])
 
   return (
+
     <List
       resource='BackgroundProcess'
-      pagination={undefined}
+      pagination={false}
+      actions={false}
+      sx={{ ml: '2em', mt: '2em' }}
     >
       <SimpleList
         leftIcon={getLeftIcon}
