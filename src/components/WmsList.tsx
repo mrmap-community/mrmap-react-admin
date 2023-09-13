@@ -6,6 +6,7 @@ const WmsList = (): ReactNode => {
 
     <ListGuesser
       resource='WebMapService'
+
     // aside={<TaskList />}
     />
 

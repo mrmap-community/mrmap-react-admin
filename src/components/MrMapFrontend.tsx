@@ -14,6 +14,7 @@ import { HttpClientContext } from '../context/HttpClientContext'
 import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
 import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
+import MyLayout from './Layout'
 import WmsList from './WmsList'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
@@ -39,6 +40,7 @@ const MrMapFrontend = (): ReactElement => {
         darkTheme={darkTheme}
         dataProvider={jsonApiDataProvider}
         authProvider={authProvider()}
+        layout={MyLayout}
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} />
         <ResourceGuesser name={'Layer'} icon={LayersIcon} />

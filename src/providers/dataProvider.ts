@@ -18,19 +18,33 @@ export interface JsonApiDataProviderOptions extends Options {
 
 type EventTypes = 'created' | 'updated' | 'deleted'
 
+export interface MrMapMessage {
+  topic: string
+  event: {
+    type: EventTypes
+    payload: {
+      ids: Identifier[]
+      records?: JsonApiPrimaryData[]
+    }
+  }
+}
+
 export interface CrudEvent {
   type: EventTypes
-  payload: { ids: Identifier[] }
+  payload: {
+    ids: Identifier[] // basic event type https://marmelab.com/react-admin/RealtimeDataProvider.html#crud-events
+    records?: RaRecord[] // custom extension to provide the records which are passed by the real time bus
+  }
+}
+
+export interface CrudMessage {
+  topic: string
+  event: CrudEvent
 }
 
 export interface Subscription {
   topic: string
   callback: (event: CrudEvent) => void
-}
-
-export interface MrMapMessagePayload {
-  payload: JsonApiPrimaryData
-  type: string
 }
 
 let subscriptions: Subscription[] = []
@@ -74,18 +88,21 @@ const getTotal = (response: JsonApiDocument, total: string): number => {
 }
 
 const realtimeOnMessage = (event: MessageEvent): void => {
-  console.log('reseved message', event)
-  const primaryData = JSON.parse(event?.data) as MrMapMessagePayload
-  const [_, type] = primaryData.type?.split('/')
-  const _type = type as EventTypes
+  const data = JSON.parse(event?.data) as MrMapMessage
+  console.log('reseved message', data)
 
-  const id = primaryData.payload.id
+  const raEvent = { ...data.event }
+  raEvent.payload.records = data.event.payload.records?.map(jsonApiPrimaryData => encapsulateJsonApiPrimaryData(undefined, jsonApiPrimaryData))
 
-  const viewers = subscriptions.filter(
+  console.log('subs: ', subscriptions, subscriptions.filter(
     subscription =>
-      subscription.topic !== primaryData.type)
-
-  viewers.forEach(viewer => { viewer.callback({ type: _type, payload: { ids: [id] } }) })
+      subscription.topic === data.topic))
+  // fire callback functions
+  subscriptions.filter(
+    subscription =>
+      subscription.topic === data.topic)
+    .forEach(
+      observer => { observer.callback(raEvent) })
 }
 
 const dataProvider = ({
@@ -103,9 +120,8 @@ const dataProvider = ({
 }: JsonApiDataProviderOptions): DataProvider => {
   const token = checkAuth(headers)
 
-  if (realtimeBus !== '') {
+  if (realtimeBus !== '' && token !== '') {
     const socket = new WebSocket(`${realtimeBus}?token=${token}`)
-    socket.onopen = () => { console.log('websocket established') }
     socket.onmessage = realtimeOnMessage
   }
 

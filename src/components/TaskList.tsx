@@ -7,7 +7,7 @@ import Box from '@mui/material/Box'
 import LinearProgress, { type LinearProgressProps } from '@mui/material/LinearProgress'
 import Typography from '@mui/material/Typography'
 
-import { type CrudEvent } from '../providers/dataProvider'
+import { type CrudMessage } from '../providers/dataProvider'
 
 const LinearProgressWithLabel = (props: LinearProgressProps & { value: number }): ReactNode => {
   return (
@@ -47,7 +47,7 @@ const TaskList = (): ReactNode => {
   const dataProvider = useDataProvider()
 
   useEffect(() => {
-    const callback = (event: CrudEvent): void => {
+    const callback = (event: CrudMessage): void => {
       console.log('callback fired', event)
     }
     // subscribe to the 'messages' topic on mount

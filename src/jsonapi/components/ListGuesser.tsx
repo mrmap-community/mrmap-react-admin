@@ -184,15 +184,15 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-            relatedResource: {
-              resource: relatedResource,
-              id
-            },
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              relatedResource: {
+                resource: relatedResource,
+                id
+              },
+              jsonApiParams: { ...jsonApiQuery }
+            }
           : {
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              jsonApiParams: { ...jsonApiQuery }
+            }
       }}
       sx={{
         maxWidth: '100%'
@@ -205,7 +205,7 @@ const ListGuesser = ({
       < DatagridConfigurable
         rowClick="edit"
         sx={{
-          maxWidth: '200vh', width: '100%', overflowX: 'scroll', whiteSpace: 'nowrap'
+          maxWidth: '80vw', width: '100%', overflowX: 'scroll', whiteSpace: 'nowrap'
         }}
 
       >

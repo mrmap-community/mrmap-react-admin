@@ -52,14 +52,14 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
   return primaryData
 }
 
-export const findIncludedData = (document: JsonApiDocument, resourceIdentifierObject: ResourceIdentifierObject): JsonApiPrimaryData => {
+export const findIncludedData = (resourceIdentifierObject: ResourceIdentifierObject, document?: JsonApiDocument): JsonApiPrimaryData => {
   /** Searches for included object and returns it insted of the ResourceIdentifierObject */
-  const founded = document.included?.find((data: JsonApiPrimaryData) => data.id === resourceIdentifierObject.id && data.type === resourceIdentifierObject.type)
+  const founded = document?.included?.find((data: JsonApiPrimaryData) => data.id === resourceIdentifierObject.id && data.type === resourceIdentifierObject.type)
   const returnVal = founded ?? resourceIdentifierObject as JsonApiPrimaryData
   return returnVal
 }
 // concrete the return value;
-export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: JsonApiPrimaryData): any => {
+export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument | undefined, data: JsonApiPrimaryData): any => {
   /** helper to transform json:api primary data object to react admin record
      *
      */
@@ -74,7 +74,7 @@ export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: J
           relatedObjects.push(
             encapsulateJsonApiPrimaryData(
               document,
-              findIncludedData(document, resourceIdentifierObject)
+              findIncludedData(resourceIdentifierObject, document)
             )
           )
         })
@@ -83,7 +83,7 @@ export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument, data: J
         relationships[`${relationName}`] = (resourceLinkage.data != null)
           ? encapsulateJsonApiPrimaryData(
             document,
-            findIncludedData(document, resourceLinkage.data)
+            findIncludedData(resourceLinkage.data, document)
           )
           : undefined
       }
