@@ -1,21 +1,19 @@
 import { type ReactNode } from 'react'
-import { Layout, type LayoutProps } from 'react-admin'
+import { type Identifier, Layout, type LayoutProps } from 'react-admin'
 
-import IconClose from '@mui/icons-material/Close'
-import IconButton from '@mui/material/IconButton'
 import { SnackbarProvider } from 'notistack'
-import { type SnackbarKey, useSnackbar } from 'notistack'
 
 import SnackbarObserver from '../jsonapi/components/SnackbarObserver'
+import TaskShortInfoLive from './TaskShortInfoLive'
 
-const SnackbarCloseButton = (snackbarKey: SnackbarKey): ReactNode => {
-  const { closeSnackbar } = useSnackbar()
-
-  return (
-    <IconButton onClick={() => { closeSnackbar(snackbarKey) }}>
-      <IconClose />
-    </IconButton>
-  )
+declare module 'notistack' {
+  interface VariantOverrides {
+    // adds `taskProgress` variant and specifies the
+    // "extra" props it takes in options of `enqueueSnackbar`
+    taskProgress: {
+      taskId: Identifier
+    }
+  }
 }
 
 // Dirty hack to append SnackbarObserver
@@ -28,8 +26,12 @@ const MyLayout = (
   return (
     <SnackbarProvider
       maxSnack={10}
-      action={SnackbarCloseButton}
-
+      // action={SnackbarCloseButton}
+      Components={
+        {
+          taskProgress: TaskShortInfoLive
+        }
+      }
     >
 
       <Layout {...rest} >

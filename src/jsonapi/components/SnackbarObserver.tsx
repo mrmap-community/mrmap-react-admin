@@ -3,7 +3,6 @@ import { useDataProvider } from 'react-admin'
 
 import { useSnackbar } from 'notistack'
 
-import TaskShortInfoLive from '../../components/TaskShortInfoLive'
 import { type CrudEvent } from '../../providers/dataProvider'
 
 const SnackbarObserver = (): ReactNode => {
@@ -13,7 +12,11 @@ const SnackbarObserver = (): ReactNode => {
   const handleBusEvent = useCallback((event: CrudEvent) => {
     console.log('SnackbarObserver callback fired', event)
     event.payload.ids.forEach(id => {
-      enqueueSnackbar(<TaskShortInfoLive id={id} />, { persist: true })
+      enqueueSnackbar('', {
+        variant: 'taskProgress',
+        persist: true,
+        taskId: id
+      })
     })
   }, [])
 
