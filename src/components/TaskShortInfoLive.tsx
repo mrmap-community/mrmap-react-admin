@@ -1,30 +1,14 @@
 import React, { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { type Identifier, type RaRecord, useDataProvider } from 'react-admin'
 
-import IconClose from '@mui/icons-material/Close'
 import Alert, { type AlertColor } from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
 import Box from '@mui/material/Box'
-import IconButton from '@mui/material/IconButton'
 import LinearProgress, { type LinearProgressProps } from '@mui/material/LinearProgress'
 import Typography from '@mui/material/Typography'
-import { type CustomContentProps, SnackbarContent, type SnackbarKey, useSnackbar } from 'notistack'
+import { type CustomContentProps, SnackbarContent, useSnackbar } from 'notistack'
 
 import { type CrudEvent } from '../providers/dataProvider'
-
-export interface CloseButtonProps {
-  snackbarKey: SnackbarKey
-}
-
-const CloseButton = ({ snackbarKey }: CloseButtonProps): ReactNode => {
-  const { closeSnackbar } = useSnackbar()
-
-  return (
-    <IconButton onClick={() => { closeSnackbar(snackbarKey) }}>
-      <IconClose />
-    </IconButton>
-  )
-}
 
 const LinearProgressWithLabel = (props: LinearProgressProps & { value: number }): ReactNode => {
   return (
