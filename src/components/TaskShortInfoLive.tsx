@@ -45,7 +45,7 @@ const getColor = (status: string): AlertColor => {
   switch (status) {
     case 'successed':
       return 'success'
-    case 'error':
+    case 'failed':
       return 'error'
     default:
       return 'info'
