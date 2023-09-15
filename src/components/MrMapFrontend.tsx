@@ -48,6 +48,7 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'FeatureType'} icon={AddLocationAltIcon} />
         <ResourceGuesser name={'Keyword'} icon={LocalOfferIcon} />
         <ResourceGuesser name={'BackgroundProcess'} />
+        <ResourceGuesser name={'DatasetMetadata'} />
 
       </Admin>
     )

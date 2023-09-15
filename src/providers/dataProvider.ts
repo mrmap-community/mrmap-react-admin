@@ -122,7 +122,9 @@ const dataProvider = ({
 
   if (realtimeBus !== '' && token !== '') {
     const socket = new WebSocket(`${realtimeBus}?token=${token}`)
+    socket.onopen = (event) => { console.log('open', event) }
     socket.onmessage = realtimeOnMessage
+    socket.onerror = (event) => { console.log('error', event) }
   }
 
   // TODO: get baseURL from open api client

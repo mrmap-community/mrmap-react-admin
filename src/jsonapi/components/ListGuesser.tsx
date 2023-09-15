@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { snakeCase } from 'lodash'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
+import HistoryList from '../../components/HistoryList'
 import useOperationSchema from '../hooks/useOperationSchema'
 import inputGuesser from '../openapi/inputGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
@@ -184,19 +185,22 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-              relatedResource: {
-                resource: relatedResource,
-                id
-              },
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            relatedResource: {
+              resource: relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
           : {
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
       sx={{
-        maxWidth: '100%'
+        maxWidth: '100%',
+        display: 'flex',
+        maxHeight: '60vh'
       }}
+      aside={<HistoryList resource={`Historical${props.resource ?? ''}`} />}
       {...props}
 
     >
