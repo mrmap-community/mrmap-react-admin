@@ -10,7 +10,6 @@ const SnackbarObserver = (): ReactNode => {
   const { enqueueSnackbar } = useSnackbar()
 
   const handleBusEvent = useCallback((event: CrudEvent) => {
-    console.log('SnackbarObserver callback fired', event)
     event.payload.ids.forEach(id => {
       enqueueSnackbar('', {
         variant: 'taskProgress',

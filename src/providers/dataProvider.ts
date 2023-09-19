@@ -89,14 +89,10 @@ const getTotal = (response: JsonApiDocument, total: string): number => {
 
 const realtimeOnMessage = (event: MessageEvent): void => {
   const data = JSON.parse(event?.data) as MrMapMessage
-  console.log('reseved message', data)
 
   const raEvent = { ...data.event }
   raEvent.payload.records = data.event.payload.records?.map(jsonApiPrimaryData => encapsulateJsonApiPrimaryData(undefined, jsonApiPrimaryData))
 
-  console.log('subs: ', subscriptions, subscriptions.filter(
-    subscription =>
-      subscription.topic === data.topic))
   // fire callback functions
   subscriptions.filter(
     subscription =>
@@ -147,12 +143,10 @@ const dataProvider = ({
 
   const deleteResource = async (resource: string, params: DeleteParams): Promise<{ data: any }> =>
     await httpClient.then(async (client) => {
-      const conf = client.api.getAxiosConfigForOperation(`delete_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
+      const conf = client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
       return await client.request(conf)
     }).then((response) => {
-      const jsonApiDocument = response.data as JsonApiDocument
-      const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
-      return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
+      return { data: { id: params.id } }
     })
 
   return {

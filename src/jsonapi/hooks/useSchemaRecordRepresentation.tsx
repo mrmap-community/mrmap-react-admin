@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { type OptionTextFunc, useResourceDefinition } from 'react-admin'
+import { type RecordToStringFunction, useResourceDefinition } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
@@ -26,7 +26,7 @@ const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObjec
 
 const useSchemaRecordRepresentation = (
   operationId?: string
-): OptionTextFunc => {
+): RecordToStringFunction => {
   const { name } = useResourceDefinition()
   const { schema } = useOperationSchema(operationId ?? `list_${name}`)
 

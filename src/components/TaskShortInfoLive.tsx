@@ -53,17 +53,11 @@ const TaskShortInfoLive = React.forwardRef<HTMLDivElement, TaskShortInfoLiveProp
     const [task, setTask] = useState<RaRecord>()
 
     const updateFromRealtimeBus = useCallback((message: CrudEvent) => {
-      console.log('TaskShortInfoLive callback fired', message)
       setTask(message.payload.records?.[0])
     }, [])
 
     useEffect(() => {
-      console.log('task updated', task)
-    }, [task])
-
-    useEffect(() => {
       // subscribe on mount
-      console.log('TaskShortInfoLive mounted')
       dataProvider.subscribe(`resource/BackgroundProcess/${taskId}`, updateFromRealtimeBus)
       // unsubscribe on unmount
       return () => dataProvider.unsubscribe(`resource/BackgroundProcess/${taskId}`, updateFromRealtimeBus)

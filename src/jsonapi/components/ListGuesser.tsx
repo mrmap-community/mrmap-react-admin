@@ -2,6 +2,7 @@ import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, use
 import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
+import Container from '@mui/material/Container'
 import { snakeCase } from 'lodash'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
@@ -107,6 +108,8 @@ const ListGuesser = ({
     , [sparseFieldOptions, availableColumns, selectedColumnsIdxs]
   )
 
+  const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
+
   const includeQueryValue = useMemo(
     () => includeOptions.filter(includeOption => sparseFieldsQueryValue.includes(includeOption))
     , [sparseFieldsQueryValue, includeOptions]
@@ -195,31 +198,33 @@ const ListGuesser = ({
             jsonApiParams: { ...jsonApiQuery }
           }
       }}
-      sx={{
-        maxWidth: '100%',
-        display: 'flex',
-        maxHeight: '60vh'
-      }}
-      aside={<HistoryList resource={`Historical${props.resource ?? ''}`} />}
+
+      aside={
+        <Container maxWidth="sm" sx={{ marginTop: '1em' }}>
+
+          <HistoryList resource={`Historical${props.resource ?? ''}`} related={props.resource} record={selectedRecord} />
+        </Container>
+      }
       {...props}
 
     >
 
       {/* rowClick='edit' only if the resource provide edit operations */}
-      < DatagridConfigurable
-        rowClick="edit"
-        sx={{
-          maxWidth: '80vw', width: '100%', overflowX: 'scroll', whiteSpace: 'nowrap'
-        }}
+      <Container maxWidth="lg" >
 
-      >
-        {...fields}
+        < DatagridConfigurable
+          rowClick={(id, resource, record) => { setSelectedRecord(record); return false }}
 
-        < FieldWrapper label="Actions">
-          {(hasShow ?? false) && <ShowButton />}
-          {(hasEdit ?? false) && <EditButton />}
-        </FieldWrapper >
-      </DatagridConfigurable >
+          sx={{ maxWidth: '100%', overflowX: 'auto', maxHeight: '80vh' }}
+        >
+          {...fields}
+
+          < FieldWrapper label="Actions">
+            {(hasShow ?? false) && <ShowButton />}
+            {(hasEdit ?? false) && <EditButton />}
+          </FieldWrapper >
+        </DatagridConfigurable >
+      </Container>
 
     </List >
   )
