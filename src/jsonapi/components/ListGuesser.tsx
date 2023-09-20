@@ -81,6 +81,8 @@ const ListGuesser = ({
   relatedResource = '',
   ...props
 }: ListGuesserProps): ReactElement => {
+  const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
+
   const { id } = useParams()
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
@@ -107,8 +109,6 @@ const ListGuesser = ({
     )
     , [sparseFieldOptions, availableColumns, selectedColumnsIdxs]
   )
-
-  const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
 
   const includeQueryValue = useMemo(
     () => includeOptions.filter(includeOption => sparseFieldsQueryValue.includes(includeOption))
@@ -140,6 +140,11 @@ const ListGuesser = ({
       }
     }
   }, [props.resource, name])
+
+  // useEffect(() => {
+  //   setSelectedRecord(undefined)
+  //   console.log('filters changed')
+  // }, [filters])
 
   const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
@@ -213,7 +218,7 @@ const ListGuesser = ({
       <Container maxWidth="lg" >
 
         < DatagridConfigurable
-          rowClick={(id, resource, record) => { setSelectedRecord(record); return false }}
+          rowClick={(id, resource, record) => { if (selectedRecord !== record) { setSelectedRecord(record) }; return false }}
 
           sx={{ maxWidth: '100%', overflowX: 'auto', maxHeight: '80vh' }}
         >
