@@ -141,11 +141,6 @@ const ListGuesser = ({
     }
   }, [props.resource, name])
 
-  // useEffect(() => {
-  //   setSelectedRecord(undefined)
-  //   console.log('filters changed')
-  // }, [filters])
-
   const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
      *
@@ -184,7 +179,6 @@ const ListGuesser = ({
     // untill a new full render cyclus becomes started for the datagrid. (for example page change)
     return <div />
   }
-
   return (
     <List
       filters={filters}
@@ -193,15 +187,15 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-            relatedResource: {
-              resource: relatedResource,
-              id
-            },
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              relatedResource: {
+                resource: relatedResource,
+                id
+              },
+              jsonApiParams: { ...jsonApiQuery }
+            }
           : {
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              jsonApiParams: { ...jsonApiQuery }
+            }
       }}
 
       aside={

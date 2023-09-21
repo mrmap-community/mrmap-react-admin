@@ -41,7 +41,8 @@ module.exports = {
                     ["^[./]"]
                 ]
             }
-        ]
+        ],
+
     },
     "settings": {
         "react": {

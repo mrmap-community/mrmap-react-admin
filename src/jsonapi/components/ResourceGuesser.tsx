@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo } from 'react'
 import {
   Loading,
+  type RecordToStringFunction,
   Resource, type ResourceProps
 } from 'react-admin'
 import { Route } from 'react-router-dom'
@@ -13,15 +14,17 @@ import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentatio
 import { CreateGuesser, EditGuesser } from './FormGuesser'
 import ListGuesser from './ListGuesser'
 
+let _recordRepresentation: RecordToStringFunction = (record) => { return record.id }
+
 const ResourceGuesser = ({
   list = ListGuesser,
   create = CreateGuesser,
   edit = EditGuesser,
   ...rest
 }: ResourceProps): ReactElement => {
-  const recordRepresentation = useSchemaRecordRepresentation(rest.name)
+  _recordRepresentation = useSchemaRecordRepresentation(`list_${rest.name}`)
 
-  const { schemas } = useGetRelatedOperationSchemas(rest.name, undefined)
+  const { schemas } = useGetRelatedOperationSchemas(rest.name)
 
   const relatedResources = useMemo<string[]>(() => {
     return schemas?.map((schema) => {
@@ -40,22 +43,35 @@ const ResourceGuesser = ({
   }
 
   return (
-    <Resource list={list} create={create} edit={edit} recordRepresentation={recordRepresentation} {...rest} >
+    <Resource list={list} create={create} edit={edit} {...rest} >
       {relatedRoutes}
     </Resource>
   )
 }
 
 ResourceGuesser.raName = 'Resource'
-ResourceGuesser.registerResource = ({
 
-  ...rest
+ResourceGuesser.registerResource = ({
+  create,
+  edit,
+  icon,
+  list,
+  name,
+  options,
+  show,
+  recordRepresentation,
+  hasCreate,
+  hasEdit,
+  hasShow
 }: ResourceProps) => ({
-  hasList: true,
-  hasEdit: true,
-  hasCreate: true,
-  hasShow: true,
-  ...rest
+  name,
+  options,
+  hasList: (list !== null),
+  hasCreate: (create !== null) || !!(hasCreate ?? false),
+  hasEdit: (edit !== null) || !!(hasEdit ?? false),
+  hasShow: (show !== null) || !!(hasShow ?? false),
+  icon,
+  recordRepresentation: recordRepresentation ?? _recordRepresentation
 })
 
 ResourceGuesser.propTypes = {

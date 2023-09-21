@@ -1,10 +1,11 @@
 import { type ReactNode, useMemo } from 'react'
-import { type RaRecord, RecordRepresentation, SimpleList, type SimpleListProps, useGetList } from 'react-admin'
+import { type RaRecord, RecordRepresentation, SimpleList, type SimpleListProps, useGetList, useGetRecordRepresentation } from 'react-admin'
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import UpdateIcon from '@mui/icons-material/Update'
 import { Card, CardHeader } from '@mui/material'
+import _ from 'lodash'
 
 const getIcon = (record: RaRecord): ReactNode => {
   if (record.historyType === 'created') {
@@ -20,21 +21,38 @@ const getTertiaryText = (record: RaRecord): ReactNode => {
   return `${new Date(record.historyDate).toLocaleString('de-DE')}, by ${record.historyUser.username}`
 }
 
+const getPrimaryText = (record: RaRecord, related: string, selectedRecord: RaRecord, allRecords: any): ReactNode => {
+  if (selectedRecord !== undefined) {
+    const index = allRecords.indexOf(record) as number
+    const lastRecordToCompare = allRecords.at(index + 1)
+
+    const diff = _.difference([record, lastRecordToCompare])
+
+    console.log(diff)
+  } else {
+    if (record.historyType === 'deleted') {
+      return `${record.title} (${record.historyRelation.id})`
+    } else {
+      return <RecordRepresentation record={record.historyRelation} resource={related} />
+    }
+  }
+}
+
 export interface HistoryListProps extends SimpleListProps {
   related: string
   record: RaRecord
 }
 
-const HistoryList = ({ related, record, ...props }: HistoryListProps): ReactNode => {
+const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListProps): ReactNode => {
   const jsonApiParams = useMemo(() => {
     const params: any = { include: 'historyUser,historyRelation' }
     // params[`fields[${related ?? ''}]`] = 'title'
     params['fields[User]'] = 'username,stringRepresentation'
-    if (record !== undefined) {
-      params['filter[historyRelation]'] = record.id
+    if (selectedRecord !== undefined) {
+      params['filter[historyRelation]'] = selectedRecord.id
     }
     return params
-  }, [props.resource, record])
+  }, [props.resource, selectedRecord])
 
   const { data, total, isLoading, error, refetch } = useGetList(
     props.resource ?? '',
@@ -45,15 +63,16 @@ const HistoryList = ({ related, record, ...props }: HistoryListProps): ReactNode
     }
 
   )
+  const getRecordRepresentation = useGetRecordRepresentation(related)
 
   return (
     <Card>
       <CardHeader
-        title='Last 10 events'
+        title={(selectedRecord === undefined) ? 'Last 10 events' : getRecordRepresentation(selectedRecord)}
         subheader={
           <SimpleList
             leftIcon={record => getIcon(record)}
-            primaryText={record => <RecordRepresentation record={record.historyRelation} resource={related} />}
+            primaryText={record => getPrimaryText(record, related, selectedRecord, data)}
             tertiaryText={record => getTertiaryText(record)}
             linkType={false}
             // rowSx={record => ({ backgroundColor: record.historyType === 'created' ? '#efe' : 'white' })}

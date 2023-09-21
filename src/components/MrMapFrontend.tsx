@@ -43,6 +43,8 @@ const MrMapFrontend = (): ReactElement => {
         layout={MyLayout}
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} />
+        <ResourceGuesser name={'HistoricalWebMapService'} />
+
         <ResourceGuesser name={'Layer'} icon={LayersIcon} />
         <ResourceGuesser name={'WebFeatureService'} />
         <ResourceGuesser name={'FeatureType'} icon={AddLocationAltIcon} />
