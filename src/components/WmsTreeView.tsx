@@ -1,11 +1,11 @@
-import { type ReactNode, useEffect, useMemo } from 'react'
-import { Loading, type RaRecord, RecordRepresentation, ShowBase, type SimpleShowLayoutProps, useInfiniteGetList, useRecordContext, useResourceDefinition } from 'react-admin'
+import { type ChangeEvent, type ReactNode, useCallback, useEffect, useMemo } from 'react'
+import { Loading, type RaRecord, RecordRepresentation, ShowBase, type SimpleShowLayoutProps, useInfiniteGetList, useRecordContext, useResourceDefinition, useUpdate } from 'react-admin'
 
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import LayersIcon from '@mui/icons-material/Layers'
+import { Chip, Switch } from '@mui/material'
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import { TreeItem, TreeView } from '@mui/x-tree-view'
 
@@ -23,9 +23,36 @@ const getChildren = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
   )
 }
 
-const getLabel = (record: RaRecord): ReactNode => {
+const getRightLabelContent = (record: RaRecord): ReactNode => {
   const childCount: number = Math.floor((record.rght - record.lft) / 2)
 
+  // const [update, { data, isLoading, error }] = useUpdate()
+
+  const handleChange = (event: ChangeEvent, checked: boolean) => {
+    console.log(checked)
+    // void update('Layer', { id: record.id, data: { isActive: checked }, previousData: record })
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        p: 0.5,
+        pr: 0
+      }}
+    >
+      <Box color="inherit" sx={{ mr: 1 }} >
+        {childCount > 0 ? <Chip label={childCount} /> : null}
+      </Box>
+      <Box color="inherit" sx={{ mr: 1 }} >
+        <Switch checked={record.isActive} color={(record.isActive) ? 'success' : 'warning'} onChange={(event, checked) => { handleChange(event, checked) }} />
+      </Box>
+    </Box>
+  )
+}
+
+const getLabel = (record: RaRecord): ReactNode => {
   return (
     <Box
       sx={{
@@ -41,7 +68,7 @@ const getLabel = (record: RaRecord): ReactNode => {
 
       </Typography>
       <Typography variant="caption" color="inherit">
-        {childCount > 0 ? <Chip label={childCount} /> : null}
+        {getRightLabelContent(record)}
       </Typography>
     </Box>
   )
@@ -54,7 +81,6 @@ const mapTreeData = (nodes: RaRecord[], currentNode: RaRecord): ReactNode => {
       key={currentNode.id}
       nodeId={`tree-node-${currentNode.id}`}
       label={getLabel(currentNode)}
-
     >
     </TreeItem>
   } else {
@@ -62,7 +88,6 @@ const mapTreeData = (nodes: RaRecord[], currentNode: RaRecord): ReactNode => {
       key={currentNode.id}
       nodeId={`tree-node-${currentNode.id}`}
       label={getLabel(currentNode)}
-
     >
       {getChildren(nodes, currentNode).map(child => mapTreeData(nodes, child))}
     </TreeItem>
