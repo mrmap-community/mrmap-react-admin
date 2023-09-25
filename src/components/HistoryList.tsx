@@ -4,8 +4,7 @@ import { type RaRecord, RecordRepresentation, SimpleList, type SimpleListProps, 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import UpdateIcon from '@mui/icons-material/Update'
-import { Card, CardHeader } from '@mui/material'
-import _ from 'lodash'
+import { Box, Card, CardHeader, Chip, Typography } from '@mui/material'
 
 const getIcon = (record: RaRecord): ReactNode => {
   if (record.historyType === 'created') {
@@ -18,24 +17,41 @@ const getIcon = (record: RaRecord): ReactNode => {
 }
 
 const getTertiaryText = (record: RaRecord): ReactNode => {
-  return `${new Date(record.historyDate).toLocaleString('de-DE')}, by ${record.historyUser.username}`
+  return `${new Date(record.historyDate).toLocaleString('de-DE')}, by ${record.historyUser?.username}`
 }
 
-const getPrimaryText = (record: RaRecord, related: string, selectedRecord: RaRecord, allRecords: any): ReactNode => {
-  if (selectedRecord !== undefined) {
-    const index = allRecords.indexOf(record) as number
-    const lastRecordToCompare = allRecords.at(index + 1)
+export interface PrimaryTextProps {
+  record: RaRecord
+  related: string
+  selectedRecord: RaRecord
+}
 
-    const diff = _.difference([record, lastRecordToCompare])
+const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): ReactNode => {
+  const changedFields = record.delta?.map((change: any, index: number) => <Typography key={`${record.id}-change-${index}`} sx={{ p: 1 }}>{change.field} changed from {change.old} to {change.new}</Typography>)
 
-    console.log(diff)
-  } else {
-    if (record.historyType === 'deleted') {
+  const primaryText = useMemo(() => {
+    if (selectedRecord !== undefined) {
+      if (record.historyType === 'created') {
+        return 'Created'
+      } else {
+        return (
+          <Box>
+            <Chip
+              label={record.delta?.length ?? 0}
+            />
+            {changedFields}
+
+          </Box>
+        )
+      }
+    } else if (record.historyType === 'deleted') {
       return `${record.title} (${record.historyRelation.id})`
     } else {
       return <RecordRepresentation record={record.historyRelation} resource={related} />
     }
-  }
+  }, [])
+
+  return primaryText
 }
 
 export interface HistoryListProps extends SimpleListProps {
@@ -72,7 +88,7 @@ const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListP
         subheader={
           <SimpleList
             leftIcon={record => getIcon(record)}
-            primaryText={record => getPrimaryText(record, related, selectedRecord, data)}
+            primaryText={record => <PrimaryText record={record} related={related} selectedRecord={selectedRecord} />}
             tertiaryText={record => getTertiaryText(record)}
             linkType={false}
             // rowSx={record => ({ backgroundColor: record.historyType === 'created' ? '#efe' : 'white' })}
