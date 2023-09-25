@@ -45,6 +45,7 @@ const ResourceGuesser = ({
   return (
     <Resource list={list} create={create} edit={edit} {...rest} >
       {relatedRoutes}
+      {rest.children}
     </Resource>
   )
 }

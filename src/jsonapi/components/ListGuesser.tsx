@@ -23,6 +23,7 @@ interface ListActionsProps {
 
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
+  additionalActions?: ReactNode
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
@@ -79,6 +80,7 @@ const ListActions = (
 
 const ListGuesser = ({
   relatedResource = '',
+  additionalActions = undefined,
   ...props
 }: ListGuesserProps): ReactElement => {
   const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
@@ -221,6 +223,7 @@ const ListGuesser = ({
           < FieldWrapper label="Actions">
             {(hasShow ?? false) && <ShowButton />}
             {(hasEdit ?? false) && <EditButton />}
+            {additionalActions}
           </FieldWrapper >
         </DatagridConfigurable >
       </Container>

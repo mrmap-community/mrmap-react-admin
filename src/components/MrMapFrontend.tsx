@@ -1,9 +1,11 @@
 import { type ReactElement, useContext } from 'react'
 import {
   Admin,
+  CustomRoutes,
   defaultTheme, Loading,
   type RaThemeOptions
 } from 'react-admin'
+import { Route } from 'react-router-dom'
 
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt'
 import LayersIcon from '@mui/icons-material/Layers'
@@ -16,6 +18,7 @@ import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
 import WmsList from './WmsList'
+import WmsTreeView from './WmsTreeView'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
@@ -42,7 +45,10 @@ const MrMapFrontend = (): ReactElement => {
         authProvider={authProvider()}
         layout={MyLayout}
       >
-        <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} />
+        <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >
+          <Route path=":id/tree" element={<WmsTreeView />} />
+
+        </ResourceGuesser>
         <ResourceGuesser name={'HistoricalWebMapService'} />
 
         <ResourceGuesser name={'Layer'} icon={LayersIcon} />
