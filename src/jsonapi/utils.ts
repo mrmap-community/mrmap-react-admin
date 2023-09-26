@@ -1,5 +1,5 @@
 import { type ReactElement } from 'react'
-import type { Identifier, RaRecord } from 'react-admin'
+import type { RaRecord } from 'react-admin'
 
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
