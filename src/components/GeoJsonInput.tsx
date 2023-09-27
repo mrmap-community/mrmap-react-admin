@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { TextInput, type TextInputProps, useInput } from 'react-admin'
-import { useForm } from 'react-hook-form'
-import { FeatureGroup, GeoJSON, MapContainer, TileLayer } from 'react-leaflet'
-import { EditControl } from 'react-leaflet-draw'
+import { MapContainer, TileLayer } from 'react-leaflet'
 
 import { Box, Modal, Typography } from '@mui/material'
-import { useLeafletContext } from '@react-leaflet/core'
-import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson'
-import L, { Polygon } from 'leaflet'
+import type { GeoJSON as GeoJSONType } from 'geojson'
+
+import FeatureGroupEditor from './FeatureGroupEditor'
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -24,71 +22,13 @@ const style = {
   // pb: 3,
 }
 
-export interface EditorProps {
-  geoJson?: GeoJSONType
-  setGeoJson: Function
-};
-
-const Editor = (props: EditorProps) => {
-  const context = useLeafletContext()
-
-  const updateGeoJson = useCallback((event: any) => {
-    const multiPolygon: MultiPolygon = {
-      type: 'MultiPolygon',
-      coordinates: []
-    }
-
-    context.map.eachLayer((layer) => {
-      if (layer instanceof L.Polygon) {
-        const coordinates = layer.toGeoJSON().geometry.coordinates as Position[][]
-        multiPolygon.coordinates.push(coordinates)
-      }
-    })
-    props.setGeoJson(multiPolygon)
-  }, [])
-
-  useEffect(() => {
-    if (props.geoJson != null) {
-      const bounds = L.geoJSON(props.geoJson).getBounds()
-      if (Object.keys(bounds).length > 1) {
-        context.map.flyToBounds(bounds, { duration: 0.3 })
-      }
-    }
-  }, [props.geoJson])
-
-  const geoJsonObject = (props.geoJson != null) ? <GeoJSON data={props.geoJson} /> : <div></div>
-
-  return (
-    <FeatureGroup
-
-    >
-      {geoJsonObject}
-      <EditControl
-        position='topright'
-        onEdited={updateGeoJson}
-        onCreated={updateGeoJson}
-        onDeleted={updateGeoJson}
-        // onDrawStop={onEdit}
-        draw={{
-          marker: false,
-          circlemarker: false,
-          circle: false
-        }}
-      />
-    </FeatureGroup>
-  )
-}
-
-const GeoJsonInput = (props: TextInputProps) => {
+const GeoJsonInput = (props: TextInputProps): ReactNode => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
   const [geoJson, setGeoJson] = useState<GeoJSONType>()
   const [geoJsonString, setGeoJsonString] = useState((geoJson != null) ? JSON.stringify(geoJson) : 'huhu')
   const {
-    field: { value, onChange },
-    fieldState: { isTouched, error },
-    formState: { isSubmitted },
-    isRequired
+    field: { onChange }
   } = useInput(props)
 
   useEffect(() => {
@@ -131,9 +71,9 @@ const GeoJsonInput = (props: TextInputProps) => {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Editor
+            <FeatureGroupEditor
               geoJson={geoJson}
-              setGeoJson={setGeoJson}
+              geoJsonCallback={setGeoJson}
             />
           </MapContainer>
 

@@ -19,6 +19,7 @@ import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
 import WmsList from './WmsList'
 import WmsTreeView from './WmsTreeView'
+import WMSViewer from './WMSViewer'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
@@ -47,7 +48,7 @@ const MrMapFrontend = (): ReactElement => {
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >
           <Route path=":id/tree" element={<WmsTreeView />} />
-
+          <Route path=":id/viewer" element={<WMSViewer />} />
         </ResourceGuesser>
         <ResourceGuesser name={'HistoricalWebMapService'} />
 
