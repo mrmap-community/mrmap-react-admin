@@ -72,8 +72,6 @@ const SelectTreeNode = ({ record }: SelectTreeNodeProps): ReactNode => {
     }
   }, [record, selectedNodes])
 
-  useEffect(() => { console.log('selectedNodes changed', selectedNodes) }, [selectedNodes])
-
   const isChecked = useMemo(() => {
     return Boolean(selectedNodes.find(node => node.id === record.id))
   }, [selectedNodes, record])

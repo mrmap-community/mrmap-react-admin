@@ -189,34 +189,33 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-              relatedResource: {
-                resource: relatedResource,
-                id
-              },
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            relatedResource: {
+              resource: relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
           : {
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
 
       aside={
-        <Container maxWidth="sm" sx={{ marginTop: '1em' }}>
 
-          <HistoryList resource={`Historical${props.resource ?? ''}`} related={props.resource} record={selectedRecord} />
-        </Container>
+        <HistoryList resource={`Historical${props.resource ?? ''}`} related={props.resource} record={selectedRecord} />
       }
+
       {...props}
 
     >
 
       {/* rowClick='edit' only if the resource provide edit operations */}
-      <Container maxWidth="lg" >
+      <Container maxWidth='xl' >
 
         < DatagridConfigurable
           rowClick={(id, resource, record) => { if (selectedRecord !== record) { setSelectedRecord(record) }; return false }}
 
-          sx={{ maxWidth: '100%', overflowX: 'auto', maxHeight: '80vh' }}
+          sx={{ width: '100%', overflowX: 'auto', maxHeight: 'calc(100vh - 174px )' }} // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
         >
           {...fields}
 

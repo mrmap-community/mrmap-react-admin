@@ -82,7 +82,8 @@ const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListP
   const getRecordRepresentation = useGetRecordRepresentation(related)
 
   return (
-    <Card>
+    <Card sx={{ marginLeft: '1em', marginTop: '1em', height: 'calc(100vh - 110px - 1em)', overflowY: 'scroll' } // 174px ==> 50 appbar, 52 pagination,  1 em top padding
+    }>
       <CardHeader
         title={(selectedRecord === undefined) ? 'Last 10 events' : getRecordRepresentation(selectedRecord)}
         subheader={
@@ -103,7 +104,7 @@ const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListP
 
       </CardHeader>
 
-    </Card>
+    </Card >
   )
 }
 

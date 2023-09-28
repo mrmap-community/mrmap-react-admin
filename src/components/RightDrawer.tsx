@@ -48,8 +48,13 @@ const RightDrawer = ({
           zIndex: 1000,
           padding: 0,
           right: `${isVisible ? width : '0px'}`,
-          transition: 'all 0.2s cubic-bezier(0.23, 1, 0.32, 1)'
-
+          transition: 'all 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
+          border: 'unset',
+          borderRadius: '5px 0 0 5px',
+          width: '30px',
+          height: '60px',
+          color: 'white',
+          backgroundColor: '#002140'
         }
         }
 

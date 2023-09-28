@@ -1,6 +1,6 @@
-import { type ReactNode, type RefObject, useEffect, useId, useMemo, useRef } from 'react'
+import { type ReactNode, type RefObject, useCallback, useEffect, useId, useMemo, useRef } from 'react'
 import { type RaRecord, ShowBase, type SimpleShowLayoutProps, useGetOne, useRecordContext, useResourceDefinition } from 'react-admin'
-import { LayersControl, MapContainer, WMSTileLayer } from 'react-leaflet'
+import { MapContainer, useMap, WMSTileLayer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
 import { type LeafletMap } from 'leaflet'
@@ -13,24 +13,15 @@ const style = {
   position: 'relative',
   //  display: 'flex',
   width: '100%',
-  height: '100vh',
-  maxHeight: 'calc(100vh - 50px !important)'
+  height: 'calc(100vh - 50px)'
+  // maxHeight: 'calc(100vh - 50px !important)'
 
 }
 
-const resizeMap = (mapRef: RefObject<LeafletMap>): void => {
-  const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
-  const container = document.getElementById('map-container')
-  if (container != null) {
-    resizeObserver.observe(container)
-  }
+export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 }
 
-export interface WmsClient {
-
-}
-
-const WMSLayerTree = ({ ...rest }: Partial<SimpleShowLayoutProps>): ReactNode => {
+const WMSLayerTree = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
   const { name } = useResourceDefinition()
   const record = useRecordContext()
   const {
@@ -50,20 +41,21 @@ const WMSLayerTree = ({ ...rest }: Partial<SimpleShowLayoutProps>): ReactNode =>
   )
   const { selectedNodes, setFlatTree } = useTreeContext()
 
-  useEffect(() => {
-    if (data !== undefined) {
-      setFlatTree(data.layers?.sort((a: RaRecord, b: RaRecord) => a.lft - b.lft) ?? [])
-    }
-  }, [data])
+  const map = useMap()
 
   const getMapUrl: string = useMemo(() => { return data?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url }, [data])
 
   const layers: string = useMemo(() => {
     // we call only the leafnodes
     const layerIdentifiers = selectedNodes.sort((a: RaRecord, b: RaRecord) => b.lft - a.lft).filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
-    console.log(layerIdentifiers)
     return layerIdentifiers.join(',') ?? ''
   }, [selectedNodes])
+
+  useEffect(() => {
+    if (data !== undefined) {
+      setFlatTree(data.layers?.sort((a: RaRecord, b: RaRecord) => a.lft - b.lft) ?? [])
+    }
+  }, [data])
 
   if (layers === '') {
     return null
@@ -71,20 +63,21 @@ const WMSLayerTree = ({ ...rest }: Partial<SimpleShowLayoutProps>): ReactNode =>
 
   return (
     <WMSTileLayer
-      // layers={'dwd:Cwam_reg025_fd_sl_DD10M'}
       url={getMapUrl}
       params={
-        {
-          version: '1.3.0',
-          layers
-        }
+        { layers }
       }
-      // params={{ hello: 'world' }} // <-- comment out this line to stop the map flickering when the button is pressed
       // maxZoom={6}
-      // transparent={true}
+      version={data.version === '' ? '1.3.0' : data.version}
+      // layers={layers}
+      transparent={true}
+      // tileSize={map.getSize()}
       format='image/png'
+    // tms={false}
+
     // opacity={0}
     />
+
   )
 }
 
@@ -93,6 +86,14 @@ const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
 
   const containerId = useId()
   const mapRef = useRef<LeafletMap>(null)
+
+  const resizeMap = useCallback((mapRef: RefObject<LeafletMap>): void => {
+    const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
+    const container = document.getElementById('map-container')
+    if (container != null) {
+      resizeObserver.observe(container)
+    }
+  }, [])
 
   return (
     <div>

@@ -4,6 +4,7 @@ import { type RaRecord, ShowBase, useResourceDefinition } from 'react-admin'
 import { type TreeItemProps } from '@mui/x-tree-view'
 
 import OgcTreeView from './OGCTreeView'
+import { TreeBase } from './TreeContext'
 
 export interface ActivateButtonProps {
   record: RaRecord
@@ -19,9 +20,11 @@ const WmsTreeView = (): ReactNode => {
   const { name } = useResourceDefinition()
 
   return (
-    <ShowBase resource={name}>
-      <OgcTreeView ><div></div></OgcTreeView>
-    </ShowBase>
+    <TreeBase>
+      <ShowBase resource={name}>
+        <OgcTreeView ><div></div></OgcTreeView>
+      </ShowBase>
+    </TreeBase>
   )
 }
 
