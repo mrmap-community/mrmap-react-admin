@@ -17,8 +17,8 @@ import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
 import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
+import WmsTreeView from './OGCTree/WmsTreeView'
 import WmsList from './WmsList'
-import WmsTreeView from './WmsTreeView'
 import WMSViewer from './WMSViewer'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme

@@ -66,7 +66,8 @@ const RightDrawer = ({
             '& .MuiDrawer-paper': {
               width,
               zIndex: 1,
-              top: '50px'
+              top: '50px',
+              height: 'calc(100vh - 50px)'
               // padding: `${theme.spacing(0, 1)}`,
               // justifyContent: 'flex-start'
             }
@@ -74,10 +75,7 @@ const RightDrawer = ({
         }
         {...rest}
       >
-        huuhuuuu
-        hihi
-        haha
-        hohjo
+
       </Drawer >
     </>
   )
