@@ -49,3 +49,8 @@ export interface JsonApiPrimaryData {
   attributes: any
   relationships?: Record<string, ResourceLinkage>
 }
+
+export interface JsonApiQueryParams {
+  include?: string
+  fields?: string
+}

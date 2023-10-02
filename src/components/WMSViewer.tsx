@@ -21,54 +21,31 @@ const style = {
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 }
 
-const WMSLayerTree = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
-  const { name } = useResourceDefinition()
-  const record = useRecordContext()
-  const {
-    data,
-    isLoading,
-    error,
-    refetch
-
-  } = useGetOne(
-    name,
-    {
-      id: rest.record?.id ?? record?.id,
-      meta: {
-        jsonApiParams: { include: 'layers,operationUrls' }
-      }
-    }
-  )
-  const { selectedNodes, setFlatTree } = useTreeContext()
-
+const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
+  const { selectedNodes, rawOgcService } = useTreeContext()
   const map = useMap()
 
-  const getMapUrl: string = useMemo(() => { return data?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url }, [data])
+  const getMapUrl: string = useMemo(() => { return rawOgcService?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? '' }, [rawOgcService])
 
   const layers: string = useMemo(() => {
     // we call only the leafnodes
-    const layerIdentifiers = selectedNodes.sort((a: RaRecord, b: RaRecord) => b.lft - a.lft).filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+    const layerIdentifiers = selectedNodes.toSorted((a: RaRecord, b: RaRecord) => b.lft - a.lft).filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
     return layerIdentifiers.join(',') ?? ''
   }, [selectedNodes])
 
-  useEffect(() => {
-    if (data !== undefined) {
-      setFlatTree(data.layers?.sort((a: RaRecord, b: RaRecord) => a.lft - b.lft) ?? [])
-    }
-  }, [data])
-
-  if (layers === '') {
+  if (layers === '' || getMapUrl === '') {
     return null
   }
 
   return (
     <WMSTileLayer
+
       url={getMapUrl}
       params={
         { layers }
       }
       // maxZoom={6}
-      version={data.version === '' ? '1.3.0' : data.version}
+      version={rawOgcService?.version === '' ? '1.3.0' : rawOgcService?.version}
       // layers={layers}
       transparent={true}
       // tileSize={map.getSize()}
@@ -96,31 +73,27 @@ const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
   }, [])
 
   return (
-    <div>
-      <TreeBase>
-        <ShowBase resource={name}>
-          <div>
-            <Box id={containerId} sx={{ ...style }}>
-              <MapContainer
-                whenReady={() => { resizeMap(mapRef) }}
-                center={[51.505, -0.09]}
-                zoom={2}
-                scrollWheelZoom={true}
-                style={{ flex: 1, height: '100%', width: '100%' }}
+    <TreeBase>
+      <div>
+        <Box id={containerId} sx={{ ...style }}>
+          <MapContainer
+            whenReady={() => { resizeMap(mapRef) }}
+            center={[51.505, -0.09]}
+            zoom={2}
+            scrollWheelZoom={true}
+            style={{ flex: 1, height: '100%', width: '100%' }}
 
-              >
-                <WMSLayerTree />
-              </MapContainer>
-            </Box>
-            <RightDrawer
-              leftComponentId={containerId}
-            >
-              <OgcTreeView ><div></div></OgcTreeView>
-            </RightDrawer>
-          </div>
-        </ShowBase>
-      </TreeBase >
-    </div>
+          >
+            <WMSTileLayerCombined />
+          </MapContainer>
+        </Box>
+        <RightDrawer
+          leftComponentId={containerId}
+        >
+          <OgcTreeView jsonApiParams={{ include: 'layers,operationUrls' }}><div></div></OgcTreeView>
+        </RightDrawer>
+      </div>
+    </TreeBase >
   )
 }
 

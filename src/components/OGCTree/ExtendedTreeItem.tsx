@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import { TreeItem, type TreeItemProps } from '@mui/x-tree-view'
 
 import { useTreeContext } from './TreeContext'
-import { getDescendants } from './utils'
+import { getDescendants, isDescendantOf } from './utils'
 import { type ActivateButtonProps } from './WmsTreeView'
 
 const ActivateButton = ({ record, callback = () => { } }: ActivateButtonProps): ReactNode => {
@@ -76,11 +76,16 @@ const SelectTreeNode = ({ record }: SelectTreeNodeProps): ReactNode => {
     return Boolean(selectedNodes.find(node => node.id === record.id))
   }, [selectedNodes, record])
 
+  const isIndeterminate = useMemo(() => {
+    return Boolean(selectedNodes.find(node => isDescendantOf(node, record)))
+  }, [selectedNodes, record])
+
   return (
     <Checkbox
       key={`checkbox-node-${record.id}`}
       id={`checkbox-node-${record.id}`}
       checked={isChecked}
+      indeterminate={isIndeterminate}
       tabIndex={-1}
 
       onChange={(event, checked) => { handleNodeSelect(event, checked) }}

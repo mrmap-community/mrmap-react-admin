@@ -1,11 +1,13 @@
 import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
-import { Loading, type RaRecord, type SimpleShowLayoutProps, useGetOne, useRecordContext, useResourceDefinition } from 'react-admin'
+import { Loading, type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
 
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { TreeView } from '@mui/x-tree-view'
 
+import { type JsonApiQueryParams } from '../../jsonapi/types/jsonapi'
 import ExtendedTreeItem from './ExtendedTreeItem'
+import { useTreeContext } from './TreeContext'
 import { getChildren, getDescendants } from './utils'
 
 export interface OgcLayerTreeProps {
@@ -18,11 +20,13 @@ const OgcLayerTree = ({ flatLayers, treeRefetch }: OgcLayerTreeProps): ReactNode
     const childCount: number = Math.floor((currentNode.rght - currentNode.lft) / 2)
     if (childCount === 0) {
       return <ExtendedTreeItem
+        key={`node-${currentNode.id}`}
         node={currentNode}
         onUpdateSuccessed={treeRefetch}
       />
     } else {
       return <ExtendedTreeItem
+        key={`node-${currentNode.id}`}
         node={currentNode}
         onUpdateSuccessed={treeRefetch}
       >
@@ -45,29 +49,18 @@ const OgcLayerTree = ({ flatLayers, treeRefetch }: OgcLayerTreeProps): ReactNode
   )
 }
 
-const OgcTreeView = ({ ...rest }: SimpleShowLayoutProps): ReactNode => {
-  const { name } = useResourceDefinition()
-  const record = useRecordContext()
-  const {
-    data,
-    isLoading,
-    error,
-    refetch
+export interface OGCTreeViewProps extends SimpleShowLayoutProps {
+  jsonApiParams?: JsonApiQueryParams
+}
 
-  } = useGetOne(
-    name,
-    {
-      id: rest.record?.id ?? record?.id,
-      meta: {
-        jsonApiParams: { include: 'layers' }
-      }
-    }
-  )
-
-  const flatLayers: RaRecord[] = useMemo(() => data?.layers?.sort((a: RaRecord, b: RaRecord) => a.lft - b.lft) ?? []
-    , [data])
+const OgcTreeView = ({
+  jsonApiParams = { include: 'layers' },
+  ...rest
+}: OGCTreeViewProps): ReactNode => {
+  const { flatTree, refetch, isLoading } = useTreeContext()
 
   const [expanded, setExpanded] = useState<string[]>([])
+
   const handleToggle = (event: SyntheticEvent, nodeIds: string[]): void => {
     if (event.target.closest('.MuiSvgIcon-root')) {
       setExpanded(nodeIds)
@@ -86,7 +79,7 @@ const OgcTreeView = ({ ...rest }: SimpleShowLayoutProps): ReactNode => {
       onNodeToggle={handleToggle}
       expanded={expanded}
     >
-      <OgcLayerTree flatLayers={flatLayers} treeRefetch={refetch} />
+      <OgcLayerTree flatLayers={flatTree} treeRefetch={refetch} />
     </TreeView>
   )
 }

@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { type RaRecord, ShowBase, useResourceDefinition } from 'react-admin'
+import { type RaRecord } from 'react-admin'
 
 import { type TreeItemProps } from '@mui/x-tree-view'
 
@@ -17,13 +17,9 @@ export interface OgcLayerItemProps extends Partial<TreeItemProps> {
 }
 
 const WmsTreeView = (): ReactNode => {
-  const { name } = useResourceDefinition()
-
   return (
     <TreeBase>
-      <ShowBase resource={name}>
-        <OgcTreeView ><div></div></OgcTreeView>
-      </ShowBase>
+      <OgcTreeView ><div></div></OgcTreeView>
     </TreeBase>
   )
 }
