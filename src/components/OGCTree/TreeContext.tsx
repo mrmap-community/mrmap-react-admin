@@ -20,8 +20,6 @@ export const TreeBase = ({ children }): ReactNode => {
   const [flatTree, setFlatTree] = useState<RaRecord[]>([])
   const [rawOgcService, setRawOgcService] = useState<RaRecord | undefined>(undefined)
 
-  const { name } = useResourceDefinition()
-
   const {
     defaultTitle, // the translated title based on the resource, e.g. 'Post #123'
     error, // error returned by dataProvider when it failed to fetch the record. Useful if you want to adapt the view instead of just showing a notification using the `onError` side effect.

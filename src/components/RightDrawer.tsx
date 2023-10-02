@@ -7,11 +7,13 @@ import { Drawer, type DrawerProps, IconButton } from '@mui/material'
 export interface RightDrawerProps extends DrawerProps {
   leftComponentId?: string
   width?: string
+  callback?: () => void
 }
 
 const RightDrawer = ({
   leftComponentId,
   width = '20vw',
+  callback = () => { },
   ...rest
 }: RightDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -32,6 +34,7 @@ const RightDrawer = ({
   const toggleVisible = useCallback(() => {
     setIsVisible(!isVisible)
     buttonRef.current?.blur()
+    callback()
   }, [isVisible, buttonRef])
 
   return (

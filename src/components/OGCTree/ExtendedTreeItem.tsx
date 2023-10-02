@@ -1,4 +1,4 @@
-import { type ChangeEvent, type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { type RaRecord, RecordRepresentation, useUpdate } from 'react-admin'
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
@@ -77,7 +77,7 @@ const SelectTreeNode = ({ record }: SelectTreeNodeProps): ReactNode => {
   }, [selectedNodes, record])
 
   const isIndeterminate = useMemo(() => {
-    return Boolean(selectedNodes.find(node => isDescendantOf(node, record)))
+    return Boolean(selectedNodes.find(node => isDescendantOf(node, record))) && !isChecked
   }, [selectedNodes, record])
 
   return (

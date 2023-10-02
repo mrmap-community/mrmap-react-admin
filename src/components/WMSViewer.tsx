@@ -59,12 +59,10 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
 }
 
 const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
-  const { name } = useResourceDefinition()
-
   const containerId = useId()
   const mapRef = useRef<LeafletMap>(null)
 
-  const resizeMap = useCallback((mapRef: RefObject<LeafletMap>): void => {
+  const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
     const container = document.getElementById('map-container')
     if (container != null) {
@@ -77,7 +75,7 @@ const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
       <div>
         <Box id={containerId} sx={{ ...style }}>
           <MapContainer
-            whenReady={() => { resizeMap(mapRef) }}
+            whenReady={() => { resizeMap() }}
             center={[51.505, -0.09]}
             zoom={2}
             scrollWheelZoom={true}
@@ -89,6 +87,7 @@ const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
         </Box>
         <RightDrawer
           leftComponentId={containerId}
+          callback={resizeMap}
         >
           <OgcTreeView jsonApiParams={{ include: 'layers,operationUrls' }}><div></div></OgcTreeView>
         </RightDrawer>
