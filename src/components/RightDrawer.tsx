@@ -23,6 +23,7 @@ const RightDrawer = ({
   useEffect(() => {
     if (leftComponentId !== undefined) {
       const div: any = document.querySelector(`#${CSS.escape(leftComponentId)}`)
+      console.log(div)
       if (!isVisible) {
         div.style.paddingRight = '0'
       } else {

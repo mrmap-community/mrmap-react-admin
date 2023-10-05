@@ -1,9 +1,9 @@
-import { type ReactNode, type RefObject, useCallback, useEffect, useId, useMemo, useRef } from 'react'
-import { type RaRecord, ShowBase, type SimpleShowLayoutProps, useGetOne, useRecordContext, useResourceDefinition } from 'react-admin'
-import { MapContainer, useMap, WMSTileLayer } from 'react-leaflet'
+import { type ReactNode, useCallback, useId, useMemo, useRef } from 'react'
+import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
+import { MapContainer, WMSTileLayer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import { type LeafletMap } from 'leaflet'
+import { type LeafletEvent, type Map } from 'leaflet'
 
 import OgcTreeView from './OGCTree/OGCTreeView'
 import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
@@ -18,18 +18,22 @@ const style = {
 
 }
 
+const onMoveend = (event: LeafletEvent): void => {
+  console.log(event, event.target.getBound())
+}
+
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 }
 
 const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
   const { selectedNodes, rawOgcService } = useTreeContext()
-  const map = useMap()
+  // const map = useMap()
 
   const getMapUrl: string = useMemo(() => { return rawOgcService?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? '' }, [rawOgcService])
 
   const layers: string = useMemo(() => {
     // we call only the leafnodes
-    const layerIdentifiers = selectedNodes.toSorted((a: RaRecord, b: RaRecord) => b.lft - a.lft).filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+    const layerIdentifiers = selectedNodes.filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
     return layerIdentifiers.join(',') ?? ''
   }, [selectedNodes])
 
@@ -48,19 +52,22 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
       version={rawOgcService?.version === '' ? '1.3.0' : rawOgcService?.version}
       // layers={layers}
       transparent={true}
-      // tileSize={map.getSize()}
+      zoomOffset={-1}
       format='image/png'
-    // tms={false}
+      noWrap
+      // tms={false}
 
-    // opacity={0}
+      // opacity={0}
+      eventHandlers={{ moveend: onMoveend, viewreset: onMoveend }}
+
     />
 
   )
 }
 
-const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
+const WMSViewer = (): ReactNode => {
   const containerId = useId()
-  const mapRef = useRef<LeafletMap>(null)
+  const mapRef = useRef<Map>(null)
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
@@ -75,7 +82,9 @@ const WMSViewer = ({ ...rest }: WmsClient): ReactNode => {
       <div>
         <Box id={containerId} sx={{ ...style }}>
           <MapContainer
+
             whenReady={() => { resizeMap() }}
+
             center={[51.505, -0.09]}
             zoom={2}
             scrollWheelZoom={true}

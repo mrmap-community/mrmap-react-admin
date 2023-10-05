@@ -78,7 +78,7 @@ const SelectTreeNode = ({ record }: SelectTreeNodeProps): ReactNode => {
 
   const isIndeterminate = useMemo(() => {
     return Boolean(selectedNodes.find(node => isDescendantOf(node, record))) && !isChecked
-  }, [selectedNodes, record])
+  }, [selectedNodes, record, isChecked])
 
   return (
     <Checkbox
