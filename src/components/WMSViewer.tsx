@@ -1,14 +1,14 @@
 import { type ReactNode, useCallback, useId, useMemo, useRef } from 'react'
-import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
+import { type RaRecord, type SimpleShowLayoutProps, TextField } from 'react-admin'
 import { MapContainer, WMSTileLayer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
+import Autocomplete from '@mui/material/Autocomplete'
 import { type Map } from 'leaflet'
 
 import OgcTreeView from './OGCTree/OGCTreeView'
 import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
 import RightDrawer from './RightDrawer'
-
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -59,7 +59,7 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
   )
 }
 
-const WMSViewer = (): ReactNode => {
+const WMSViewerCore = (): ReactNode => {
   const containerId = useId()
   const mapRef = useRef<Map>(null)
 
@@ -71,30 +71,49 @@ const WMSViewer = (): ReactNode => {
     }
   }, [])
 
+  const { flatTree } = useTreeContext()
+
+  const availableCrs = useMemo(() => {
+    return flatTree?.[0]?.referenceSystems ?? []
+  }, [flatTree])
+
+  return (
+    <div>
+      <Box id={containerId} sx={{ ...style }}>
+        <Autocomplete
+          disablePortal
+          id="combo-box-demo"
+          options={availableCrs}
+          sx={{ width: 300 }}
+          renderInput={(params) => <TextField {...params} label="Movie" />}
+        />
+        <MapContainer
+          whenReady={() => { resizeMap() }}
+          center={[51.505, -0.09]}
+          zoom={2}
+          scrollWheelZoom={true}
+          style={{ flex: 1, height: '100%', width: '100%' }}
+
+        >
+          <WMSTileLayerCombined />
+
+        </MapContainer>
+      </Box>
+      <RightDrawer
+        leftComponentId={containerId}
+        callback={resizeMap}
+      >
+        <OgcTreeView jsonApiParams={{ include: 'layers,operationUrls' }}><div></div></OgcTreeView>
+      </RightDrawer>
+    </div>
+  )
+}
+
+const WMSViewer = (): ReactNode => {
   return (
     <TreeBase>
-      <div>
-        <Box id={containerId} sx={{ ...style }}>
-          <MapContainer
+      <WMSViewerCore />
 
-            whenReady={() => { resizeMap() }}
-
-            center={[51.505, -0.09]}
-            zoom={2}
-            scrollWheelZoom={true}
-            style={{ flex: 1, height: '100%', width: '100%' }}
-
-          >
-            <WMSTileLayerCombined />
-          </MapContainer>
-        </Box>
-        <RightDrawer
-          leftComponentId={containerId}
-          callback={resizeMap}
-        >
-          <OgcTreeView jsonApiParams={{ include: 'layers,operationUrls' }}><div></div></OgcTreeView>
-        </RightDrawer>
-      </div>
     </TreeBase >
   )
 }
