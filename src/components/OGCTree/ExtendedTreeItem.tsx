@@ -9,6 +9,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { TreeItem, type TreeItemProps } from '@mui/x-tree-view'
 
+import NodeContextMenu from './NodeContextMenu'
 import { useTreeContext } from './TreeContext'
 import { getDescendants, isDescendantOf } from './utils'
 import { type ActivateButtonProps } from './WmsTreeView'
@@ -120,7 +121,7 @@ const ExtendedTreeItem = ({
           {childCount > 0 ? <Chip label={childCount} /> : null}
         </Box>
         <Box color="inherit" sx={{ mr: 1 }} >
-          <ActivateButton record={record} callback={onUpdateSuccessed} />
+          <NodeContextMenu node={record} />
 
         </Box>
       </Box>
@@ -138,7 +139,7 @@ const ExtendedTreeItem = ({
         }}
       >
         <SelectTreeNode record={record} />
-        <Box component={LayersIcon} color="inherit" sx={{ mr: 1 }} />
+        <Box component={LayersIcon} color={record.isActive ? 'green' : 'red'} sx={{ mr: 1 }} />
         <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
           <RecordRepresentation record={record} />
 

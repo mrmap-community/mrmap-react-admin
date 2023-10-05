@@ -3,7 +3,7 @@ import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer, WMSTileLayer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import { type LeafletEvent, type Map } from 'leaflet'
+import { type Map } from 'leaflet'
 
 import OgcTreeView from './OGCTree/OGCTreeView'
 import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
@@ -16,10 +16,6 @@ const style = {
   height: 'calc(100vh - 50px)'
   // maxHeight: 'calc(100vh - 50px !important)'
 
-}
-
-const onMoveend = (event: LeafletEvent): void => {
-  console.log(event, event.target.getBound())
 }
 
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
@@ -43,7 +39,6 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
 
   return (
     <WMSTileLayer
-
       url={getMapUrl}
       params={
         { layers }
@@ -55,10 +50,9 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
       zoomOffset={-1}
       format='image/png'
       noWrap
-      // tms={false}
+    // tms={false}
 
-      // opacity={0}
-      eventHandlers={{ moveend: onMoveend, viewreset: onMoveend }}
+    // opacity={0}
 
     />
 

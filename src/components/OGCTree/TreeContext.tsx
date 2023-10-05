@@ -24,7 +24,7 @@ export const TreeBase = ({ children }): ReactNode => {
     isLoading, // boolean that is true until the record is available for the first time
     record, // record fetched via dataProvider.getOne() based on the id from the location
     refetch // callback to refetch the record via dataProvider.getOne()
-  } = useShowController({ queryOptions: { meta: { jsonApiParams: { include: 'layers,operationUrls' } } } })
+  } = useShowController({ queryOptions: { meta: { jsonApiParams: { include: 'layers,operationUrls,layers.referenceSystems' } } } })
 
   const setSelectedNodesSorted = useCallback((nodes: RaRecord[]) => {
     setSelectedNodes(nodes.toSorted((a: RaRecord, b: RaRecord) => b.lft - a.lft))
