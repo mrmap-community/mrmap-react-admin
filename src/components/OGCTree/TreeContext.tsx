@@ -27,7 +27,7 @@ export const TreeBase = ({ children }): ReactNode => {
   } = useShowController({ queryOptions: { meta: { jsonApiParams: { include: 'layers,operationUrls,layers.referenceSystems' } } } })
 
   const setSelectedNodesSorted = useCallback((nodes: RaRecord[]) => {
-    setSelectedNodes(nodes.toSorted((a: RaRecord, b: RaRecord) => b.lft - a.lft))
+    setSelectedNodes(nodes.sort((a: RaRecord, b: RaRecord) => b.lft - a.lft))
   }, [])
 
   useEffect(() => {

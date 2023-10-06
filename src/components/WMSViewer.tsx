@@ -6,6 +6,8 @@ import { Box } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import { type Map } from 'leaflet'
 
+import ListGuesser from '../jsonapi/components/ListGuesser'
+import BottomDrawer from './BottomDrawer'
 import OgcTreeView from './OGCTree/OGCTreeView'
 import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
 import RightDrawer from './RightDrawer'
@@ -105,6 +107,19 @@ const WMSViewerCore = (): ReactNode => {
       >
         <OgcTreeView jsonApiParams={{ include: 'layers,operationUrls' }}><div></div></OgcTreeView>
       </RightDrawer>
+      <BottomDrawer
+        aboveComponentId={containerId}
+        callback={resizeMap}
+      >
+
+        <ListGuesser
+          resource='AllowedWebMapServiceOperation'
+          relatedResource='WebMapService'
+        >
+
+        </ListGuesser>
+
+      </BottomDrawer>
     </div>
   )
 }

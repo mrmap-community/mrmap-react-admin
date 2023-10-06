@@ -1,5 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useStore } from 'react-admin'
+import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useSidebarState, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import Container from '@mui/material/Container'
@@ -83,12 +83,24 @@ const ListGuesser = ({
   additionalActions = undefined,
   ...props
 }: ListGuesserProps): ReactElement => {
+  const [open] = useSidebarState()
+
   const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
 
   const { id } = useParams()
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
+
+  const createOperationId = useMemo(() => {
+    if (relatedResource !== undefined && relatedResource !== '') {
+      return `create_${relatedResource}`
+    } else {
+      return `create_${name}`
+    }
+  }, [relatedResource])
+
+  const { schema: createSchema } = useOperationSchema(createOperationId)
 
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
@@ -185,24 +197,50 @@ const ListGuesser = ({
     <List
       filters={filters}
       actions={<ListActions filters={filters} />}
+      hasCreate={(createSchema !== undefined)}
       queryOptions={{
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-              relatedResource: {
-                resource: relatedResource,
-                id
-              },
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            relatedResource: {
+              resource: relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
           : {
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
+      sx={
+        {
+          '& .RaList-main': {
+            width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px'})`,
+            maxHeight: 'calc(100vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
+            overfloxX: 'hidden'
+          },
+          '& .RaDatagrid-tableWrapper': {
+            overflowX: 'scroll'
+          }
+        }
+      }
 
       aside={
+        <HistoryList
+          resource={`Historical${props.resource ?? ''}`}
+          related={props.resource}
+          record={selectedRecord}
+          cardSx={
+            {
+              marginLeft: '1em',
+              marginTop: '1em',
+              height: 'calc(100vh - 110px - 1em)', // 174px ==> 50 appbar, 52 pagination,  1 em top padding
+              width: `calc(${open ? '40vw' : '20vw'} - 1em - ${open ? '240px' : '50px'})`,
+              overflowY: 'scroll'
+            }
+          }
 
-        <HistoryList resource={`Historical${props.resource ?? ''}`} related={props.resource} record={selectedRecord} />
+        />
       }
 
       {...props}
@@ -210,22 +248,19 @@ const ListGuesser = ({
     >
 
       {/* rowClick='edit' only if the resource provide edit operations */}
-      <Container maxWidth='xl' >
 
-        < DatagridConfigurable
-          rowClick={(id, resource, record) => { if (selectedRecord !== record) { setSelectedRecord(record) }; return false }}
+      < DatagridConfigurable
+        rowClick={(id, resource, record) => { if (selectedRecord !== record) { setSelectedRecord(record) }; return false }}
+      // FIXME: this styling shoud be part of the parent and this component should always fill full available size
+      >
+        {...fields}
 
-          sx={{ width: '100%', overflowX: 'auto', maxHeight: 'calc(100vh - 174px )' }} // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
-        >
-          {...fields}
-
-          < FieldWrapper label="Actions">
-            {(hasShow ?? false) && <ShowButton />}
-            {(hasEdit ?? false) && <EditButton />}
-            {additionalActions}
-          </FieldWrapper >
-        </DatagridConfigurable >
-      </Container>
+        < FieldWrapper label="Actions" >
+          {(hasShow ?? false) && <ShowButton />}
+          {(hasEdit ?? false) && <EditButton />}
+          {additionalActions}
+        </FieldWrapper >
+      </DatagridConfigurable >
 
     </List >
   )

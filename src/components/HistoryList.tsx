@@ -4,7 +4,8 @@ import { type RaRecord, RecordRepresentation, SimpleList, type SimpleListProps, 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import UpdateIcon from '@mui/icons-material/Update'
-import { Box, Card, CardHeader, Chip, Typography } from '@mui/material'
+import { Box, Card, CardHeader, Chip, type Theme, Typography } from '@mui/material'
+import { type SxProps } from '@mui/system'
 
 const getIcon = (record: RaRecord): ReactNode => {
   if (record.historyType === 'created') {
@@ -57,9 +58,16 @@ const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): Rea
 export interface HistoryListProps extends SimpleListProps {
   related: string
   record: RaRecord
+  cardSx?: SxProps<Theme>
 }
 
-const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListProps): ReactNode => {
+const HistoryList = ({
+  related,
+  record: selectedRecord,
+  cardSx = {},
+
+  ...props
+}: HistoryListProps): ReactNode => {
   const jsonApiParams = useMemo(() => {
     const params: any = { include: 'historyUser,historyRelation' }
     // params[`fields[${related ?? ''}]`] = 'title'
@@ -82,8 +90,9 @@ const HistoryList = ({ related, record: selectedRecord, ...props }: HistoryListP
   const getRecordRepresentation = useGetRecordRepresentation(related)
 
   return (
-    <Card sx={{ marginLeft: '1em', marginTop: '1em', height: 'calc(100vh - 110px - 1em)', overflowY: 'scroll' } // 174px ==> 50 appbar, 52 pagination,  1 em top padding
-    }>
+    <Card
+      sx={cardSx}
+    >
       <CardHeader
         title={(selectedRecord === undefined) ? 'Last 10 events' : getRecordRepresentation(selectedRecord)}
         subheader={
