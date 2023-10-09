@@ -1,5 +1,5 @@
 import { type ReactElement } from 'react'
-import { BooleanField, DateField, EmailField, NumberField, type RaRecord, TextField, UrlField } from 'react-admin'
+import { BooleanField, DateField, EmailField, NumberField, TextField, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
@@ -35,6 +35,7 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
     if (primaryDataSchema?.type === 'object') {
       // single related object
       const typeSchema = primaryDataSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
+      // eslint-disable-next-line
       const related = typeSchema?.enum?.[0]
       // TODO
       // return <ReferenceOneField {...commonProps} reference={related} target={resource} />

@@ -62,7 +62,7 @@ const OgcTreeView = ({
   const [expanded, setExpanded] = useState<string[]>([])
 
   const handleToggle = (event: SyntheticEvent, nodeIds: string[]): void => {
-    if (event.target.closest('.MuiSvgIcon-root')) {
+    if ((event.target as HTMLElement).closest('.MuiSvgIcon-root') != null) {
       setExpanded(nodeIds)
     }
   }
@@ -79,7 +79,7 @@ const OgcTreeView = ({
       onNodeToggle={handleToggle}
       expanded={expanded}
     >
-      <OgcLayerTree flatLayers={flatTree} treeRefetch={refetch} />
+      <OgcLayerTree flatLayers={flatTree} treeRefetch={() => { void refetch() }} />
     </TreeView>
   )
 }

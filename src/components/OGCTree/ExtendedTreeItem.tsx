@@ -14,10 +14,11 @@ import { useTreeContext } from './TreeContext'
 import { getDescendants, isDescendantOf } from './utils'
 import { type ActivateButtonProps } from './WmsTreeView'
 
+// eslint-disable-next-line
 const ActivateButton = ({ record, callback = () => { } }: ActivateButtonProps): ReactNode => {
-  const [update, { data, isLoading, error, isSuccess }] = useUpdate()
+  const [update, { data, isLoading, isSuccess }] = useUpdate()
   const [isMouseOver, setIsMouseOver] = useState(false)
-
+  const isActive = Boolean(record.isActive)
   useEffect(() => {
     if (isSuccess) {
       callback()
@@ -25,13 +26,13 @@ const ActivateButton = ({ record, callback = () => { } }: ActivateButtonProps): 
   }, [data])
 
   const getLabel = useCallback(() => {
-    if (isMouseOver && record.isActive) {
+    if (isMouseOver && isActive) {
       return <><HighlightOffIcon sx={{ mr: 1 }} /> deactivate</>
-    } else if (isMouseOver && !record.isActive) {
+    } else if (isMouseOver && !isActive) {
       return <><CheckCircleOutlineIcon sx={{ mr: 1 }} /> activate</>
-    } else if (!isMouseOver && record.isActive) {
+    } else if (!isMouseOver && isActive) {
       return <><CheckCircleOutlineIcon sx={{ mr: 1 }} /> active</>
-    } else if (!isMouseOver && !record.isActive) {
+    } else if (!isMouseOver && !isActive) {
       return <><HighlightOffIcon sx={{ mr: 1 }} /> inactive</>
     }
   }, [record, isMouseOver])
@@ -41,8 +42,8 @@ const ActivateButton = ({ record, callback = () => { } }: ActivateButtonProps): 
       key={`activate-button-of-${record.id}`}
       variant="extended"
       size="small"
-      color={isMouseOver ? record.isActive ? 'warning' : 'success' : record.isActive ? 'success' : 'warning'}
-      onClick={async () => await update('Layer', { id: record.id, data: { id: record.id, isActive: !record.isActive }, previousData: record })}
+      color={isMouseOver ? isActive ? 'warning' : 'success' : isActive ? 'success' : 'warning'}
+      onClick={() => { void update('Layer', { id: record.id, data: { id: record.id, isActive: !isActive }, previousData: record }) }}
       onMouseOver={() => { setIsMouseOver(true) }}
       onMouseOut={() => { setIsMouseOver(false) }}
       disabled={isLoading}
@@ -129,6 +130,7 @@ const ExtendedTreeItem = ({
   }, [])
 
   const getLabel = useCallback((record: RaRecord): ReactNode => {
+    const isActive = Boolean(record.isActive)
     return (
       <Box
         sx={{
@@ -139,7 +141,7 @@ const ExtendedTreeItem = ({
         }}
       >
         <SelectTreeNode record={record} />
-        <Box component={LayersIcon} color={record.isActive ? 'green' : 'red'} sx={{ mr: 1 }} />
+        <Box component={LayersIcon} color={isActive ? 'green' : 'red'} sx={{ mr: 1 }} />
         <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
           <RecordRepresentation record={record} />
 

@@ -1,7 +1,6 @@
 import { type ReactElement, useContext } from 'react'
 import {
   Admin,
-  CustomRoutes,
   defaultTheme, Loading,
   type RaThemeOptions
 } from 'react-admin'

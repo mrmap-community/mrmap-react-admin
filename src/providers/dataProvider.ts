@@ -1,4 +1,4 @@
-import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams } from 'react-admin'
+import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult, type DeleteResult } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
 import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
@@ -6,6 +6,18 @@ import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } f
 import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 import { TOKENNAME } from './authProvider'
+
+export interface RelatedResource {
+  resource: string
+  id: Identifier
+}
+
+export interface GetListJsonApiParams extends GetListParams {
+  meta?: {
+    relatedResource?: RelatedResource
+    jsonApiParams?: any
+  }
+}
 
 export interface JsonApiDataProviderOptions extends Options {
   entrypoint: string
@@ -126,13 +138,15 @@ const dataProvider = ({
   // TODO: get baseURL from open api client
   const axiosRequestConf = { baseURL: rest.entrypoint, headers }
 
-  const updateResource = async (resource: string, params: UpdateParams): Promise<{ data: any }> =>
+  const updateResource = async (resource: string, params: UpdateParams): Promise<UpdateResult<any>> =>
     await httpClient.then(async (client) => {
       const operationId = `partial_update_${resource}`
       const operation = client.api.getOperation(operationId)
+      if (operation === undefined) {
+        throw new Error('update operatio not found')
+      }
 
       // FIXME: only post the edited fields for partial update
-
       const conf = client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
       return await client.request(conf)
     }).then((response) => {
@@ -141,7 +155,7 @@ const dataProvider = ({
       return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
     })
 
-  const deleteResource = async (resource: string, params: DeleteParams): Promise<{ data: any }> =>
+  const deleteResource = async (resource: string, params: DeleteParams): Promise<DeleteResult<any>> =>
     await httpClient.then(async (client) => {
       const conf = client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
       return await client.request(conf)
@@ -150,7 +164,7 @@ const dataProvider = ({
     })
 
   return {
-    getList: async (resource: string, params: GetListParams) => {
+    getList: async (resource: string, params: GetListJsonApiParams) => {
       let operationId = `list_${resource}`
       const relatedResource = params.meta?.relatedResource
 
@@ -282,6 +296,9 @@ const dataProvider = ({
       await httpClient.then(async (client) => {
         const operationId = `create_${resource}`
         const operation = client.api.getOperation(operationId)
+        if (operation === undefined) {
+          throw new Error('create operation not found')
+        }
 
         const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
         return await client.request(conf)
@@ -289,7 +306,7 @@ const dataProvider = ({
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
-      }).catch(error => {
+      }).catch(async error => {
         if (error.response.status === 400) {
           const jsonApiErrors: JsonApiErrorObject[] = error.response.data.errors
           const fieldErrors: any = {}
@@ -307,11 +324,13 @@ const dataProvider = ({
             }
           })
           // TODO: translate message
-          throw new HttpError(
+          return await Promise.reject(new HttpError(
             'Bad Request',
             error.response.status,
             { errors: fieldErrors }
-          )
+          ))
+        } else {
+          return await Promise.reject(error)
         }
       }),
 
@@ -321,7 +340,8 @@ const dataProvider = ({
     updateMany: async (resource: string, params: UpdateManyParams) => {
       // Hacky many update via for loop. JSON:API does not support many update in a single transaction.
       const results: Identifier[] = []
-      params.ids.forEach(async (id) => {
+
+      for (const id of params.ids) {
         await updateResource(
           resource,
           {
@@ -329,11 +349,11 @@ const dataProvider = ({
             data: params.data,
             previousData: undefined
           }
-        ).then(() => {
-          results.push(id)
+        ).then((data) => {
+          results.push(data.data.id)
         })
       }
-      )
+
       return await Promise.resolve({ data: results })
     },
 
@@ -341,14 +361,13 @@ const dataProvider = ({
       await deleteResource(resource, params),
     deleteMany: async (resource: string, params: DeleteManyParams) => {
       const results: Identifier[] = []
-      params.ids.forEach(async (id) => {
+      for (const id of params.ids) {
         await deleteResource(
           resource, { id }
-        ).then(() => {
-          results.push(id)
+        ).then((data) => {
+          results.push(data.data.id)
         })
       }
-      )
       return await Promise.resolve({ data: results })
     },
 

@@ -8,7 +8,7 @@ import inputGuesser from './openapi/inputGuesser'
 import { getEncapsulatedSchema } from './openapi/parser'
 import { type JsonApiDocument, type JsonApiPrimaryData, type ResourceIdentifierObject, type ResourceLinkage } from './types/jsonapi'
 
-export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operation: Operation): JsonApiPrimaryData => {
+export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type: string, operation: Operation): JsonApiPrimaryData => {
   /** helper to transform react admin data to json:api conform primary data object
      *
      */
@@ -38,8 +38,8 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord, type: string, operat
           relationships[relationName] = { data: { id: relationData.id, type: relationResourceType?.enum?.[0] } }
         }
       }
-      // TODO: delete attributes.relationName does not work
-      delete attributes[relationName]
+      // TODO: delete attributes.relationName does not work (no-dynamic-delete)
+      delete attributes[relationName] // eslint-disable-line 
     }
   }
 

@@ -1,4 +1,4 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useCallback, useContext, useEffect, useState, type PropsWithChildren } from 'react'
 import { type RaRecord, useShowController } from 'react-admin'
 import { type RefetchOptions, type RefetchQueryFilters } from 'react-query'
 
@@ -9,13 +9,13 @@ export interface TreeContextType {
   setFlatTree: Dispatch<SetStateAction<RaRecord[]>>
   rawOgcService: RaRecord | undefined
   setRawOgcService: Dispatch<SetStateAction<RaRecord | undefined>>
-  refetch: (options?: RefetchOptions & RefetchQueryFilters<unknown>) => void
+  refetch: (options?: RefetchOptions & RefetchQueryFilters<unknown>) => Promise<any>
   isLoading: boolean
 }
 
 export const TreeContext = createContext<TreeContextType | undefined>(undefined)
 
-export const TreeBase = ({ children }): ReactNode => {
+export const TreeBase = ({ children }: PropsWithChildren): ReactNode => {
   const [selectedNodes, setSelectedNodes] = useState<RaRecord[]>([])
   const [flatTree, setFlatTree] = useState<RaRecord[]>([])
   const [rawOgcService, setRawOgcService] = useState<RaRecord | undefined>(undefined)

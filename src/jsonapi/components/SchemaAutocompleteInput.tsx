@@ -33,7 +33,8 @@ const SchemaAutocompleteInput = (
   const [errorInitial, setErrorInitial] = useState()
 
   const [isLoadingChoices, setIsLoadingChoices] = useState(false)
-  const [errorChoices, setErrorChoices] = useState()
+  // TODO: show errors
+  const [errorChoices, setErrorChoices] = useState() // eslint-disable-line
 
   const record = useRecordContext()
   const [selectedChoice, setSelectedChoice] = useState<RaRecord | undefined>((record === undefined) ? undefined : record[source])

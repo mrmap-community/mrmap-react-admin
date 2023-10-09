@@ -5,9 +5,12 @@ export const ResourceCreate = (): ReactElement => {
   const def = useResourceDefinition()
   const jsonApiType = def.options?.type
 
-  const onError = (error) => {
+  // TODO: handle errors
+  /* eslint-disable */
+  const onError = (error: unknown, variables: unknown, context: unknown | undefined): void => {
     // TODO: handle jsonapi errors
   }
+  /* eslint-enable */
 
   return (
     <Create

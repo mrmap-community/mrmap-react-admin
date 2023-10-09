@@ -48,5 +48,9 @@ module.exports = {
         "react": {
             "version": "detect"
         }
+    },
+    "ignorePatterns": ["**/vite-env.d.ts"],
+    "rules": {
+
     }
 }

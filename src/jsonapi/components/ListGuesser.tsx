@@ -2,7 +2,6 @@ import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, use
 import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useSidebarState, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
-import Container from '@mui/material/Container'
 import { snakeCase } from 'lodash'
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
@@ -202,15 +201,15 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-            relatedResource: {
-              resource: relatedResource,
-              id
-            },
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              relatedResource: {
+                resource: relatedResource,
+                id
+              },
+              jsonApiParams: { ...jsonApiQuery }
+            }
           : {
-            jsonApiParams: { ...jsonApiQuery }
-          }
+              jsonApiParams: { ...jsonApiQuery }
+            }
       }}
       sx={
         {
@@ -228,7 +227,7 @@ const ListGuesser = ({
       aside={
         <HistoryList
           resource={`Historical${props.resource ?? ''}`}
-          related={props.resource}
+          related={props.resource ?? ''}
           record={selectedRecord}
           cardSx={
             {

@@ -1,5 +1,5 @@
 import { type ReactElement, useMemo } from 'react'
-import { Create, type CreateProps, Edit, type EditProps, Loading, type RaRecord, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
+import { Create, type CreateProps, Edit, type EditProps, Loading, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
 
 import { snakeCase } from 'lodash'
 
@@ -15,8 +15,8 @@ export const EditGuesser = (
   const editOperationId = useMemo(() => (name !== undefined) ? `partial_update_${name}` : '', [name])
   const showOperationId = useMemo(() => (name !== undefined) ? `retrieve_${name}` : '', [name])
 
-  const { schema: editSchema, operation: editOperation } = useOperationSchema(editOperationId)
-  const { schema: showSchema, operation: showOperation } = useOperationSchema(showOperationId)
+  const { schema: editSchema } = useOperationSchema(editOperationId)
+  const { operation: showOperation } = useOperationSchema(showOperationId)
 
   const fields = useMemo(() => (editSchema !== undefined) ? getFieldsForOperation(editSchema, record) : [], [editSchema, record])
   const includeOptions = useMemo(() => (showOperation !== undefined) ? getIncludeOptions(showOperation) : [], [showOperation])
@@ -52,9 +52,11 @@ export const EditGuesser = (
     , [sparseFieldsQueryValue, includeQueryValue]
   )
 
+  /* eslint-disable */
   const onError = (error) => {
     // TODO: handle jsonapi errors
   }
+  /* eslint-enable */
 
   if (Object.keys(jsonApiQuery).length === 0 || fields.length === 0) {
     return <Loading />

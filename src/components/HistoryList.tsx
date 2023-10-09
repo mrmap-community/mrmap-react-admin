@@ -18,13 +18,14 @@ const getIcon = (record: RaRecord): ReactNode => {
 }
 
 const getTertiaryText = (record: RaRecord): ReactNode => {
+  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
   return `${new Date(record.historyDate).toLocaleString('de-DE')}, by ${record.historyUser?.username}`
 }
 
 export interface PrimaryTextProps {
   record: RaRecord
   related: string
-  selectedRecord: RaRecord
+  selectedRecord: RaRecord | undefined
 }
 
 const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): ReactNode => {
@@ -46,6 +47,7 @@ const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): Rea
         )
       }
     } else if (record.historyType === 'deleted') {
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       return `${record.title} (${record.historyRelation.id})`
     } else {
       return <RecordRepresentation record={record.historyRelation} resource={related} />
@@ -57,7 +59,7 @@ const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): Rea
 
 export interface HistoryListProps extends SimpleListProps {
   related: string
-  record: RaRecord
+  record: RaRecord | undefined
   cardSx?: SxProps<Theme>
 }
 
@@ -78,7 +80,7 @@ const HistoryList = ({
     return params
   }, [props.resource, selectedRecord])
 
-  const { data, total, isLoading, error, refetch } = useGetList(
+  const { data, total, isLoading } = useGetList(
     props.resource ?? '',
     {
       pagination: { page: 1, perPage: 10 },
