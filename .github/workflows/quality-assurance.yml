@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: check linting
+    name: build project
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
