@@ -58,7 +58,7 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'Keyword'} icon={LocalOfferIcon} />
         <ResourceGuesser name={'BackgroundProcess'} />
         <ResourceGuesser name={'DatasetMetadata'} />
-
+        <ResourceGuesser name={'AllowedWebMapServiceOperation'} />
       </Admin>
     )
   }

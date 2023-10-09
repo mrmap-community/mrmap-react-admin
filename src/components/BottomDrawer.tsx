@@ -1,35 +1,35 @@
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { ChevronLeft, ChevronRight } from '@mui/icons-material'
+import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
 
-export interface RightDrawerProps extends DrawerProps {
-  leftComponentId?: string
-  width?: string
+export interface BottomDrawerProps extends DrawerProps {
+  aboveComponentId?: string
+  height?: string
   callback?: () => void
 }
 
-const RightDrawer = ({
-  leftComponentId,
-  width = '20vw',
+const BottomDrawer = ({
+  aboveComponentId,
+  height = '30vh',
   callback = () => { },
   ...rest
-}: RightDrawerProps): ReactNode => {
+}: BottomDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [isVisible, setIsVisible] = useState<boolean>(true)
 
   // adjust padding of map div
   useEffect(() => {
-    if (leftComponentId !== undefined) {
-      const div: any = document.querySelector(`#${CSS.escape(leftComponentId)}`)
+    if (aboveComponentId !== undefined) {
+      const div: any = document.querySelector(`#${CSS.escape(aboveComponentId)}`)
       if (!isVisible) {
-        div.style.paddingRight = '0'
+        div.style.paddingBottom = '0'
       } else {
-        div.style.paddingRight = width
+        div.style.paddingBottom = height
       }
     }
-  }, [leftComponentId, isVisible])
+  }, [aboveComponentId, isVisible])
 
   const toggleVisible = useCallback(() => {
     setIsVisible(!isVisible)
@@ -47,35 +47,35 @@ const RightDrawer = ({
         onClick={toggleVisible}
         sx={{
           position: 'absolute',
-          top: '50%',
+          left: '50%',
           zIndex: 1000,
           padding: 0,
-          right: `${isVisible ? width : '0px'}`,
+          bottom: `${isVisible ? height : '0px'}`,
           transition: 'all 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
           border: 'unset',
-          borderRadius: '5px 0 0 5px',
-          width: '30px',
-          height: '60px',
+          borderRadius: '5px 5px 0 0',
+          width: '60px',
+          height: '30px',
           color: 'white',
           backgroundColor: '#002140'
         }
         }
 
       >
-        {isVisible ? <ChevronRight /> : <ChevronLeft />}
+        {isVisible ? <ExpandMore /> : <ExpandLess />}
       </IconButton >
       <Drawer
-        anchor="right"
+        anchor="bottom"
         open={isVisible}
         variant="persistent"
         style={{ top: '100px' }}
         sx={
           {
             '& .MuiDrawer-paper': {
-              width,
-              zIndex: 1000,
-              top: '50px',
-              height: 'calc(100vh - 50px)'
+              height,
+              zIndex: 1001,
+              // top: '50px',
+              width: '100vw'
               // padding: `${theme.spacing(0, 1)}`,
               // justifyContent: 'flex-start'
             }
@@ -89,4 +89,4 @@ const RightDrawer = ({
   )
 }
 
-export default RightDrawer
+export default BottomDrawer
