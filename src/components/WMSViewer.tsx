@@ -7,10 +7,11 @@ import Autocomplete from '@mui/material/Autocomplete'
 import { type Map } from 'leaflet'
 
 import ListGuesser from '../jsonapi/components/ListGuesser'
-import BottomDrawer from './BottomDrawer'
+import BottomDrawer from './Drawer/BottomDrawer'
 import OgcTreeView from './OGCTree/OGCTreeView'
 import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
-import RightDrawer from './RightDrawer'
+import RightDrawer from './Drawer/RightDrawer'
+import { DrawerBase } from './Drawer/DrawerContext'
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -80,7 +81,7 @@ const WMSViewerCore = (): ReactNode => {
   }, [flatTree])
 
   return (
-    <div>
+    <DrawerBase>
       <Box id={containerId} sx={{ ...style }}>
         <Autocomplete
           disablePortal
@@ -120,7 +121,7 @@ const WMSViewerCore = (): ReactNode => {
         </ListGuesser>
 
       </BottomDrawer>
-    </div>
+    </DrawerBase>
   )
 }
 

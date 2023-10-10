@@ -1,41 +1,41 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
+import { useDrawerContext } from './DrawerContext'
 
 export interface RightDrawerProps extends DrawerProps {
   leftComponentId?: string
-  width?: string
   callback?: () => void
 }
 
 const RightDrawer = ({
   leftComponentId,
-  width = '20vw',
   callback = () => { },
   ...rest
 }: RightDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const [isVisible, setIsVisible] = useState<boolean>(true)
+
+  const { rightDrawer, setRightDrawer } = useDrawerContext()
 
   // adjust padding of map div
   useEffect(() => {
     if (leftComponentId !== undefined) {
       const div: any = document.querySelector(`#${CSS.escape(leftComponentId)}`)
-      if (!isVisible) {
+      if (!rightDrawer.isOpen) {
         div.style.paddingRight = '0'
       } else {
-        div.style.paddingRight = width
+        div.style.paddingRight = rightDrawer.width
       }
     }
-  }, [leftComponentId, isVisible])
+  }, [leftComponentId, rightDrawer.isOpen])
 
   const toggleVisible = useCallback(() => {
-    setIsVisible(!isVisible)
+    setRightDrawer({ ...rightDrawer, isOpen: !rightDrawer.isOpen })
     buttonRef.current?.blur()
     callback()
-  }, [isVisible, buttonRef])
+  }, [rightDrawer.isOpen, buttonRef])
 
   return (
     <>
@@ -50,7 +50,7 @@ const RightDrawer = ({
           top: '50%',
           zIndex: 1000,
           padding: 0,
-          right: `${isVisible ? width : '0px'}`,
+          right: `${rightDrawer.isOpen ? rightDrawer.width : '0px'}`,
           transition: 'all 0.2s cubic-bezier(0.23, 1, 0.32, 1)',
           border: 'unset',
           borderRadius: '5px 0 0 5px',
@@ -62,20 +62,20 @@ const RightDrawer = ({
         }
 
       >
-        {isVisible ? <ChevronRight /> : <ChevronLeft />}
+        {rightDrawer.isOpen ? <ChevronRight /> : <ChevronLeft />}
       </IconButton >
       <Drawer
         anchor="right"
-        open={isVisible}
+        open={rightDrawer.isOpen}
         variant="persistent"
         style={{ top: '100px' }}
         sx={
           {
             '& .MuiDrawer-paper': {
-              width,
+              width: rightDrawer.width,
               zIndex: 1000,
               top: '50px',
-              height: 'calc(100vh - 50px)'
+              height: rightDrawer.height
               // padding: `${theme.spacing(0, 1)}`,
               // justifyContent: 'flex-start'
             }
