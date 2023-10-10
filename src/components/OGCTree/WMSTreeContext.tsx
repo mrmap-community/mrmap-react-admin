@@ -2,7 +2,7 @@ import { createContext, type Dispatch, type ReactNode, type SetStateAction, useC
 import { type RaRecord, useShowController } from 'react-admin'
 import { type RefetchOptions, type RefetchQueryFilters } from 'react-query'
 
-export interface TreeContextType {
+export interface WMSTreeContextType {
   selectedNodes: RaRecord[]
   setSelectedNodes: (nodes: RaRecord[]) => void
   flatTree: RaRecord[]
@@ -13,9 +13,9 @@ export interface TreeContextType {
   isLoading: boolean
 }
 
-export const TreeContext = createContext<TreeContextType | undefined>(undefined)
+export const WMSTreeContext = createContext<WMSTreeContextType | undefined>(undefined)
 
-export const TreeBase = ({ children }: PropsWithChildren): ReactNode => {
+export const WMSTreeBase = ({ children }: PropsWithChildren): ReactNode => {
   const [selectedNodes, setSelectedNodes] = useState<RaRecord[]>([])
   const [flatTree, setFlatTree] = useState<RaRecord[]>([])
   const [rawOgcService, setRawOgcService] = useState<RaRecord | undefined>(undefined)
@@ -38,7 +38,7 @@ export const TreeBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [record])
 
   return (
-    <TreeContext.Provider
+    <WMSTreeContext.Provider
       value={
         {
           selectedNodes,
@@ -52,14 +52,14 @@ export const TreeBase = ({ children }: PropsWithChildren): ReactNode => {
         }
       }>
       {children}
-    </TreeContext.Provider>
+    </WMSTreeContext.Provider>
   )
 }
 
-export const useTreeContext = (): TreeContextType => {
-  const selectedNodesContext = useContext(TreeContext)
+export const useWMSTreeContext = (): WMSTreeContextType => {
+  const selectedNodesContext = useContext(WMSTreeContext)
   if (selectedNodesContext === undefined) {
-    throw new Error('selectedNodesContext must be inside a TreeBase')
+    throw new Error('useWMSTreeContext must be inside a WMSTreeBase')
   }
   return selectedNodesContext
 }

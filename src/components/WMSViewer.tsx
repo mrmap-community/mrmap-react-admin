@@ -1,17 +1,16 @@
 import { type ReactNode, useCallback, useId, useMemo, useRef } from 'react'
-import { type RaRecord, type SimpleShowLayoutProps, TextField } from 'react-admin'
+import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer, WMSTileLayer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import Autocomplete from '@mui/material/Autocomplete'
 import { type Map } from 'leaflet'
 
 import ListGuesser from '../jsonapi/components/ListGuesser'
 import BottomDrawer from './Drawer/BottomDrawer'
 import OgcTreeView from './OGCTree/OGCTreeView'
-import { TreeBase, useTreeContext } from './OGCTree/TreeContext'
 import RightDrawer from './Drawer/RightDrawer'
 import { DrawerBase } from './Drawer/DrawerContext'
+import { WMSTreeBase, useWMSTreeContext } from './OGCTree/WMSTreeContext'
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -24,8 +23,8 @@ const style = {
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 }
 
-const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
-  const { selectedNodes, rawOgcService } = useTreeContext()
+const WMSTileLayerSingleRequest = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
+  const { selectedNodes, rawOgcService } = useWMSTreeContext()
   // const map = useMap()
 
   const getMapUrl: string = useMemo(() => { return rawOgcService?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? '' }, [rawOgcService])
@@ -46,17 +45,11 @@ const WMSTileLayerCombined = ({ ...rest }: WMSLayerTreeProps): ReactNode => {
       params={
         { layers }
       }
-      // maxZoom={6}
       version={rawOgcService?.version === '' ? '1.3.0' : rawOgcService?.version}
-      // layers={layers}
       transparent={true}
       zoomOffset={-1}
       format='image/png'
       noWrap
-    // tms={false}
-
-    // opacity={0}
-
     />
 
   )
@@ -74,7 +67,7 @@ const WMSViewerCore = (): ReactNode => {
     }
   }, [])
 
-  const { flatTree } = useTreeContext()
+  const { flatTree } = useWMSTreeContext()
 
   const availableCrs = useMemo(() => {
     return flatTree?.[0]?.referenceSystems ?? []
@@ -83,13 +76,7 @@ const WMSViewerCore = (): ReactNode => {
   return (
     <DrawerBase>
       <Box id={containerId} sx={{ ...style }}>
-        <Autocomplete
-          disablePortal
-          id="combo-box-demo"
-          options={availableCrs}
-          sx={{ width: 300 }}
-          renderInput={(params) => <TextField {...params} label="Movie" />}
-        />
+
         <MapContainer
           whenReady={() => { resizeMap() }}
           center={[51.505, -0.09]}
@@ -98,7 +85,7 @@ const WMSViewerCore = (): ReactNode => {
           style={{ flex: 1, height: '100%', width: '100%' }}
 
         >
-          <WMSTileLayerCombined />
+          <WMSTileLayerSingleRequest />
 
         </MapContainer>
       </Box>
@@ -116,6 +103,7 @@ const WMSViewerCore = (): ReactNode => {
         <ListGuesser
           resource='AllowedWebMapServiceOperation'
           relatedResource='WebMapService'
+
         >
 
         </ListGuesser>
@@ -127,10 +115,10 @@ const WMSViewerCore = (): ReactNode => {
 
 const WMSViewer = (): ReactNode => {
   return (
-    <TreeBase>
+    <WMSTreeBase>
       <WMSViewerCore />
 
-    </TreeBase >
+    </WMSTreeBase >
   )
 }
 

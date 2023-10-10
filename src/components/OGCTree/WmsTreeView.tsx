@@ -4,7 +4,7 @@ import { type RaRecord } from 'react-admin'
 import { type TreeItemProps } from '@mui/x-tree-view'
 
 import OgcTreeView from './OGCTreeView'
-import { TreeBase } from './TreeContext'
+import { WMSTreeBase } from './WMSTreeContext'
 
 export interface ActivateButtonProps {
   record: RaRecord
@@ -18,9 +18,9 @@ export interface OgcLayerItemProps extends Partial<TreeItemProps> {
 
 const WmsTreeView = (): ReactNode => {
   return (
-    <TreeBase>
+    <WMSTreeBase>
       <OgcTreeView ><div></div></OgcTreeView>
-    </TreeBase>
+    </WMSTreeBase>
   )
 }
 

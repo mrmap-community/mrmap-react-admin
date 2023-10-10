@@ -10,9 +10,9 @@ import Typography from '@mui/material/Typography'
 import { TreeItem, type TreeItemProps } from '@mui/x-tree-view'
 
 import NodeContextMenu from './NodeContextMenu'
-import { useTreeContext } from './TreeContext'
 import { getDescendants, isDescendantOf } from './utils'
 import { type ActivateButtonProps } from './WmsTreeView'
+import { useWMSTreeContext } from './WMSTreeContext'
 
 // eslint-disable-next-line
 const ActivateButton = ({ record, callback = () => { } }: ActivateButtonProps): ReactNode => {
@@ -58,7 +58,7 @@ export interface SelectTreeNodeProps {
 }
 
 const SelectTreeNode = ({ record }: SelectTreeNodeProps): ReactNode => {
-  const { selectedNodes, setSelectedNodes, flatTree } = useTreeContext()
+  const { selectedNodes, setSelectedNodes, flatTree } = useWMSTreeContext()
 
   const handleNodeSelect = useCallback((event: ChangeEvent, checked: boolean) => {
     event.stopPropagation()

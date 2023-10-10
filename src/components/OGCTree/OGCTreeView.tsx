@@ -7,8 +7,8 @@ import { TreeView } from '@mui/x-tree-view'
 
 import { type JsonApiQueryParams } from '../../jsonapi/types/jsonapi'
 import ExtendedTreeItem from './ExtendedTreeItem'
-import { useTreeContext } from './TreeContext'
 import { getChildren, getDescendants } from './utils'
+import { useWMSTreeContext } from './WMSTreeContext'
 
 export interface OgcLayerTreeProps {
   flatLayers: RaRecord[]
@@ -57,7 +57,7 @@ const OgcTreeView = ({
   jsonApiParams = { include: 'layers' },
   ...rest
 }: OGCTreeViewProps): ReactNode => {
-  const { flatTree, refetch, isLoading } = useTreeContext()
+  const { flatTree, refetch, isLoading } = useWMSTreeContext()
 
   const [expanded, setExpanded] = useState<string[]>([])
 
