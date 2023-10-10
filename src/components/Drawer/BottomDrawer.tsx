@@ -23,7 +23,6 @@ const BottomDrawer = ({
 
   // adjust padding of map div
   useEffect(() => {
-    console.log('effect called')
     if (aboveComponentId !== undefined) {
       const div: any = document.querySelector(`#${CSS.escape(aboveComponentId)}`)
       if (!bottomDrawer.isOpen) {
@@ -46,8 +45,6 @@ const BottomDrawer = ({
     buttonRef.current?.blur()
     callback()
   }, [bottomDrawer, buttonRef])
-
-  console.log('rerender', buttonRef, bottomDrawer, rightDrawer, lastRightDrawerState)
 
   return (
     <>

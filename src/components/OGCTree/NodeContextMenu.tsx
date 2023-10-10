@@ -39,7 +39,6 @@ const NodeContextMenu = ({ node }: NodeContextMenuProps): ReactNode => {
   const handleClose = (): void => {
     setAnchorEl(null)
   }
-  console.log('node', node)
 
   return (
     <div>

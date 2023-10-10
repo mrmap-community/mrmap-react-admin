@@ -26,7 +26,6 @@ export const DrawerBase = ({ children }: PropsWithChildren): ReactNode => {
 
   useEffect(() => {
     if (lastOpenState === undefined || (open !== lastOpenState)) {
-      console.log('huhu')
       setLastOpenState(open)
       setBottomDrawer({ ...bottomDrawer, marginLeft: `${open ? '250px' : '58px'}` })
     }

@@ -213,13 +213,16 @@ const ListGuesser = ({
       }}
       sx={
         {
+
           '& .RaList-main': {
             width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px'})`,
             maxHeight: 'calc(100vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
             overfloxX: 'hidden'
+
           },
           '& .RaDatagrid-tableWrapper': {
             overflowX: 'scroll'
+
           }
         }
       }
