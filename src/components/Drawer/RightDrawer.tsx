@@ -13,7 +13,6 @@ export interface RightDrawerProps extends DrawerProps {
 const RightDrawer = ({
   leftComponentId,
   callback = () => { },
-  children,
   ...rest
 }: RightDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
