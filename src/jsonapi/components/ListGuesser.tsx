@@ -23,6 +23,7 @@ interface ListActionsProps {
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
   additionalActions?: ReactNode
+  onRowSelect?: (selectedRecord: RaRecord) => void
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
@@ -80,6 +81,7 @@ const ListActions = (
 const ListGuesser = ({
   relatedResource = '',
   additionalActions = undefined,
+  onRowSelect = () => { },
   ...props
 }: ListGuesserProps): ReactElement => {
   const [open] = useSidebarState()
@@ -252,7 +254,14 @@ const ListGuesser = ({
       {/* rowClick='edit' only if the resource provide edit operations */}
 
       < DatagridConfigurable
-        rowClick={(id, resource, record) => { if (selectedRecord !== record) { setSelectedRecord(record) }; return false }}
+        rowClick={(id, resource, record) => {
+          onRowSelect(record)
+          if (selectedRecord !== record) {
+            setSelectedRecord(record)
+          }
+          return false
+        }
+        }
       // FIXME: this styling shoud be part of the parent and this component should always fill full available size
       >
         {...fields}

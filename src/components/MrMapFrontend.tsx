@@ -16,9 +16,8 @@ import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
 import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
-import WmsTreeView from './OGCTree/WmsTreeView'
-import WmsList from './WmsList'
-import WMSViewer from './WMSViewer'
+import WmsList from './WMS/WmsList'
+import WmsViewer from './WMS/WmsViewer'
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
@@ -46,8 +45,7 @@ const MrMapFrontend = (): ReactElement => {
         layout={MyLayout}
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >
-          <Route path=":id/tree" element={<WmsTreeView />} />
-          <Route path=":id/viewer" element={<WMSViewer />} />
+          <Route path=":id/viewer" element={<WmsViewer />} />
         </ResourceGuesser>
         <ResourceGuesser name={'HistoricalWebMapService'} />
 
