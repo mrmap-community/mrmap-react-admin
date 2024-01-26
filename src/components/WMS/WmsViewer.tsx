@@ -29,7 +29,7 @@ const WmsViewerCore = (): null => {
     if (record !== undefined) {
       return {
         id: record?.id ?? id,
-        rootNode: raRecordToNode(record?.layers?.find((node: RaRecord) => node.lft === 1)),
+        rootNode: raRecordToNode(record?.layers?.find((node: RaRecord) => node.mpttLft === 1)),
         record,
         checkedNodes: []
       }

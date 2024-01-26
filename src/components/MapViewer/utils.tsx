@@ -12,19 +12,19 @@ export const collectChildren = (node: TreeNode): TreeNode[] => {
 export const getDescendants = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
     return nodes?.filter(
         node =>
-            node?.lft > currentNode?.lft &&
-            node?.rght < currentNode?.rght
+            node?.mpttLft > currentNode?.mpttLft &&
+            node?.mpttRgt < currentNode?.mpttRgt
     )
 }
 
 export const getChildren = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
     return getDescendants(nodes, currentNode).filter(
-        node => node?.level === currentNode?.level as number + 1
+        node => node?.mpttDepth === currentNode?.mpttDepth as number + 1
     )
 }
 
 export const isDescendantOf = (nodeA: RaRecord, nodeB: RaRecord): boolean => {
-    return (nodeA.lft > nodeB.lft && nodeA.rght < nodeB.rght)
+    return (nodeA.mpttLft > nodeB.mpttLft && nodeA.mpttRgt < nodeB.mpttRgt)
 }
 
 export const isAncestorOf = (nodeA: RaRecord, nodeB: RaRecord): boolean => {

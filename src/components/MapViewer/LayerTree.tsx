@@ -24,15 +24,18 @@ const LayerTree = (): ReactNode => {
   }, [])
 
   const renderTree = useCallback((nodes: TreeNode) => (
-    <TreeItem
+
+    < TreeItem
       key={nodes.id}
       nodeId={nodes.id as string}
       label={renderTreeItemLabel(nodes)}
     >
-      {Array.isArray(nodes.children)
-        ? nodes.children.map((node) => renderTree(node))
-        : null}
-    </TreeItem>
+      {
+        Array.isArray(nodes.children)
+          ? nodes.children.map((node) => renderTree(node))
+          : null
+      }
+    </TreeItem >
   ), [])
 
   const treeViews = useMemo(() => {

@@ -17,7 +17,7 @@ const WMSTileLayerSingleRequest = ({
 
   const layers: string = useMemo(() => {
     // we call only the leafnodes
-    const layerIdentifiers = selectedNodes.filter(node => Math.floor((node.rght - node.lft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+    const layerIdentifiers = selectedNodes.filter(node => Math.floor((node.mpttRgt - node.mpttLft) / 2) === 0).map(node => node.identifier).filter(identifier => !(identifier === null || identifier === undefined))
     return layerIdentifiers.join(',') ?? ''
   }, [selectedNodes])
 

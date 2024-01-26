@@ -32,7 +32,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   useEffect(() => {
     const _tiles: ReactNode[] = []
     wmsTrees.forEach(tree => {
-      const checkedLayerIdentifiers = tree.checkedNodes.sort((a: TreeNode, b: TreeNode) => b.record.lft - a.record.lft).filter(node => Math.floor((node.record?.rght - node.record?.lft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+      const checkedLayerIdentifiers = tree.checkedNodes.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
 

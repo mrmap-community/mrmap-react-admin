@@ -11,7 +11,7 @@ export interface TreeNodeCheckboxProps {
 
 const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
   const { wmsTrees, setWmsTrees } = useMapViewerContext()
-
+  console.log(node)
   const tree = useMemo(() => {
     return wmsTrees.find(tree => tree.id === node.record.service.id)
   }, [wmsTrees])
