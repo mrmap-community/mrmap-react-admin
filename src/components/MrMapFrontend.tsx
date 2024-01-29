@@ -31,9 +31,9 @@ const MrMapFrontend = (): ReactElement => {
   } else {
     const asyncClient = client.api.getClient()
     const jsonApiDataProvider = jsonApidataProvider({
-      entrypoint: 'https://mrmap.geospatial-interoperability-solutions.eu/',
+      entrypoint: 'http://localhost:8001/',
       httpClient: asyncClient,
-      realtimeBus: 'wss://mrmap.geospatial-interoperability-solutions.eu/ws/default/'
+      realtimeBus: 'wss://localhost:8001/ws/default/'
     })
 
     return (

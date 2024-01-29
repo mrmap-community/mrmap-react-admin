@@ -1,6 +1,7 @@
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect } from 'react'
 import { type RaRecord, type Identifier } from 'react-admin'
 import { WMSTileLayer } from 'react-leaflet'
+import FeatureGroupEditor from '../FeatureGroupEditor'
 
 export interface TreeNode {
   id: Identifier
@@ -20,7 +21,7 @@ export interface MapViewerContextType {
   tiles: ReactNode[]
   wmsTrees: WMSTree[]
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
-
+  setEditor: Dispatch<SetStateAction<boolean>>
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -28,6 +29,7 @@ export const context = createContext<MapViewerContextType | undefined>(undefined
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [tiles, setTiles] = useState<ReactNode[]>([])
+  const [editor, setEditor] = useState<boolean>(false)
 
   useEffect(() => {
     const _tiles: ReactNode[] = []
@@ -50,8 +52,12 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
         />)
       }
     })
+    if (editor) {
+      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { console.log(multiPolygon) }} />)
+    }
+
     setTiles(_tiles)
-  }, [wmsTrees])
+  }, [wmsTrees, editor])
 
   return (
     <context.Provider
@@ -59,7 +65,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
         {
           tiles,
           wmsTrees,
-          setWmsTrees
+          setWmsTrees,
+          setEditor
         }
       }>
       {children}

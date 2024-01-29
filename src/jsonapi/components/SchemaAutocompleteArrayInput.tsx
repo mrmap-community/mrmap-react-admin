@@ -34,7 +34,7 @@ const SchemaAutocompleteArrayInput = (
   const record = useRecordContext()
   const { name } = useResourceDefinition()
 
-  const [selectedChoices, setSelectedChoices] = useState<RaRecord[]>(record[source] ?? [])
+  const [selectedChoices, setSelectedChoices] = useState<RaRecord[]>((record === undefined) ? [] : record[source] ?? [])
   const [fetchedChoices, setFetchedChoices] = useState<RaRecord[]>([])
 
   const optionText = useSchemaRecordRepresentation()

@@ -15,8 +15,8 @@ export const TOKENNAME = 'token'
 
 const tokenAuthProvider = (options: Options = {}): AuthProvider => {
   const opts = {
-    loginUrl: 'https://mrmap.geospatial-interoperability-solutions.eu/api/auth/login',
-    logoutUrl: 'https://mrmap.geospatial-interoperability-solutions.eu/api/auth/logout',
+    loginUrl: 'http://localhost:8001/api/auth/login',
+    logoutUrl: 'http://localhost:8001/api/auth/logout',
     ...options
   }
   return {
