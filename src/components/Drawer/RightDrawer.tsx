@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
@@ -13,12 +13,18 @@ export interface RightDrawerProps extends DrawerProps {
 const RightDrawer = ({
   leftComponentId,
   callback = () => { },
+  children,
   ...rest
 }: RightDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const { rightDrawer, setRightDrawer } = useDrawerContext()
-
+  const childComponent = useMemo(() => {
+    if (rightDrawer.children !== undefined) {
+      return rightDrawer.children
+    }
+    return children
+  }, [rightDrawer, children])
   // adjust padding of map div
   useEffect(() => {
     if (leftComponentId !== undefined) {
@@ -84,7 +90,7 @@ const RightDrawer = ({
         }
         {...rest}
       >
-
+        {childComponent}
       </Drawer >
 
     </>

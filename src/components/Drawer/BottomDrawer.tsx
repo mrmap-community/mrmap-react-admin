@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
@@ -14,12 +14,19 @@ export interface BottomDrawerProps extends DrawerProps {
 const BottomDrawer = ({
   aboveComponentId,
   callback = () => { },
+  children,
   ...rest
 }: BottomDrawerProps): ReactNode => {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const { bottomDrawer, setBottomDrawer, rightDrawer, setRightDrawer } = useDrawerContext()
   const [lastRightDrawerState, setLastRightDrawerState] = useState<DrawerState>(rightDrawer)
+  const childComponent = useMemo(() => {
+    if (bottomDrawer.children !== undefined) {
+      return bottomDrawer.children
+    }
+    return children
+  }, [bottomDrawer, children])
 
   // adjust padding of map div
   useEffect(() => {
@@ -88,7 +95,9 @@ const BottomDrawer = ({
           }
         }}
         {...rest}
-      />
+      >
+        {childComponent}
+      </Drawer>
     </>
   )
 }

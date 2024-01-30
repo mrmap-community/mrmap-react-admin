@@ -11,6 +11,9 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import { FeatureGroup, GeoJSON } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
+import { useDrawerContext } from '../Drawer/DrawerContext'
+import { SecurityCreate } from '../SecurityEditor/Forms'
+import { CreateGuesser } from '../../jsonapi/components/FormGuesser'
 
 const SecurityEditor = (): ReactNode => {
   return (
@@ -41,6 +44,7 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
     mouseY: number
   } | null>(null)
   const { tiles, setTiles, setEditor } = useMapViewerContext()
+  const { bottomDrawer, setBottomDrawer } = useDrawerContext()
 
   const handleContextMenu = (event: MouseEvent): void => {
     console.log(node)
@@ -65,8 +69,10 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
 
   const handleSecuityEditorCall = (): void => {
     setEditor(true)
-    // TODO: open bottom drawer
     // set bottom drawer content to security editor mask
+
+    setBottomDrawer({ ...bottomDrawer, isOpen: true, children: <SecurityCreate /> })
+
     console.log('huhu')
   }
 

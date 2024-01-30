@@ -6,6 +6,7 @@ export interface DrawerState {
   height: string
   width: string
   marginLeft?: string
+  children?: ReactNode
 }
 
 export interface DrawerContextType {

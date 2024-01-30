@@ -9,12 +9,14 @@ import CreateResourceDialog from './CreateResourceDialog'
 export interface SchemaAutocompleteArrayInputProps extends AutocompleteArrayInputProps {
   reference: string
   source: string
+  sort?: string
 }
 
 const SchemaAutocompleteArrayInput = (
   {
     reference,
     source,
+    sort,
     ...rest
   }: SchemaAutocompleteArrayInputProps
 ): ReactElement => {
@@ -50,7 +52,7 @@ const SchemaAutocompleteArrayInput = (
         if (relatedOperation !== undefined) {
           const params = {
             pagination: { page: 1, perPage: 500 },
-            sort: { field: 'id', order: 'DESC' },
+            sort: { field: sort ?? 'id', order: 'DESC' },
             filter: undefined,
             meta: { relatedResource: reference }
           }
@@ -69,7 +71,7 @@ const SchemaAutocompleteArrayInput = (
           // TODO: check if the filter is available on this endpoint...
           const params = {
             pagination: { page: 1, perPage: 500 },
-            sort: { field: 'id', order: 'DESC' },
+            sort: { field: sort ?? 'id', order: 'DESC' },
             filter: { 'filter[id.in]': selectedChoices?.map(choice => choice.id).join(',') }
           }
           dataProvider.getList(reference, params)

@@ -1,11 +1,10 @@
 import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren } from 'react'
-import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
+import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
 import { type Map } from 'leaflet'
 
-import ListGuesser from '../../jsonapi/components/ListGuesser'
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
@@ -39,10 +38,6 @@ const MapViewerCore = (): ReactNode => {
     }
   }, [])
 
-  const handleRowSelect = useCallback((record: RaRecord) => {
-    console.log(record)
-  }, [])
-
   return (
     <DrawerBase>
       <Box id={containerId} sx={{ ...style }}>
@@ -69,15 +64,6 @@ const MapViewerCore = (): ReactNode => {
         aboveComponentId={containerId}
         callback={resizeMap}
       >
-
-        <ListGuesser
-          resource='AllowedWebMapServiceOperation'
-          relatedResource='WebMapService'
-          empty={false}
-          onRowSelect={handleRowSelect}
-        >
-
-        </ListGuesser>
 
       </BottomDrawer>
     </DrawerBase>

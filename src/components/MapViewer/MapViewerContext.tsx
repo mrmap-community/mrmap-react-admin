@@ -2,6 +2,7 @@ import { createContext, type Dispatch, type ReactNode, type SetStateAction, useC
 import { type RaRecord, type Identifier } from 'react-admin'
 import { WMSTileLayer } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
+import type { MultiPolygon } from 'geojson'
 
 export interface TreeNode {
   id: Identifier
@@ -22,6 +23,7 @@ export interface MapViewerContextType {
   wmsTrees: WMSTree[]
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
   setEditor: Dispatch<SetStateAction<boolean>>
+  geoJSON: MultiPolygon | undefined
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -30,6 +32,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [tiles, setTiles] = useState<ReactNode[]>([])
   const [editor, setEditor] = useState<boolean>(false)
+  const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
 
   useEffect(() => {
     const _tiles: ReactNode[] = []
@@ -53,7 +56,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
     })
     if (editor) {
-      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { console.log(multiPolygon) }} />)
+      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { console.log(multiPolygon); setGeoJSON(multiPolygon) }} />)
     }
 
     setTiles(_tiles)
@@ -66,7 +69,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           tiles,
           wmsTrees,
           setWmsTrees,
-          setEditor
+          setEditor,
+          geoJSON
         }
       }>
       {children}

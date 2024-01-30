@@ -7,6 +7,7 @@ import { hasIncludedData } from '../utils'
 export interface SchemaAutocompleteInputProps extends AutocompleteInputProps {
   reference: string
   source: string
+  sort?: string
 }
 
 /**
@@ -21,6 +22,7 @@ const SchemaAutocompleteInput = (
   {
     reference,
     source,
+    sort,
     ...rest
   }: SchemaAutocompleteInputProps
 ): ReactElement => {
@@ -65,7 +67,7 @@ const SchemaAutocompleteInput = (
       setIsLoadingChoices(true)
       const params = {
         pagination: { page: 1, perPage: 25 },
-        sort: { field: 'id', order: 'DESC' },
+        sort: { field: sort ?? 'id', order: 'DESC' },
         filter
       }
       dataProvider.getList(reference, params)
