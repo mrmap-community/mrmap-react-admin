@@ -33,7 +33,7 @@ const MrMapFrontend = (): ReactElement => {
     const jsonApiDataProvider = jsonApidataProvider({
       entrypoint: 'http://localhost:8001/',
       httpClient: asyncClient,
-      realtimeBus: 'wss://localhost:8001/ws/default/'
+      realtimeBus: 'ws://localhost:8001/ws/default/'
     })
 
     return (

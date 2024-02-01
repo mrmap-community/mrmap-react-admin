@@ -2,57 +2,81 @@ import { TextInput, useCreateContext, SimpleForm, CreateBase, useInput, type Tex
 import { useEffect, type ReactNode } from 'react'
 import { useMapViewerContext } from '../MapViewer/MapViewerContext'
 import SchemaAutocompleteArrayInput from '../../jsonapi/components/SchemaAutocompleteArrayInput'
+import SchemaAutocompleteInput from '../../jsonapi/components/SchemaAutocompleteInput'
 
 export const GeoJSONInput = ({
-    source,
-    ...rest
+  source,
+  ...rest
 }: TextInputProps): ReactNode => {
-    const { geoJSON } = useMapViewerContext()
-    const { field: { onChange } } = useInput({ source })
+  const { geoJSON } = useMapViewerContext()
+  const { field: { onChange } } = useInput({ source })
 
-    useEffect(() => {
-        onChange(JSON.stringify(geoJSON))
-        console.log('geoJSON', geoJSON)
-    }, [geoJSON])
+  useEffect(() => {
+    onChange(JSON.stringify(geoJSON))
+    console.log('geoJSON', geoJSON)
+  }, [geoJSON])
 
-    return (
+  return (
         <TextInput source={source} onChange={onChange} />
-    )
+  )
 }
 
-export const SecurityCreateForm = (): ReactNode => {
-    const { save } = useCreateContext()
+export interface SecurityCreateFormProps {
+  defaultValues?: any
+}
 
-    // allowedArea (geojson)
-    // description (string 1:512)
-    // allowedGroups M2M
-    // securedService FK
-    // operations
-    // securedLayers M2M
+export const SecurityCreateForm = ({ defaultValues }: SecurityCreateFormProps): ReactNode => {
+  const { save } = useCreateContext()
 
-    return (
-        <SimpleForm onSubmit={save}>
+  // allowedArea (geojson)
+  // description (string 1:512)
+  // allowedGroups M2M
+  // securedService FK
+  // operations
+  // securedLayers M2M
+
+  return (
+        <SimpleForm onSubmit={save} defaultValues={defaultValues}>
             <GeoJSONInput source="allowedArea" />
             <TextInput source="description" />
             <SchemaAutocompleteArrayInput
+
                 key={'operations'}
                 source={'operations'}
                 isRequired={true}
                 reference={'WebMapServiceOperation'}
                 sort={'operation'}
             // helperText={schema.description}
-
+            />
+            <SchemaAutocompleteArrayInput
+                // hidden={true}
+                key={'securedLayers'}
+                source={'securedLayers'}
+                isRequired={true}
+                reference={'Layer'}
+                sort={'id'}
+            />
+            <SchemaAutocompleteInput
+                // hidden={true}
+                key={'securedService'}
+                source={'securedService'}
+                isRequired={true}
+                reference={'WebMapService'}
+                sort={'id'}
             />
 
         </SimpleForm>
-    )
+  )
 }
 
-export const SecurityCreate = (): ReactNode => {
-    console.log('huh1u')
-    return (
+export interface SecurityCreateProps {
+  defaultValues?: any
+}
+
+export const SecurityCreate = ({ defaultValues }: SecurityCreateProps): ReactNode => {
+  return (
         <CreateBase resource="AllowedWebMapServiceOperation">
-            <SecurityCreateForm />
+            <SecurityCreateForm defaultValues={defaultValues} />
         </CreateBase>
-    )
+  )
 }

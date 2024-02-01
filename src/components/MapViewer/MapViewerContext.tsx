@@ -55,8 +55,9 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
         />)
       }
     })
+
     if (editor) {
-      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { console.log(multiPolygon); setGeoJSON(multiPolygon) }} />)
+      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
     }
 
     setTiles(_tiles)

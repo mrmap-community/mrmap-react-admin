@@ -10,6 +10,7 @@ import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import { MapViewerBase, useMapViewerContext } from './MapViewerContext'
 import LayerTree from './LayerTree'
+import { TabListBase } from '../Tab/TabListContext'
 
 const style = {
   position: 'relative',
@@ -17,7 +18,6 @@ const style = {
   width: '100%',
   height: 'calc(100vh - 50px)'
   // maxHeight: 'calc(100vh - 50px !important)'
-
 }
 
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
@@ -40,32 +40,33 @@ const MapViewerCore = (): ReactNode => {
 
   return (
     <DrawerBase>
-      <Box id={containerId} sx={{ ...style }}>
+      <TabListBase>
+        <Box id={containerId} sx={{ ...style }}>
 
-        <MapContainer
-          whenReady={() => { resizeMap() }}
-          center={[51.505, -0.09]}
-          zoom={2}
-          scrollWheelZoom={true}
-          style={{ flex: 1, height: '100%', width: '100%' }}
+          <MapContainer
+            whenReady={() => { resizeMap() }}
+            center={[51.505, -0.09]}
+            zoom={2}
+            scrollWheelZoom={true}
+            style={{ flex: 1, height: '100%', width: '100%' }}
+          >
+            {...tiles}
 
+          </MapContainer>
+        </Box>
+        <RightDrawer
+          leftComponentId={containerId}
+          callback={resizeMap}
         >
-          {...tiles}
+          <LayerTree />
+        </RightDrawer>
+        <BottomDrawer
+          aboveComponentId={containerId}
+          callback={resizeMap}
+        >
 
-        </MapContainer>
-      </Box>
-      <RightDrawer
-        leftComponentId={containerId}
-        callback={resizeMap}
-      >
-        <LayerTree />
-      </RightDrawer>
-      <BottomDrawer
-        aboveComponentId={containerId}
-        callback={resizeMap}
-      >
-
-      </BottomDrawer>
+        </BottomDrawer>
+      </TabListBase>
     </DrawerBase>
   )
 }

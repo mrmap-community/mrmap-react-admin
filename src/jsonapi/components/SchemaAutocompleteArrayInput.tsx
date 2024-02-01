@@ -70,7 +70,7 @@ const SchemaAutocompleteArrayInput = (
           // fallback if nested resource list is not propagated by the api
           // TODO: check if the filter is available on this endpoint...
           const params = {
-            pagination: { page: 1, perPage: 500 },
+            pagination: { page: 1, perPage: 25 },
             sort: { field: sort ?? 'id', order: 'DESC' },
             filter: { 'filter[id.in]': selectedChoices?.map(choice => choice.id).join(',') }
           }
@@ -93,7 +93,7 @@ const SchemaAutocompleteArrayInput = (
       setIsLoadingChoices(true)
       const params = {
         pagination: { page: 1, perPage: 25 },
-        sort: { field: 'id', order: 'DESC' },
+        sort: { field: sort ?? 'id', order: 'DESC' },
         filter
       }
       dataProvider.getList(reference, params)

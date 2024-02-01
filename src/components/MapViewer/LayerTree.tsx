@@ -9,30 +9,14 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import { FeatureGroup, GeoJSON } from 'react-leaflet'
-import { EditControl } from 'react-leaflet-draw'
 import { useDrawerContext } from '../Drawer/DrawerContext'
 import { SecurityCreate } from '../SecurityEditor/Forms'
-import { CreateGuesser } from '../../jsonapi/components/FormGuesser'
-
-const SecurityEditor = (): ReactNode => {
-  return (
-    <FeatureGroup>
-      <EditControl
-        position='topright'
-        // onEdited={updateGeoJson}
-        // onCreated={updateGeoJson}
-        // onDeleted={updateGeoJson}
-        // onDrawStop={onEdit}
-        draw={{
-          marker: false,
-          circlemarker: false,
-          circle: false
-        }}
-      />
-    </FeatureGroup>
-  )
-}
+import { collectChildren } from './utils'
+import VpnLockIcon from '@mui/icons-material/VpnLock'
+import LockIcon from '@mui/icons-material/Lock'
+import Tooltip from '@mui/material/Tooltip'
+import { Tabs } from '../Tab/Tabs'
+import { useTabListContext } from '../Tab/TabListContext'
 
 interface ContextMenuProps {
   node: TreeNode
@@ -43,11 +27,11 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
     mouseX: number
     mouseY: number
   } | null>(null)
-  const { tiles, setTiles, setEditor } = useMapViewerContext()
+  const { setEditor } = useMapViewerContext()
   const { bottomDrawer, setBottomDrawer } = useDrawerContext()
+  const { tabList, setTabList } = useTabListContext()
 
   const handleContextMenu = (event: MouseEvent): void => {
-    console.log(node)
     event.stopPropagation()
     // event.preventDefault()
     setContextMenu(
@@ -56,7 +40,8 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
           mouseX: event.clientX + 2,
           mouseY: event.clientY - 6
         }
-        : // repeated contextmenu when it is already open closes it with Chrome 84 on Ubuntu
+        :
+        // repeated contextmenu when it is already open closes it with Chrome 84 on Ubuntu
         // Other native context menus might behave different.
         // With this behavior we prevent contextmenu from the backdrop to re-locale existing context menus.
         null
@@ -70,10 +55,13 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   const handleSecuityEditorCall = (): void => {
     setEditor(true)
     // set bottom drawer content to security editor mask
+    const defaultValues = { securedService: node.record.service, securedLayers: collectChildren(node, true) }
+    const newTabList = tabList
+    newTabList.tabs.push({ tab: { label: 'new rule' }, tabPanel: { children: <SecurityCreate defaultValues={defaultValues} /> } })
 
-    setBottomDrawer({ ...bottomDrawer, isOpen: true, children: <SecurityCreate /> })
+    setTabList({ ...tabList })
 
-    console.log('huhu')
+    setBottomDrawer({ ...bottomDrawer, isOpen: true, children: <Tabs /> })
   }
 
   return (
@@ -111,7 +99,14 @@ const LayerTree = (): ReactNode => {
   }, [setExpanded])
 
   const renderTreeItemLabel = useCallback((node: TreeNode) => {
-    return <><TreeNodeCheckbox node={node} /> {node.name} <ContextMenu node={node} /></>
+    return (
+      <>
+        <TreeNodeCheckbox node={node} />
+        {node.record.isSpatialSecured ? <Tooltip title="Spatial secured"><VpnLockIcon /></Tooltip> : node.record.isSecured ? <Tooltip title="Secured"><LockIcon /></Tooltip> : null}
+        {node.name}
+        <ContextMenu node={node} />
+      </>
+    )
   }, [])
 
   const renderTree = useCallback((nodes: TreeNode) => (
@@ -138,7 +133,7 @@ const LayerTree = (): ReactNode => {
           defaultExpandIcon={<ChevronRightIcon />}
           onNodeToggle={handleToggle}
           expanded={expanded}
-
+          multiSelect
         >
           {renderTree(tree.rootNode)}
 

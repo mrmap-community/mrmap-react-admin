@@ -10,6 +10,7 @@
     "format": "prettier --write ./src"
   },
   "dependencies": {
+    "@mui/lab": "^5.0.0-alpha.163",
     "@mui/x-tree-view": "^6.17.0",
     "@types/inflection": "^1.13.0",
     "jsonpointer": "^5.0.1",
