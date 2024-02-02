@@ -33,7 +33,7 @@ export const Tabs = (): ReactNode => {
     return tabList.tabs.map((tabDef, index): ReactNode => (
       <Tab
         key={index}
-        value={index}
+        value={String(index)}
         {...tabDef.tab}
         icon={
           <IconButton onClick={(event) => { handleTabClose(event, index) }}>
@@ -47,14 +47,31 @@ export const Tabs = (): ReactNode => {
 
   const tabPanels = useMemo(() => {
     return tabList.tabs.map((tabDef, index): ReactNode => (
-      <TabPanel key={index} {...tabDef.tabPanel} value={index} />
+      <TabPanel key={index} {...tabDef.tabPanel} value={String(index)} />
     )
     )
   }, [tabList])
 
+  const TabContextComponent = useMemo(() => {
+    if (tabList.activeTab !== '') {
+      return (
+        <TabContext value={tabList.activeTab}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <TabList onChange={handleChange} aria-label="lab API tabs example">
+              {...tabs}
+            </TabList>
+          </Box>
+          {...tabPanels}
+        </TabContext>
+      )
+    } else {
+      return <></>
+    }
+  }, [tabList, tabPanels, tabs])
+
   return (
     <Box sx={{ width: '100%', typography: 'body1' }}>
-      <TabContext value={tabList.activeTab}>
+      <TabContext value={tabList.activeTab === '' ? '0' : tabList.activeTab}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <TabList onChange={handleChange} aria-label="lab API tabs example">
             {...tabs}

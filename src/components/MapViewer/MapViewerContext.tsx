@@ -24,6 +24,7 @@ export interface MapViewerContextType {
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
+  setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -57,11 +58,11 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     })
 
     if (editor) {
-      _tiles.push(<FeatureGroupEditor geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
+      _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
     }
 
     setTiles(_tiles)
-  }, [wmsTrees, editor])
+  }, [wmsTrees, editor, geoJSON])
 
   return (
     <context.Provider
@@ -71,7 +72,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           wmsTrees,
           setWmsTrees,
           setEditor,
-          geoJSON
+          geoJSON,
+          setGeoJSON
         }
       }>
       {children}

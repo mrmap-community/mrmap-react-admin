@@ -59,7 +59,7 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
     const newTabList = tabList
     newTabList.tabs.push({ tab: { label: 'new rule' }, tabPanel: { children: <SecurityCreate defaultValues={defaultValues} /> } })
 
-    setTabList({ ...tabList })
+    setTabList({ ...tabList, activeTab: String(newTabList.tabs.length - 1) })
 
     setBottomDrawer({ ...bottomDrawer, isOpen: true, children: <Tabs /> })
   }
@@ -99,10 +99,17 @@ const LayerTree = (): ReactNode => {
   }, [setExpanded])
 
   const renderTreeItemLabel = useCallback((node: TreeNode) => {
+    const securityRuleButton = (
+      <IconButton
+      >
+        {node.record.isSpatialSecured ? <Tooltip title="Spatial secured"><VpnLockIcon /></Tooltip> : node.record.isSecured ? <Tooltip title="Secured"><LockIcon /></Tooltip> : null}
+      </IconButton>
+    )
+
     return (
       <>
         <TreeNodeCheckbox node={node} />
-        {node.record.isSpatialSecured ? <Tooltip title="Spatial secured"><VpnLockIcon /></Tooltip> : node.record.isSecured ? <Tooltip title="Secured"><LockIcon /></Tooltip> : null}
+        {securityRuleButton}
         {node.name}
         <ContextMenu node={node} />
       </>
