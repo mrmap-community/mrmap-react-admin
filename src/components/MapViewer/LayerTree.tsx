@@ -1,8 +1,6 @@
 import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
 
-import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { TreeItem, TreeView } from '@mui/x-tree-view'
+import { TreeItem, type TreeItemProps, TreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
 import TreeNodeCheckbox from './NodeCheckbox'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
@@ -85,6 +83,17 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   )
 }
 
+const AsyncTreeItem = ({ rest }: TreeItemProps): ReactNode => {
+  return (
+    < TreeItem
+      {...rest}
+
+    >
+
+    </TreeItem >
+  )
+}
+
 const LayerTree = (): ReactNode => {
   // const { flatTree, refetch, isLoading } = useWMSTreeContext()
 
@@ -92,16 +101,28 @@ const LayerTree = (): ReactNode => {
 
   const [expanded, setExpanded] = useState<string[]>([])
 
-  const handleToggle = useCallback((event: SyntheticEvent, nodeIds: string[]): void => {
+  const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
+    const newExpanded = expanded
+    if (isExpanded) {
+      if (!newExpanded.includes(nodeId)) {
+        newExpanded.push(nodeId)
+        // TODO: fetch children of node and append them
+      }
+    } else {
+      const index = newExpanded.indexOf(nodeId)
+      if (index > -1) {
+        newExpanded.splice(index, 1)
+      }
+    }
+
     if ((event.target as HTMLElement).closest('.MuiSvgIcon-root') != null) {
-      setExpanded(nodeIds)
+      setExpanded(newExpanded)
     }
   }, [setExpanded])
 
   const renderTreeItemLabel = useCallback((node: TreeNode) => {
     const securityRuleButton = (
-      <IconButton
-      >
+      <IconButton>
         {node.record.isSpatialSecured ? <Tooltip title="Spatial secured"><VpnLockIcon /></Tooltip> : node.record.isSecured ? <Tooltip title="Secured"><LockIcon /></Tooltip> : null}
       </IconButton>
     )
@@ -122,6 +143,7 @@ const LayerTree = (): ReactNode => {
       key={nodes.id}
       nodeId={nodes.id as string}
       label={renderTreeItemLabel(nodes)}
+
     >
       {
         Array.isArray(nodes.children)
@@ -136,10 +158,11 @@ const LayerTree = (): ReactNode => {
       return (
         <TreeView
           key={tree.id}
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-          onNodeToggle={handleToggle}
-          expanded={expanded}
+          // collapseIcon={<ExpandMoreIcon />}
+
+          // defaultExpandIcon={<ChevronRightIcon />}
+          onNodeExpansionToggle={handleToggle}
+          expandedNodes={expanded}
           multiSelect
         >
           {renderTree(tree.rootNode)}
