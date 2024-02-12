@@ -41,7 +41,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       const checkedLayerIdentifiers = tree.checkedNodes.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
-
+      console.log(tree, layerIdentifiers, getMapUrl)
       if (layerIdentifiers !== '' && getMapUrl !== '') {
         _tiles.push(<WMSTileLayer
           url={getMapUrl}

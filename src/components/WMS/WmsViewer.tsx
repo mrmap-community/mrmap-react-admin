@@ -1,19 +1,29 @@
-import { type RaRecord, useShowController } from 'react-admin'
+import { type RaRecord, useGetOne } from 'react-admin'
 import MapViewer from '../MapViewer/MapViewer'
-import { type ReactNode, useCallback, useEffect, useId, useMemo } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
 import { getChildren } from '../MapViewer/utils'
+import { useSearchParams } from 'react-router-dom'
 
-const WmsViewerCore = (): null => {
+export interface WmsSyncHandlerProps {
+  id: string
+}
+
+const WmsSyncHandler = ({ id }: WmsSyncHandlerProps): null => {
   const { wmsTrees, setWmsTrees } = useMapViewerContext()
 
-  const id = useId()
-
-  const {
-    isLoading, // boolean that is true until the record is available for the first time
-    record, // record fetched via dataProvider.getOne() based on the id from the location
-    refetch // callback to refetch the record via dataProvider.getOne()
-  } = useShowController({ queryOptions: { meta: { jsonApiParams: { include: 'layers,operationUrls,layers.referenceSystems' } } } })
+  const { data: record, isLoading, error, refetch } = useGetOne(
+    'WebMapService',
+    {
+      id,
+      meta: {
+        jsonApiParams: {
+          include: 'layers,operationUrls,layers.referenceSystems',
+          'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier'
+        }
+      }
+    }
+  )
 
   const raRecordToNode = useCallback((node: RaRecord): TreeNode => {
     return {
@@ -43,6 +53,33 @@ const WmsViewerCore = (): null => {
   }, [topDownTree])
 
   return null
+}
+
+const WmsViewerCore = (): ReactNode => {
+  const [searchParams] = useSearchParams()
+
+  const [wmsIds, setWmsIds] = useState<string[]>([])
+
+  useEffect(() => {
+    const wmsParam = searchParams?.get('wms')
+
+    if (wmsParam !== undefined) {
+      const ids = wmsParam?.split(',') ?? []
+      setWmsIds(ids)
+    }
+  }, [searchParams])
+
+  const wmsSyncHandlers = useMemo(() => {
+    const _wmsSyncHandlers = []
+    for (const id of wmsIds) {
+      _wmsSyncHandlers.push(<WmsSyncHandler id={id} />)
+    }
+    return _wmsSyncHandlers
+  }, [wmsIds])
+
+  return <>
+    {...wmsSyncHandlers}
+  </>
 }
 
 const WmsViewer = (): ReactNode => {

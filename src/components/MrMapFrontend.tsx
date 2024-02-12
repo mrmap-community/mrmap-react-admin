@@ -18,6 +18,7 @@ import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
 import WmsList from './WMS/WmsList'
 import WmsViewer from './WMS/WmsViewer'
+
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }

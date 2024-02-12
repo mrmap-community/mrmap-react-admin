@@ -1,6 +1,6 @@
 import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
 
-import { TreeItem, type TreeItemProps, TreeView } from '@mui/x-tree-view'
+import { TreeItem, SimpleTreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
 import TreeNodeCheckbox from './NodeCheckbox'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
@@ -83,17 +83,6 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   )
 }
 
-const AsyncTreeItem = ({ rest }: TreeItemProps): ReactNode => {
-  return (
-    < TreeItem
-      {...rest}
-
-    >
-
-    </TreeItem >
-  )
-}
-
 const LayerTree = (): ReactNode => {
   // const { flatTree, refetch, isLoading } = useWMSTreeContext()
 
@@ -156,18 +145,15 @@ const LayerTree = (): ReactNode => {
   const treeViews = useMemo(() => {
     return wmsTrees?.map(tree => {
       return (
-        <TreeView
+        <SimpleTreeView
           key={tree.id}
-          // collapseIcon={<ExpandMoreIcon />}
-
-          // defaultExpandIcon={<ChevronRightIcon />}
           onNodeExpansionToggle={handleToggle}
           expandedNodes={expanded}
           multiSelect
         >
           {renderTree(tree.rootNode)}
 
-        </TreeView>
+        </SimpleTreeView>
       )
     })
   }, [wmsTrees, expanded])
