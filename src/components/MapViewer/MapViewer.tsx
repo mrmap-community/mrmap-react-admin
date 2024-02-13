@@ -10,7 +10,7 @@ import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import { MapViewerBase, useMapViewerContext } from './MapViewerContext'
 import LayerTree from './LayerTree'
-import { TabListBase, useTabListContext } from '../Tab/TabListContext'
+import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
 import { useSearchParams } from 'react-router-dom'
@@ -32,6 +32,8 @@ const MapViewerCore = (): ReactNode => {
   const mapRef = useRef<Map>(null)
 
   const { tiles } = useMapViewerContext()
+
+  console.log('tiles', tiles)
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
@@ -77,6 +79,14 @@ const MapViewerCore = (): ReactNode => {
                   children: <ListGuesser
                     resource='WebMapService'
                     onRowClick={(resource) => {
+                      const wmsParam = searchParams?.get('wms')
+
+                      if (wmsParam !== undefined) {
+                        const ids = wmsParam?.split(',') ?? []
+                        ids.push(resource.id as string)
+                        setSearchParams({ ...searchParams, wms: ids.join(',') })
+                      }
+
                       // TODO: append wms id to search params setSearchParams()
                       console.log(resource.id)
                     }}

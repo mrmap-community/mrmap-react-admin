@@ -37,11 +37,15 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
   useEffect(() => {
     const _tiles: ReactNode[] = []
+    console.log('new wmstree', wmsTrees)
+
     wmsTrees.forEach(tree => {
       const checkedLayerIdentifiers = tree.checkedNodes.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
-      console.log(tree, layerIdentifiers, getMapUrl)
+
+      console.log(checkedLayerIdentifiers, layerIdentifiers, getMapUrl, tree.record)
+
       if (layerIdentifiers !== '' && getMapUrl !== '') {
         _tiles.push(<WMSTileLayer
           url={getMapUrl}
@@ -56,6 +60,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
         />)
       }
     })
+
+    console.log('new tiles', _tiles)
 
     if (editor) {
       _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
