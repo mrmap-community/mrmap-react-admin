@@ -1,6 +1,7 @@
 import { type ReactElement, useContext } from 'react'
 import {
   Admin,
+  CustomRoutes,
   defaultTheme, Loading,
   type RaThemeOptions
 } from 'react-admin'
@@ -57,6 +58,11 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'BackgroundProcess'} />
         <ResourceGuesser name={'DatasetMetadata'} />
         <ResourceGuesser name={'AllowedWebMapServiceOperation'} />
+
+        <CustomRoutes>
+          <Route path="/viewer" element={<WmsViewer />} />
+
+        </CustomRoutes>
       </Admin>
     )
   }

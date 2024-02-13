@@ -1,15 +1,20 @@
-import { type ReactNode, type SyntheticEvent, useMemo } from 'react'
+import { type ReactNode, type SyntheticEvent, useMemo, useEffect, useState } from 'react'
 import Box from '@mui/material/Box'
 import Tab from '@mui/material/Tab'
 import TabContext from '@mui/lab/TabContext'
 import TabList from '@mui/lab/TabList'
 import TabPanel from '@mui/lab/TabPanel'
-import { useTabListContext } from './TabListContext'
+import { type TabListProps, useTabListContext } from './TabListContext'
 import IconButton from '@mui/material/IconButton'
 import CancelIcon from '@mui/icons-material/Cancel'
 
-export const Tabs = (): ReactNode => {
+export interface TabsProps {
+  defaultTabs?: TabListProps[]
+}
+
+export const Tabs = ({ defaultTabs }: TabsProps): ReactNode => {
   const { tabList, setTabList } = useTabListContext()
+  const [init, setInit] = useState<boolean>(false)
 
   const handleChange = (event: SyntheticEvent, newValue: string): void => {
     setTabList({ ...tabList, activeTab: newValue })
@@ -27,7 +32,14 @@ export const Tabs = (): ReactNode => {
     setTabList(newTabList)
   }
 
-  console.log(tabList)
+  useEffect(() => {
+    if (defaultTabs !== undefined && !init) {
+      const newTabList = tabList
+      newTabList.tabs.push(...defaultTabs)
+      setTabList({ ...tabList, activeTab: String(newTabList.tabs.length - 1) })
+      setInit(true)
+    }
+  }, [defaultTabs])
 
   const tabs = useMemo(() => {
     return tabList.tabs.map((tabDef, index): ReactNode => (
@@ -43,7 +55,9 @@ export const Tabs = (): ReactNode => {
       />
     )
     )
-  }, [tabList])
+  }, [tabList, defaultTabs])
+
+  console.log(defaultTabs, tabs, tabList)
 
   const tabPanels = useMemo(() => {
     return tabList.tabs.map((tabDef, index): ReactNode => (

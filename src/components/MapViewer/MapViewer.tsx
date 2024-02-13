@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren } from 'react'
+import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useEffect } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
@@ -10,7 +10,10 @@ import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import { MapViewerBase, useMapViewerContext } from './MapViewerContext'
 import LayerTree from './LayerTree'
-import { TabListBase } from '../Tab/TabListContext'
+import { TabListBase, useTabListContext } from '../Tab/TabListContext'
+import { Tabs } from '../Tab/Tabs'
+import ListGuesser from '../../jsonapi/components/ListGuesser'
+import { useSearchParams } from 'react-router-dom'
 
 const style = {
   position: 'relative',
@@ -38,6 +41,8 @@ const MapViewerCore = (): ReactNode => {
     }
   }, [])
 
+  const [searchParams, setSearchParams] = useSearchParams()
+
   return (
     <DrawerBase>
       <TabListBase>
@@ -64,7 +69,22 @@ const MapViewerCore = (): ReactNode => {
           aboveComponentId={containerId}
           callback={resizeMap}
         >
-
+          <Tabs
+            defaultTabs={
+              [{
+                tab: { label: 'WMS List' },
+                tabPanel: {
+                  children: <ListGuesser
+                    resource='WebMapService'
+                    onRowClick={(resource) => {
+                      // TODO: append wms id to search params setSearchParams()
+                      console.log(resource.id)
+                    }}
+                  />
+                }
+              }]
+            }
+          />
         </BottomDrawer>
       </TabListBase>
     </DrawerBase>
