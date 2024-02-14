@@ -29,6 +29,8 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   const { bottomDrawer, setBottomDrawer } = useDrawerContext()
   const { tabList, setTabList } = useTabListContext()
 
+  const { removeWmsTree } = useMapViewerContext()
+
   const handleContextMenu = (event: MouseEvent): void => {
     event.stopPropagation()
     // event.preventDefault()
@@ -76,6 +78,7 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
         }
       >
         <MenuItem onClick={handleSecuityEditorCall}>Security Editor</MenuItem>
+        <MenuItem onClick={() => { removeWmsTree(node.record?.service?.id) }}>Remove</MenuItem>
 
       </Menu>
     </IconButton >
@@ -126,21 +129,24 @@ const LayerTree = (): ReactNode => {
     )
   }, [])
 
-  const renderTree = useCallback((nodes: TreeNode) => (
-
-    < TreeItem
-      key={nodes.id}
-      nodeId={nodes.id as string}
-      label={renderTreeItemLabel(nodes)}
-
-    >
-      {
-        Array.isArray(nodes.children)
-          ? nodes.children.map((node) => renderTree(node))
-          : null
-      }
-    </TreeItem >
-  ), [])
+  const renderTree = useCallback((node?: TreeNode): ReactNode => {
+    if (node !== undefined) {
+      return (
+        < TreeItem
+          key={node.id}
+          nodeId={node.id as string}
+          label={renderTreeItemLabel(node)}
+        >
+          {
+            Array.isArray(node.children)
+              ? node.children.map((node) => { return renderTree(node) })
+              : <></>
+          }
+        </TreeItem >
+      )
+    }
+    return <></>
+  }, [])
 
   const treeViews = useMemo(() => {
     return wmsTrees?.map(tree => {

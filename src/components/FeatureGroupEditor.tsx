@@ -15,8 +15,6 @@ const FeatureGroupEditor = ({
   geoJson,
   geoJsonCallback
 }: GeoEditorProps): ReactNode => {
-  console.log('geoJSON', geoJson)
-
   const context = useLeafletContext()
 
   const updateGeoJson = useCallback((event: any) => {

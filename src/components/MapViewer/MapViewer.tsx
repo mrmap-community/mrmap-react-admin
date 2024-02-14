@@ -13,7 +13,6 @@ import LayerTree from './LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
-import { useSearchParams } from 'react-router-dom'
 
 const style = {
   position: 'relative',
@@ -31,9 +30,7 @@ const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const mapRef = useRef<Map>(null)
 
-  const { tiles } = useMapViewerContext()
-
-  console.log('tiles', tiles)
+  const { tiles, updateOrAppendWmsTree } = useMapViewerContext()
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
@@ -42,8 +39,6 @@ const MapViewerCore = (): ReactNode => {
       resizeObserver.observe(container)
     }
   }, [])
-
-  const [searchParams, setSearchParams] = useSearchParams()
 
   return (
     <DrawerBase>
@@ -79,16 +74,7 @@ const MapViewerCore = (): ReactNode => {
                   children: <ListGuesser
                     resource='WebMapService'
                     onRowClick={(resource) => {
-                      const wmsParam = searchParams?.get('wms')
-
-                      if (wmsParam !== undefined) {
-                        const ids = wmsParam?.split(',') ?? []
-                        ids.push(resource.id as string)
-                        setSearchParams({ ...searchParams, wms: ids.join(',') })
-                      }
-
-                      // TODO: append wms id to search params setSearchParams()
-                      console.log(resource.id)
+                      updateOrAppendWmsTree({ id: resource.id })
                     }}
                   />
                 }

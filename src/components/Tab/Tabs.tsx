@@ -23,7 +23,6 @@ export const Tabs = ({ defaultTabs }: TabsProps): ReactNode => {
   const handleTabClose = (event, index: string): void => {
     event.stopPropagation()
     const newTabList = tabList
-    console.log(newTabList.tabs.length, newTabList.tabs)
     if (newTabList.tabs.length > 1) {
       newTabList.tabs = newTabList.tabs.splice(parseInt(index), 1)
     } else {
@@ -57,31 +56,12 @@ export const Tabs = ({ defaultTabs }: TabsProps): ReactNode => {
     )
   }, [tabList, defaultTabs])
 
-  console.log(defaultTabs, tabs, tabList)
-
   const tabPanels = useMemo(() => {
     return tabList.tabs.map((tabDef, index): ReactNode => (
       <TabPanel key={index} {...tabDef.tabPanel} value={String(index)} />
     )
     )
   }, [tabList])
-
-  const TabContextComponent = useMemo(() => {
-    if (tabList.activeTab !== '') {
-      return (
-        <TabContext value={tabList.activeTab}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <TabList onChange={handleChange} aria-label="lab API tabs example">
-              {...tabs}
-            </TabList>
-          </Box>
-          {...tabPanels}
-        </TabContext>
-      )
-    } else {
-      return <></>
-    }
-  }, [tabList, tabPanels, tabs])
 
   return (
     <Box sx={{ width: '100%', typography: 'body1' }}>
