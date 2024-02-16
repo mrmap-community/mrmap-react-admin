@@ -9,7 +9,7 @@ import L from 'leaflet'
 export interface GeoEditorProps {
   geoJson?: GeoJSONType
   geoJsonCallback: (multiPolygon: MultiPolygon) => void
-};
+}
 
 const FeatureGroupEditor = ({
   geoJson,

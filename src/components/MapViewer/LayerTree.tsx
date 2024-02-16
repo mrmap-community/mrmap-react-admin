@@ -29,7 +29,7 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   const { bottomDrawer, setBottomDrawer } = useDrawerContext()
   const { tabList, setTabList } = useTabListContext()
 
-  const { removeWmsTree } = useMapViewerContext()
+  const { removeWmsTree, moveTreeUp, moveTreeDown } = useMapViewerContext()
 
   const handleContextMenu = (event: MouseEvent): void => {
     event.stopPropagation()
@@ -37,9 +37,9 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
     setContextMenu(
       contextMenu === null
         ? {
-          mouseX: event.clientX + 2,
-          mouseY: event.clientY - 6
-        }
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6
+          }
         :
         // repeated contextmenu when it is already open closes it with Chrome 84 on Ubuntu
         // Other native context menus might behave different.
@@ -79,6 +79,8 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
       >
         <MenuItem onClick={handleSecuityEditorCall}>Security Editor</MenuItem>
         <MenuItem onClick={() => { removeWmsTree(node.record?.service?.id) }}>Remove</MenuItem>
+        <MenuItem onClick={() => { moveTreeUp(node.record?.service?.id) }}>Move up</MenuItem>
+        <MenuItem onClick={() => { moveTreeDown(node.record?.service?.id) }}>Move Down</MenuItem>
 
       </Menu>
     </IconButton >
@@ -110,7 +112,7 @@ const LayerTree = (): ReactNode => {
     if ((event.target as HTMLElement).closest('.MuiSvgIcon-root') != null) {
       setExpanded(newExpanded)
     }
-  }, [setExpanded])
+  }, [expanded])
 
   const renderTreeItemLabel = useCallback((node: TreeNode) => {
     const securityRuleButton = (

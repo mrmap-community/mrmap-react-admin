@@ -1,6 +1,6 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useEffect } from 'react'
+import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useEffect, useMemo } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
-import { MapContainer } from 'react-leaflet'
+import { MapContainer, useMap } from 'react-leaflet'
 
 import { Box } from '@mui/material'
 import { type Map } from 'leaflet'
@@ -13,6 +13,7 @@ import LayerTree from './LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
+import { useLeafletContext, useLayerLifecycle, createElementObject } from '@react-leaflet/core'
 
 const style = {
   position: 'relative',
@@ -26,11 +27,28 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 }
 
+const TileHandler = (): ReactNode => {
+  const { tiles } = useMapViewerContext()
+  const context = useLeafletContext()
+
+  useEffect(() => {
+    // removing all layers from leaflet context... otherwise the changes may not be present in leaflet context correctly such as order of services
+    const container = (context.layerContainer != null) || context.map
+    console.log('container:', container)
+
+    // container.eachLayer(layer => { container.removeLayer(layer) })
+  }, [tiles])
+
+  return (<>
+    {...tiles}
+  </>)
+}
+
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const mapRef = useRef<Map>(null)
 
-  const { tiles, updateOrAppendWmsTree } = useMapViewerContext()
+  const { updateOrAppendWmsTree } = useMapViewerContext()
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
@@ -40,21 +58,26 @@ const MapViewerCore = (): ReactNode => {
     }
   }, [])
 
+  const displayMap = useMemo(() => (
+    <MapContainer
+
+      whenReady={() => { resizeMap() }}
+      center={[51.505, -0.09]}
+      zoom={2}
+      scrollWheelZoom={true}
+      style={{ flex: 1, height: '100%', width: '100%' }}
+    >
+      <TileHandler/>
+
+    </MapContainer>
+  ), [resizeMap])
+
   return (
     <DrawerBase>
       <TabListBase>
         <Box id={containerId} sx={{ ...style }}>
 
-          <MapContainer
-            whenReady={() => { resizeMap() }}
-            center={[51.505, -0.09]}
-            zoom={2}
-            scrollWheelZoom={true}
-            style={{ flex: 1, height: '100%', width: '100%' }}
-          >
-            {...tiles}
-
-          </MapContainer>
+          {displayMap}
         </Box>
         <RightDrawer
           leftComponentId={containerId}

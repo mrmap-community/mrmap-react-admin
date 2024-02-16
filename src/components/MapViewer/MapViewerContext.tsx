@@ -1,6 +1,6 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect, useCallback } from 'react'
-import { type RaRecord, type Identifier, useDataProvider, useGetOne, type UseGetOneHookValue } from 'react-admin'
-import { WMSTileLayer } from 'react-leaflet'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect, useCallback, useMemo } from 'react'
+import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
+import { WMSTileLayer, useMap } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
@@ -25,6 +25,9 @@ export interface MapViewerContextType {
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
   removeWmsTree: (wmsId: Identifier) => void
   updateOrAppendWmsTree: (wmsTree: WMSTree) => void
+  moveTree: (treeId: Identifier, newIndex: number) => void
+  moveTreeUp: (treeId: Identifier) => void
+  moveTreeDown: (treeId: Identifier) => void
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
@@ -50,42 +53,17 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
-export const useGetWms = (id: Identifier): void => {
-  const { data, isLoading, error, refetc } = useGetOne(
-    'WebMapService',
-    {
-      id,
-      meta: {
-        jsonApiParams: {
-          include: 'layers,operationUrls,layers.referenceSystems',
-          'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier'
-        }
-      }
-    }
-  )
-
-  const { updateOrAppendWmsTree } = useMapViewerContext()
-
-  useEffect(() => {
-    if (data !== undefined) {
-      const wmsTree = raRecordToTopDownTree(data)
-      updateOrAppendWmsTree(wmsTree)
-    }
-  }, [data])
-}
-
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
-  const [tiles, setTiles] = useState<ReactNode[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
 
   const dataProvider = useDataProvider()
 
-  useEffect(() => {
+  const tiles = useMemo(() => {
     const _tiles: ReactNode[] = []
 
-    wmsTrees.forEach(tree => {
+    wmsTrees.forEach((tree, index) => {
       const checkedLayerIdentifiers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
@@ -96,6 +74,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
         _tiles.push(<WMSTileLayer
+          id={index.toString()}
+
           url={getMapUrl}
           params={
             { layers: layerIdentifiers }
@@ -113,22 +93,16 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
     }
 
-    setTiles(_tiles)
+    return _tiles
   }, [wmsTrees, editor, geoJSON])
 
-  useEffect(() => {
-    console.log('changed: ', wmsTrees)
-  }, [wmsTrees])
-
   const removeWmsTree = useCallback((treeId: Identifier) => {
-    const newTrees = wmsTrees.filter(tree => tree.id !== treeId)
-    setWmsTrees(newTrees)
-  }, [wmsTrees])
+    setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
+  }, [])
 
   const updateOrAppendWmsTree = useCallback((newTree: WMSTree) => {
-    console.log(newTree, wmsTrees)
     const index = wmsTrees.findIndex(tree => tree.id === newTree.id)
-    if (index === -1) {
+    if (index < 0) {
       dataProvider.getOne(
         'WebMapService',
         {
@@ -145,7 +119,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }).catch(error => {
         console.error('something went wrong while loading wms tree', error)
       })
-    } else if (index >= 0) {
+    } else {
       setWmsTrees(prevWmsTrees => {
         const updatedWmsTrees = [...prevWmsTrees]
         updatedWmsTrees[index] = newTree
@@ -153,6 +127,34 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       })
     }
   }, [wmsTrees, dataProvider])
+
+  const moveTree = useCallback((treeId: Identifier, newIndex: number) => {
+    setWmsTrees(prevWmsTrees => {
+      const currentIndex = prevWmsTrees.findIndex(tree => tree.id === treeId)
+
+      if (newIndex >= prevWmsTrees.length) {
+        newIndex = prevWmsTrees.length - 1
+      }
+
+      const newTrees = [...prevWmsTrees]
+      newTrees.splice(newIndex, 0, newTrees.splice(currentIndex, 1)[0])
+      return newTrees
+    })
+  }, [])
+
+  const moveTreeUp = useCallback((treeId: Identifier) => {
+    const currentIndex = wmsTrees.findIndex(tree => tree.id === treeId)
+    if (currentIndex !== 0) {
+      moveTree(treeId, currentIndex - 1)
+    }
+  }, [moveTree, wmsTrees])
+
+  const moveTreeDown = useCallback((treeId: Identifier) => {
+    const currentIndex = wmsTrees.findIndex(tree => tree.id === treeId)
+    if (currentIndex !== wmsTrees.length - 1) {
+      moveTree(treeId, currentIndex + 1)
+    }
+  }, [moveTree, wmsTrees])
 
   return (
     <context.Provider
@@ -163,6 +165,9 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           setWmsTrees,
           removeWmsTree,
           updateOrAppendWmsTree,
+          moveTree,
+          moveTreeUp,
+          moveTreeDown,
           setEditor,
           geoJSON,
           setGeoJSON
