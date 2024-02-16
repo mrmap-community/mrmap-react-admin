@@ -14,7 +14,6 @@ import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
 import { useLeafletContext, useLayerLifecycle, createElementObject } from '@react-leaflet/core'
-
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -35,6 +34,8 @@ const TileHandler = (): ReactNode => {
     // removing all layers from leaflet context... otherwise the changes may not be present in leaflet context correctly such as order of services
     const container = (context.layerContainer != null) || context.map
     console.log('container:', container)
+
+    console.log('leaflet layers', container._layers)
 
     // container.eachLayer(layer => { container.removeLayer(layer) })
   }, [tiles])

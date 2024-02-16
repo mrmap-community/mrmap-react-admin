@@ -1,6 +1,6 @@
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect, useCallback, useMemo } from 'react'
 import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
-import { WMSTileLayer, useMap } from 'react-leaflet'
+import { WMSTileLayer } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
@@ -63,7 +63,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const tiles = useMemo(() => {
     const _tiles: ReactNode[] = []
 
-    wmsTrees.forEach((tree, index) => {
+    const oldWmsTrees = [...wmsTrees].reverse()
+    oldWmsTrees.forEach((tree, index) => {
       const checkedLayerIdentifiers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
@@ -71,20 +72,21 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       if (getMapUrl === '') {
         console.warn('missing getmapurl for tree ', tree.id)
       }
-
+      console.log(index, getMapUrl)
       if (layerIdentifiers !== '' && getMapUrl !== '') {
-        _tiles.push(<WMSTileLayer
-          id={index.toString()}
+        _tiles.push(
 
-          url={getMapUrl}
-          params={
-            { layers: layerIdentifiers }
-          }
-          version={tree.record?.version === '' ? '1.3.0' : tree.record?.version}
-          transparent={true}
-          zoomOffset={-1}
-          format='image/png'
-          noWrap
+          <WMSTileLayer
+            key={(Math.random() + 1).toString(36).substring(7)}
+            url={getMapUrl}
+            params={
+              { layers: layerIdentifiers }
+            }
+            version={tree.record?.version === '' ? '1.3.0' : tree.record?.version}
+            transparent={true}
+            zoomOffset={-1}
+            format='image/png'
+            noWrap
         />)
       }
     })
@@ -92,6 +94,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     if (editor) {
       _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
     }
+
+    console.log('tiles', _tiles)
 
     return _tiles
   }, [wmsTrees, editor, geoJSON])
