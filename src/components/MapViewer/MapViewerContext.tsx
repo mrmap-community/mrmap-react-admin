@@ -72,7 +72,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       if (getMapUrl === '') {
         console.warn('missing getmapurl for tree ', tree.id)
       }
-      console.log(index, getMapUrl)
+
       if (layerIdentifiers !== '' && getMapUrl !== '') {
         _tiles.push(
 
@@ -95,8 +95,6 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
     }
 
-    console.log('tiles', _tiles)
-
     return _tiles
   }, [wmsTrees, editor, geoJSON])
 
@@ -114,7 +112,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           meta: {
             jsonApiParams: {
               include: 'layers,operationUrls,layers.referenceSystems',
-              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier'
+              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,bbox_lat_lon'
             }
           }
         }

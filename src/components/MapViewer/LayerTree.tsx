@@ -15,20 +15,22 @@ import LockIcon from '@mui/icons-material/Lock'
 import Tooltip from '@mui/material/Tooltip'
 import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
+import L from 'leaflet'
 
 interface ContextMenuProps {
   node: TreeNode
+  map: any
 }
 
-const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
+const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number
     mouseY: number
   } | null>(null)
+
   const { setEditor } = useMapViewerContext()
   const { bottomDrawer, setBottomDrawer } = useDrawerContext()
   const { tabList, setTabList } = useTabListContext()
-
   const { removeWmsTree, moveTreeUp, moveTreeDown } = useMapViewerContext()
 
   const handleContextMenu = (event: MouseEvent): void => {
@@ -64,6 +66,18 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
     setBottomDrawer({ ...bottomDrawer, isOpen: true, children: <Tabs /> })
   }
 
+  const flyToLayer = useCallback((node: TreeNode) => {
+    console.log('RA-Record', node.record)
+    const feature = {
+      type: 'Feature',
+      geometry: node?.record?.bboxLatLon
+    }
+    const geojson = L.geoJSON(feature)
+
+    console.log('bbox', geojson, feature, node?.record?.bboxLatLon)
+    // map.flyToBounds()
+  }, [map])
+
   return (
     <IconButton onContextMenu={handleContextMenu} onClick={handleContextMenu}>
       <MoreHorizIcon />
@@ -81,6 +95,7 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
         <MenuItem onClick={() => { removeWmsTree(node.record?.service?.id) }}>Remove</MenuItem>
         <MenuItem onClick={() => { moveTreeUp(node.record?.service?.id) }}>Move up</MenuItem>
         <MenuItem onClick={() => { moveTreeDown(node.record?.service?.id) }}>Move Down</MenuItem>
+        <MenuItem onClick={() => { flyToLayer(node) }}>Center Layer</MenuItem>
 
       </Menu>
     </IconButton >
@@ -88,7 +103,11 @@ const ContextMenu = ({ node }: ContextMenuProps): ReactNode => {
   )
 }
 
-const LayerTree = (): ReactNode => {
+export interface LayerTreeProps {
+  map: any
+}
+
+const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   // const { flatTree, refetch, isLoading } = useWMSTreeContext()
 
   const { wmsTrees } = useMapViewerContext()
@@ -126,7 +145,7 @@ const LayerTree = (): ReactNode => {
         <TreeNodeCheckbox node={node} />
         {securityRuleButton}
         {node.name}
-        <ContextMenu node={node} />
+        <ContextMenu node={node} map={map}/>
       </>
     )
   }, [])

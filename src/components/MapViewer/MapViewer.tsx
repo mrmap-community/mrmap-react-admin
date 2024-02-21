@@ -1,6 +1,6 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useEffect, useMemo } from 'react'
+import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useMemo } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
-import { MapContainer, useMap } from 'react-leaflet'
+import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
 import { type Map } from 'leaflet'
@@ -13,7 +13,6 @@ import LayerTree from './LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
-import { useLeafletContext, useLayerLifecycle, createElementObject } from '@react-leaflet/core'
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -26,30 +25,12 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 }
 
-const TileHandler = (): ReactNode => {
-  const { tiles } = useMapViewerContext()
-  const context = useLeafletContext()
-
-  useEffect(() => {
-    // removing all layers from leaflet context... otherwise the changes may not be present in leaflet context correctly such as order of services
-    const container = (context.layerContainer != null) || context.map
-    console.log('container:', container)
-
-    console.log('leaflet layers', container._layers)
-
-    // container.eachLayer(layer => { container.removeLayer(layer) })
-  }, [tiles])
-
-  return (<>
-    {...tiles}
-  </>)
-}
-
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const mapRef = useRef<Map>(null)
 
   const { updateOrAppendWmsTree } = useMapViewerContext()
+  const { tiles } = useMapViewerContext()
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
@@ -68,10 +49,9 @@ const MapViewerCore = (): ReactNode => {
       scrollWheelZoom={true}
       style={{ flex: 1, height: '100%', width: '100%' }}
     >
-      <TileHandler/>
-
+      {...tiles}
     </MapContainer>
-  ), [resizeMap])
+  ), [resizeMap, tiles])
 
   return (
     <DrawerBase>
