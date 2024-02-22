@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useMemo } from 'react'
+import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useMemo, useState } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
@@ -27,22 +27,22 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
-  const mapRef = useRef<Map>(null)
-
+  const [map, setMap] = useState<Map>()
+  console.log(map)
   const { updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
 
   const resizeMap = useCallback((): void => {
-    const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
+    const resizeObserver = new ResizeObserver(() => map?.invalidateSize())
     const container = document.getElementById('map-container')
     if (container != null) {
       resizeObserver.observe(container)
     }
-  }, [])
+  }, [map])
 
   const displayMap = useMemo(() => (
     <MapContainer
-
+      ref={(m) => { setMap(m ?? undefined) }}
       whenReady={() => { resizeMap() }}
       center={[51.505, -0.09]}
       zoom={2}
@@ -64,7 +64,7 @@ const MapViewerCore = (): ReactNode => {
           leftComponentId={containerId}
           callback={resizeMap}
         >
-          <LayerTree />
+          <LayerTree map={map}/>
         </RightDrawer>
         <BottomDrawer
           aboveComponentId={containerId}

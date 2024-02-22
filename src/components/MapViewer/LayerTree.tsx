@@ -1,4 +1,4 @@
-import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState, type RefObject } from 'react'
 
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
@@ -16,13 +16,16 @@ import Tooltip from '@mui/material/Tooltip'
 import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
 import L from 'leaflet'
+import { type Map } from 'leaflet'
 
 interface ContextMenuProps {
   node: TreeNode
-  map: any
+  map?: Map
 }
 
 const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
+  console.log('b', map)
+
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number
     mouseY: number
@@ -68,14 +71,14 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
 
   const flyToLayer = useCallback((node: TreeNode) => {
     console.log('RA-Record', node.record)
-    const feature = {
-      type: 'Feature',
-      geometry: node?.record?.bboxLatLon
-    }
-    const geojson = L.geoJSON(feature)
 
-    console.log('bbox', geojson, feature, node?.record?.bboxLatLon)
-    // map.flyToBounds()
+    const lowerLeft = L.latLng(node?.record?.bboxLatLon?.coordinates[0][0][1], node?.record?.bboxLatLon?.coordinates[0][0][0])
+    const upperRight = L.latLng(node?.record?.bboxLatLon?.coordinates[0][2][1], node?.record?.bboxLatLon?.coordinates[0][2][0])
+    const bounds = L.latLngBounds(upperRight, lowerLeft)
+
+    console.log('c', map, bounds)
+
+    map?.flyToBounds(bounds)
   }, [map])
 
   return (
@@ -104,12 +107,12 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
 }
 
 export interface LayerTreeProps {
-  map: any
+  map?: Map
 }
 
 const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   // const { flatTree, refetch, isLoading } = useWMSTreeContext()
-
+  console.log('a', map)
   const { wmsTrees } = useMapViewerContext()
 
   const [expanded, setExpanded] = useState<string[]>([])
@@ -148,7 +151,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         <ContextMenu node={node} map={map}/>
       </>
     )
-  }, [])
+  }, [map])
 
   const renderTree = useCallback((node?: TreeNode): ReactNode => {
     if (node !== undefined) {
