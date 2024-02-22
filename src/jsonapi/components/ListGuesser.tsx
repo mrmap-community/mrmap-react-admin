@@ -24,6 +24,7 @@ interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
   additionalActions?: ReactNode
   onRowSelect?: (selectedRecord: RaRecord) => void
+  onRowClick?: (clickedRecord: RaRecord) => void
 }
 
 const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
@@ -82,6 +83,7 @@ const ListGuesser = ({
   relatedResource = '',
   additionalActions = undefined,
   onRowSelect = () => { },
+  onRowClick = undefined,
   ...props
 }: ListGuesserProps): ReactElement => {
   const [open] = useSidebarState()
@@ -196,6 +198,7 @@ const ListGuesser = ({
   }
   return (
     <List
+
       filters={filters}
       actions={<ListActions filters={filters} />}
       hasCreate={(createSchema !== undefined)}
@@ -203,15 +206,15 @@ const ListGuesser = ({
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
           ? {
-              relatedResource: {
-                resource: relatedResource,
-                id
-              },
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            relatedResource: {
+              resource: relatedResource,
+              id
+            },
+            jsonApiParams: { ...jsonApiQuery }
+          }
           : {
-              jsonApiParams: { ...jsonApiQuery }
-            }
+            jsonApiParams: { ...jsonApiQuery }
+          }
       }}
       sx={
         {
@@ -255,12 +258,17 @@ const ListGuesser = ({
 
       < DatagridConfigurable
         rowClick={(id, resource, record) => {
-          onRowSelect(record)
-          if (selectedRecord !== record) {
-            setSelectedRecord(record)
+          if (onRowClick !== undefined) {
+            onRowClick(record)
+          } else {
+            onRowSelect(record)
+            if (selectedRecord !== record) {
+              setSelectedRecord(record)
+            }
           }
           return false
         }
+
         }
       // FIXME: this styling shoud be part of the parent and this component should always fill full available size
       >

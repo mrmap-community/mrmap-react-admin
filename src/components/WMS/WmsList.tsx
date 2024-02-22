@@ -10,7 +10,7 @@ const TreeButton = (): ReactNode => {
   return (
     <Button
       component={Link}
-      to={`${record.id}/viewer`}
+      to={`/viewer?wms=${record.id}`}
       color="primary"
     >
       <AccountTreeIcon />

@@ -1,6 +1,7 @@
 import { type ReactElement, useContext } from 'react'
 import {
   Admin,
+  CustomRoutes,
   defaultTheme, Loading,
   type RaThemeOptions
 } from 'react-admin'
@@ -18,6 +19,7 @@ import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
 import WmsList from './WMS/WmsList'
 import WmsViewer from './WMS/WmsViewer'
+
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
@@ -33,7 +35,7 @@ const MrMapFrontend = (): ReactElement => {
     const jsonApiDataProvider = jsonApidataProvider({
       entrypoint: 'http://localhost:8001/',
       httpClient: asyncClient,
-      realtimeBus: 'wss://localhost:8001/ws/default/'
+      realtimeBus: 'ws://localhost:8001/ws/default/'
     })
 
     return (
@@ -56,6 +58,11 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'BackgroundProcess'} />
         <ResourceGuesser name={'DatasetMetadata'} />
         <ResourceGuesser name={'AllowedWebMapServiceOperation'} />
+
+        <CustomRoutes>
+          <Route path="/viewer" element={<WmsViewer />} />
+
+        </CustomRoutes>
       </Admin>
     )
   }

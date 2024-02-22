@@ -10,18 +10,19 @@ export interface TreeNodeCheckboxProps {
 }
 
 const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
-  const { wmsTrees, setWmsTrees } = useMapViewerContext()
+  const { wmsTrees, updateOrAppendWmsTree } = useMapViewerContext()
+
   const tree = useMemo(() => {
     return wmsTrees.find(tree => tree.id === node.record.service.id)
   }, [wmsTrees])
 
   const handleChange = useCallback((event: ChangeEvent, checked: boolean) => {
     event.stopPropagation()
-    const newTrees = [...wmsTrees?.filter(_tree => _tree.id !== tree?.id) ?? []]
+
     if (tree !== undefined) {
       const newTree = { ...tree }
 
-      const index = tree.checkedNodes.findIndex(n => n.id === node.id)
+      const index = tree.checkedNodes?.findIndex(n => n.id === node.id)
 
       if (checked && index === -1) {
         const descendants = collectChildren(node)
@@ -32,9 +33,8 @@ const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
         newTree.checkedNodes = [...newTree.checkedNodes.filter(n => n.id !== node.id).filter(n => descendants.find(descendant => descendant.id === n.id) == null)]
       }
 
-      newTrees.push(newTree)
+      updateOrAppendWmsTree(newTree)
     }
-    setWmsTrees(newTrees)
   }, [wmsTrees, tree])
 
   const isChecked = useMemo(() => {

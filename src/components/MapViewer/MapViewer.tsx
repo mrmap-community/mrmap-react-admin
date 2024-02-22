@@ -1,24 +1,24 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren } from 'react'
-import { type RaRecord, type SimpleShowLayoutProps } from 'react-admin'
+import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useMemo, useState } from 'react'
+import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
 import { type Map } from 'leaflet'
 
-import ListGuesser from '../../jsonapi/components/ListGuesser'
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import { MapViewerBase, useMapViewerContext } from './MapViewerContext'
 import LayerTree from './LayerTree'
-
+import { TabListBase } from '../Tab/TabListContext'
+import { Tabs } from '../Tab/Tabs'
+import ListGuesser from '../../jsonapi/components/ListGuesser'
 const style = {
   position: 'relative',
   //  display: 'flex',
   width: '100%',
   height: 'calc(100vh - 50px)'
   // maxHeight: 'calc(100vh - 50px !important)'
-
 }
 
 export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
@@ -27,59 +27,66 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
-  const mapRef = useRef<Map>(null)
-
+  const [map, setMap] = useState<Map>()
+  console.log(map)
+  const { updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
 
   const resizeMap = useCallback((): void => {
-    const resizeObserver = new ResizeObserver(() => mapRef.current?.invalidateSize())
+    const resizeObserver = new ResizeObserver(() => map?.invalidateSize())
     const container = document.getElementById('map-container')
     if (container != null) {
       resizeObserver.observe(container)
     }
-  }, [])
+  }, [map])
 
-  const handleRowSelect = useCallback((record: RaRecord) => {
-    console.log(record)
-  }, [])
+  const displayMap = useMemo(() => (
+    <MapContainer
+      ref={(m) => { setMap(m ?? undefined) }}
+      whenReady={() => { resizeMap() }}
+      center={[51.505, -0.09]}
+      zoom={2}
+      scrollWheelZoom={true}
+      style={{ flex: 1, height: '100%', width: '100%' }}
+    >
+      {...tiles}
+    </MapContainer>
+  ), [resizeMap, tiles])
 
   return (
     <DrawerBase>
-      <Box id={containerId} sx={{ ...style }}>
+      <TabListBase>
+        <Box id={containerId} sx={{ ...style }}>
 
-        <MapContainer
-          whenReady={() => { resizeMap() }}
-          center={[51.505, -0.09]}
-          zoom={2}
-          scrollWheelZoom={true}
-          style={{ flex: 1, height: '100%', width: '100%' }}
-
+          {displayMap}
+        </Box>
+        <RightDrawer
+          leftComponentId={containerId}
+          callback={resizeMap}
         >
-          {...tiles}
-
-        </MapContainer>
-      </Box>
-      <RightDrawer
-        leftComponentId={containerId}
-        callback={resizeMap}
-      >
-        <LayerTree />
-      </RightDrawer>
-      <BottomDrawer
-        aboveComponentId={containerId}
-        callback={resizeMap}
-      >
-
-        <ListGuesser
-          resource='AllowedWebMapServiceOperation'
-          relatedResource='WebMapService'
-          empty={false}
-          onRowSelect={handleRowSelect}
+          <LayerTree map={map}/>
+        </RightDrawer>
+        <BottomDrawer
+          aboveComponentId={containerId}
+          callback={resizeMap}
         >
-
-        </ListGuesser>
-
-      </BottomDrawer>
+          <Tabs
+            defaultTabs={
+              [{
+                tab: { label: 'WMS List' },
+                tabPanel: {
+                  children: <ListGuesser
+                    resource='WebMapService'
+                    onRowClick={(resource) => {
+                      updateOrAppendWmsTree({ id: resource.id })
+                    }}
+                  />
+                }
+              }]
+            }
+          />
+        </BottomDrawer>
+      </TabListBase>
     </DrawerBase>
   )
 }

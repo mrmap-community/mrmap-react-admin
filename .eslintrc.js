@@ -4,9 +4,11 @@ module.exports = {
         "es2021": true
     },
     "extends": [
+        "eslint:recommended",
         "standard-with-typescript",
         "plugin:react/recommended",
-        "plugin:react/jsx-runtime"
+        "plugin:react/jsx-runtime",
+        "plugin:react-hooks/recommended",
     ],
     "overrides": [
         {
@@ -29,6 +31,7 @@ module.exports = {
     "plugins": [
         "react",
         "simple-import-sort",
+        "react-hooks",
     ],
     "rules": {
         "simple-import-sort/imports": [
@@ -42,6 +45,8 @@ module.exports = {
                 ]
             }
         ],
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn"
 
     },
     "settings": {

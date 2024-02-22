@@ -31,6 +31,7 @@ const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRe
       return <TimeInput {...commonProps} />
     } else if (schema.format === 'duration') {
       // TODO: is there a durationinput?
+      // https://mui.com/x/react-date-pickers/
       return <TextInput {...commonProps} />
     } else if (schema.format === 'geojson') {
       return <GeoJsonInput {...commonProps} />
