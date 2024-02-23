@@ -1,4 +1,4 @@
-import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState, type RefObject } from 'react'
+import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
 
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
@@ -24,8 +24,6 @@ interface ContextMenuProps {
 }
 
 const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
-  console.log('b', map)
-
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number
     mouseY: number
@@ -70,13 +68,9 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
   }
 
   const flyToLayer = useCallback((node: TreeNode) => {
-    console.log('RA-Record', node.record)
-
     const lowerLeft = L.latLng(node?.record?.bboxLatLon?.coordinates[0][0][1], node?.record?.bboxLatLon?.coordinates[0][0][0])
     const upperRight = L.latLng(node?.record?.bboxLatLon?.coordinates[0][2][1], node?.record?.bboxLatLon?.coordinates[0][2][0])
     const bounds = L.latLngBounds(upperRight, lowerLeft)
-
-    console.log('c', map, bounds)
 
     map?.flyToBounds(bounds)
   }, [map])
@@ -111,8 +105,6 @@ export interface LayerTreeProps {
 }
 
 const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
-  // const { flatTree, refetch, isLoading } = useWMSTreeContext()
-  console.log('a', map)
   const { wmsTrees } = useMapViewerContext()
 
   const [expanded, setExpanded] = useState<string[]>([])
@@ -170,7 +162,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
       )
     }
     return <></>
-  }, [])
+  }, [renderTreeItemLabel])
 
   const treeViews = useMemo(() => {
     return wmsTrees?.map(tree => {
@@ -186,7 +178,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         </SimpleTreeView>
       )
     })
-  }, [wmsTrees, expanded])
+  }, [wmsTrees, handleToggle, expanded, renderTree])
 
   return treeViews
 }

@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useId, useRef, type PropsWithChildren, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
@@ -28,7 +28,6 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
-  console.log(map)
   const { updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
 

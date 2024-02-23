@@ -1,4 +1,4 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect, useCallback, useMemo } from 'react'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo } from 'react'
 import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
 import { WMSTileLayer } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
