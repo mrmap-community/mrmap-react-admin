@@ -1,8 +1,9 @@
-import { type ReactElement, useContext } from 'react'
+import { type ReactElement, useContext, useMemo } from 'react'
 import {
   Admin,
   CustomRoutes,
   defaultTheme, Loading,
+  useStore,
   type RaThemeOptions
 } from 'react-admin'
 import { Route } from 'react-router-dom'
@@ -20,11 +21,24 @@ import MyLayout from './Layout'
 import WmsList from './WMS/WmsList'
 import WmsViewer from './WMS/WmsViewer'
 
+export const TOKENNAME = 'token'
+
+export interface Token {
+  token: string
+  expiry: string
+}
+
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
   const { client, isLoading } = useContext(HttpClientContext)
+
+  const [token, setToken] = useStore<string>(TOKENNAME, undefined)
+
+  const parsedToken: Token = useMemo(() => {
+    return (token !== undefined) ? JSON.parse(token) : undefined
+  }, [token])
 
   if (isLoading || client === undefined) {
     return (
@@ -35,7 +49,10 @@ const MrMapFrontend = (): ReactElement => {
     const jsonApiDataProvider = jsonApidataProvider({
       entrypoint: 'http://localhost:8001/',
       httpClient: asyncClient,
-      realtimeBus: 'ws://localhost:8001/ws/default/'
+      realtimeBus: 'ws://localhost:8001/ws/default/',
+      user: {
+        token: parsedToken?.token
+      }
     })
 
     return (
@@ -43,7 +60,7 @@ const MrMapFrontend = (): ReactElement => {
         theme={lightTheme}
         darkTheme={darkTheme}
         dataProvider={jsonApiDataProvider}
-        authProvider={authProvider()}
+        authProvider={authProvider({ token, tokenSetter: setToken })}
         layout={MyLayout}
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >

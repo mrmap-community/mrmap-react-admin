@@ -6,6 +6,7 @@ import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } f
 import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 import { TOKENNAME } from './authProvider'
+import { type Token } from '../components/MrMapFrontend'
 
 export interface RelatedResource {
   resource: string
@@ -22,10 +23,10 @@ export interface GetListJsonApiParams extends GetListParams {
 export interface JsonApiDataProviderOptions extends Options {
   entrypoint: string
   realtimeBus?: string
-
   httpClient: Promise<OpenAPIClient>
   total?: string
   headers?: AxiosHeaders
+  token?: Token
 }
 
 type EventTypes = 'created' | 'updated' | 'deleted'
@@ -59,23 +60,12 @@ export interface Subscription {
   callback: (event: CrudEvent) => void
 }
 
-let subscriptions: Subscription[] = []
-
-const checkAuth = (headers: AxiosHeaders): string => {
-  const token = localStorage.getItem(TOKENNAME) ?? ''
-
-  if (token !== '') {
-    try {
-      const tokenValue: string = JSON.parse(token).token ?? ''
-      headers.setAuthorization(`Token ${tokenValue}`)
-      return tokenValue
-    } catch (error) {
-      localStorage.removeItem(TOKENNAME)
-      // TODO: redirect to login page
-    }
-  }
-  return token
+export interface CheckAuthReturn {
+  token: string
+  headers: AxiosHeaders
 }
+
+let subscriptions: Subscription[] = []
 
 const handleApiError = (error: AxiosError): void => {
   if (error.response?.status === 403) {
@@ -124,15 +114,18 @@ const dataProvider = ({
   total = '/meta/pagination/count',
   realtimeBus = '',
   httpClient,
+  user,
   ...rest
 }: JsonApiDataProviderOptions): DataProvider => {
-  const token = checkAuth(headers)
+  if (user?.token !== '' && user?.token !== undefined) {
+    headers.setAuthorization(`Token ${user?.token}`)
 
-  if (realtimeBus !== '' && token !== '') {
-    const socket = new WebSocket(`${realtimeBus}?token=${token}`)
-    socket.onopen = (event) => { console.log('open', event) }
-    socket.onmessage = realtimeOnMessage
-    socket.onerror = (event) => { console.log('error', event) }
+    if (realtimeBus !== '') {
+      const socket = new WebSocket(`${realtimeBus}?token=${user?.token}`)
+      socket.onopen = (event) => { console.log('open', event) }
+      socket.onmessage = realtimeOnMessage
+      socket.onerror = (event) => { console.log('error', event) }
+    }
   }
 
   // TODO: get baseURL from open api client
