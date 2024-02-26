@@ -4,7 +4,8 @@ import {
   CustomRoutes,
   defaultTheme, Loading,
   useStore,
-  type RaThemeOptions
+  type RaThemeOptions,
+  localStorageStore
 } from 'react-admin'
 import { Route } from 'react-router-dom'
 
@@ -22,6 +23,7 @@ import WmsList from './WMS/WmsList'
 import WmsViewer from './WMS/WmsViewer'
 
 export const TOKENNAME = 'token'
+const STORE_VERSION = '1'
 
 export interface Token {
   token: string
@@ -40,28 +42,33 @@ const MrMapFrontend = (): ReactElement => {
     return (token !== undefined) ? JSON.parse(token) : undefined
   }, [token])
 
-  if (isLoading || client === undefined) {
+  const dataProvider = useMemo(() => {
+    if (!isLoading && client !== undefined) {
+      const asyncClient = client.api.getClient()
+      return jsonApidataProvider({
+        entrypoint: 'http://localhost:8001/',
+        httpClient: asyncClient,
+        realtimeBus: 'ws://localhost:8001/ws/default/',
+        user: {
+          token: parsedToken?.token
+        }
+      })
+    }
+  }, [isLoading, client, parsedToken?.token])
+
+  if (dataProvider === undefined) {
     return (
       <Loading loadingPrimary="OpenApi Client is loading...." loadingSecondary='OpenApi Client is loading....' />
     )
   } else {
-    const asyncClient = client.api.getClient()
-    const jsonApiDataProvider = jsonApidataProvider({
-      entrypoint: 'http://localhost:8001/',
-      httpClient: asyncClient,
-      realtimeBus: 'ws://localhost:8001/ws/default/',
-      user: {
-        token: parsedToken?.token
-      }
-    })
-
     return (
       <Admin
         theme={lightTheme}
         darkTheme={darkTheme}
-        dataProvider={jsonApiDataProvider}
+        dataProvider={dataProvider}
         authProvider={authProvider({ token, tokenSetter: setToken })}
         layout={MyLayout}
+        store={localStorageStore(STORE_VERSION)}
       >
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >
           <Route path=":id/viewer" element={<WmsViewer />} />
