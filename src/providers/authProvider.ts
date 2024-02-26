@@ -1,6 +1,9 @@
 import { type AuthProvider } from 'ra-core'
+import { type Dispatch, type SetStateAction } from 'react'
 
 export interface Options {
+  token: string
+  tokenSetter: Dispatch<SetStateAction<any>>
   loginUrl?: string
   logoutUrl?: string
 
@@ -13,23 +16,24 @@ export interface LoginParams {
 
 export const TOKENNAME = 'token'
 
-const tokenAuthProvider = (options: Options = {}): AuthProvider => {
-  const opts = {
-    loginUrl: 'http://localhost:8001/api/auth/login',
-    logoutUrl: 'http://localhost:8001/api/auth/logout',
-    ...options
-  }
+const tokenAuthProvider = (
+  {
+    token,
+    tokenSetter,
+    loginUrl = 'http://localhost:8001/api/auth/login',
+    logoutUrl = 'http://localhost:8001/api/auth/logout'
+  }: Options
+): AuthProvider => {
   return {
     login: async ({ username, password }: LoginParams) => {
-      const request = new Request(opts.loginUrl, {
+      const request = new Request(loginUrl, {
         method: 'POST',
         headers: new Headers({ Authorization: 'Basic ' + btoa(username + ':' + password) })
       })
       const response = await fetch(request)
       if (response.ok) {
         const responseJson = await response.json()
-        const token = JSON.stringify(responseJson)
-        localStorage.setItem(TOKENNAME, token)
+        tokenSetter(JSON.stringify(responseJson))
         return
       }
       if (response.headers.get('content-type') !== 'application/json') {
@@ -42,12 +46,11 @@ const tokenAuthProvider = (options: Options = {}): AuthProvider => {
     },
     logout: async () => {
       // TODO: call logoutUrl with token
-      localStorage.removeItem(TOKENNAME)
+      tokenSetter(undefined)
       await Promise.resolve()
     },
     checkAuth: async () => {
-      const storedAuthToken = localStorage.getItem(TOKENNAME)
-      const authToken = (storedAuthToken != null) ? JSON.parse(storedAuthToken) : undefined
+      const authToken = (token !== undefined) ? JSON.parse(token) : undefined
       const validAuth = (authToken !== undefined) && !(new Date(authToken.tokenExpiry) > new Date())
 
       validAuth

@@ -29,7 +29,7 @@ export const HttpClientProvider = ({ children }: any): ReactNode => {
       }).catch(() => { })
       return () => { }
     }
-  }, [client])
+  }, [client, isLoading])
 
   return (
     <HttpClientContext.Provider value={{ client, isLoading }}>
