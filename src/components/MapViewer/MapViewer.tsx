@@ -1,9 +1,9 @@
-import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState, useEffect } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import { type Map } from 'leaflet'
+import { type Map, type Point } from 'leaflet'
 
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
@@ -30,6 +30,7 @@ const MapViewerCore = (): ReactNode => {
   const [map, setMap] = useState<Map>()
   const { updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
+  const [isShowMenu, setIsShowMenu] = useState<boolean>(false)
 
   const resizeMap = useCallback((): void => {
     const resizeObserver = new ResizeObserver(() => map?.invalidateSize())
@@ -51,6 +52,28 @@ const MapViewerCore = (): ReactNode => {
       {...tiles}
     </MapContainer>
   ), [resizeMap, tiles])
+
+  useEffect(() => {
+    if (map !== undefined) {
+      const mapSize = map.getSize()
+
+      map.on('click dragstart zoom', () => {
+        // disable ob click, dragstart and zoom
+        setIsShowMenu(false)
+      })
+
+      map.on('contextmenu', (event) => {
+        const pointRightClick: Point = event.containerPoint
+
+        const latlng = map.mouseEventToLatLng(event.originalEvent)
+
+        // ToDo: do a getfeatureinfo call to all wms layers
+
+        console.log(event, pointRightClick, latlng)
+        setIsShowMenu(true)
+      })
+    }
+  }, [map])
 
   return (
     <DrawerBase>
