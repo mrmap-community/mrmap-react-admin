@@ -4,6 +4,7 @@ import { WMSTileLayer } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
+import { type Map } from 'leaflet'
 
 export interface TreeNode {
   id: Identifier
@@ -87,6 +88,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
             zoomOffset={-1}
             format='image/png'
             noWrap
+            // tileSize={map?.getSize()}
+
         />)
       }
     })
@@ -182,6 +185,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
 export const useMapViewerContext = (): MapViewerContextType => {
   const ctx = useContext(context)
+
   if (ctx === undefined) {
     throw new Error('useMapViewerContext must be inside a MapViewerBase')
   }

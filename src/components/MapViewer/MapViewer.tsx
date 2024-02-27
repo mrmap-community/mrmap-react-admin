@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState, useEffect } from 'react'
-import { type SimpleShowLayoutProps } from 'react-admin'
+import { fetchUtils, useStore, type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
@@ -25,25 +25,30 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 }
 
+const getFeatureInfoCall = async (): Promise<void> => {
+  const response = await fetch('http://example.com/movies.json')
+
+  console.log(response)
+}
+
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
   const { updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
   const [isShowMenu, setIsShowMenu] = useState<boolean>(false)
+  const [toolbarIsOpen] = useStore('sidebar.open')
 
-  const resizeMap = useCallback((): void => {
-    const resizeObserver = new ResizeObserver(() => map?.invalidateSize())
-    const container = document.getElementById('map-container')
-    if (container != null) {
-      resizeObserver.observe(container)
-    }
-  }, [map])
+  useEffect(() => {
+    console.log('size old:', map?.getSize())
+    map?.invalidateSize()
+    console.log('size new:', map?.getSize())
+  }, [map, toolbarIsOpen])
 
   const displayMap = useMemo(() => (
     <MapContainer
       ref={(m) => { setMap(m ?? undefined) }}
-      whenReady={() => { resizeMap() }}
+
       center={[51.505, -0.09]}
       zoom={2}
       scrollWheelZoom={true}
@@ -51,16 +56,19 @@ const MapViewerCore = (): ReactNode => {
     >
       {...tiles}
     </MapContainer>
-  ), [resizeMap, tiles])
+  ), [tiles])
 
   useEffect(() => {
-    if (map !== undefined) {
-      const mapSize = map.getSize()
+    console.log('map changed')
 
-      map.on('click dragstart zoom', () => {
-        // disable ob click, dragstart and zoom
-        setIsShowMenu(false)
-      })
+    if (map !== undefined) {
+      if (!map.hasEventListeners('click dragstart zoom')) {
+        map.on('click dragstart zoom', () => {
+          // disable ob click, dragstart and zoom
+          setIsShowMenu(false)
+        })
+      }
+      map.removeEventListener('contextmenu')
 
       map.on('contextmenu', (event) => {
         const pointRightClick: Point = event.containerPoint
@@ -69,7 +77,7 @@ const MapViewerCore = (): ReactNode => {
 
         // ToDo: do a getfeatureinfo call to all wms layers
 
-        console.log(event, pointRightClick, latlng)
+        console.log('event', event, 'size', map.getSize(), 'point', pointRightClick, 'latlng', latlng)
         setIsShowMenu(true)
       })
     }
@@ -84,13 +92,13 @@ const MapViewerCore = (): ReactNode => {
         </Box>
         <RightDrawer
           leftComponentId={containerId}
-          callback={resizeMap}
+          callback={() => map?.invalidateSize()}
         >
           <LayerTree map={map}/>
         </RightDrawer>
         <BottomDrawer
           aboveComponentId={containerId}
-          callback={resizeMap}
+          callback={() => map?.invalidateSize()}
         >
           <Tabs
             defaultTabs={
