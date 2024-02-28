@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState, useEffect } from 'react'
-import { fetchUtils, useStore, type SimpleShowLayoutProps } from 'react-admin'
+import { fetchUtils, useStore, type SimpleShowLayoutProps, useSidebarState } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
@@ -38,11 +38,10 @@ const MapViewerCore = (): ReactNode => {
   const { tiles } = useMapViewerContext()
   const [isShowMenu, setIsShowMenu] = useState<boolean>(false)
   const [toolbarIsOpen] = useStore('sidebar.open')
+  const [open, setOpen] = useSidebarState()
 
   useEffect(() => {
-    console.log('size old:', map?.getSize())
     map?.invalidateSize()
-    console.log('size new:', map?.getSize())
   }, [map, toolbarIsOpen])
 
   const displayMap = useMemo(() => (
