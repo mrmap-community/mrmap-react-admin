@@ -32,6 +32,8 @@ export interface Token {
 
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
+  const customTheme: RaThemeOptions = { ...defaultTheme, transitions: {} }
+
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
   const { client, isLoading } = useContext(HttpClientContext)
@@ -65,6 +67,7 @@ const MrMapFrontend = (): ReactElement => {
       <Admin
         theme={lightTheme}
         darkTheme={darkTheme}
+        lightTheme={customTheme}
         dataProvider={dataProvider}
         authProvider={authProvider({ token, tokenSetter: setToken })}
         layout={MyLayout}
