@@ -1,5 +1,5 @@
-import { type ReactNode, useCallback, useId, type PropsWithChildren, useMemo, useState, useEffect } from 'react'
-import { fetchUtils, useStore, type SimpleShowLayoutProps, useSidebarState } from 'react-admin'
+import { type ReactNode, useId, type PropsWithChildren, useMemo, useState, useEffect, useLayoutEffect } from 'react'
+import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer } from 'react-leaflet'
 
 import { Box } from '@mui/material'
@@ -13,6 +13,7 @@ import LayerTree from './LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
+import useResizeObserver from '@react-hook/resize-observer'
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -34,20 +35,16 @@ const getFeatureInfoCall = async (): Promise<void> => {
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
-  const { updateOrAppendWmsTree } = useMapViewerContext()
-  const { tiles } = useMapViewerContext()
   const [isShowMenu, setIsShowMenu] = useState<boolean>(false)
-  const [toolbarIsOpen] = useStore('sidebar.open')
-  const [open, setOpen] = useSidebarState()
+  const { setMap: setMapContext, updateOrAppendWmsTree } = useMapViewerContext()
+  const { tiles } = useMapViewerContext()
 
-  useEffect(() => {
-    map?.invalidateSize()
-  }, [map, toolbarIsOpen])
+  const [size, setSize] = useState<DOMRectReadOnly>()
 
   const displayMap = useMemo(() => (
+    // TODO: ignore the ts error for ref... react leaflet expects a state setter here
     <MapContainer
-      ref={(m) => { setMap(m ?? undefined) }}
-
+      ref={setMap}
       center={[51.505, -0.09]}
       zoom={2}
       scrollWheelZoom={true}
@@ -57,10 +54,27 @@ const MapViewerCore = (): ReactNode => {
     </MapContainer>
   ), [tiles])
 
-  useEffect(() => {
-    console.log('map changed')
+  const mapContainer = useMemo(() => map?.getContainer() ?? null, [map])
 
-    if (map !== undefined) {
+  useLayoutEffect(() => {
+    if (mapContainer !== null) {
+      setSize(mapContainer.getBoundingClientRect())
+    }
+  }, [mapContainer])
+
+  useResizeObserver(map?.getContainer() ?? null, (entry) => { setSize(entry.contentRect) })
+
+  useEffect(() => {
+    // on every size change, we need to tell the map context to invalidate the old size values.
+    // Otherwise the getSize() will not provide correct information about the current map container size
+    if (size !== undefined && map !== undefined) {
+      map.invalidateSize()
+      setMapContext(map)
+    }
+  }, [size, map, setMapContext])
+
+  useEffect(() => {
+    if (map !== undefined && map !== null) {
       if (!map.hasEventListeners('click dragstart zoom')) {
         map.on('click dragstart zoom', () => {
           // disable ob click, dragstart and zoom

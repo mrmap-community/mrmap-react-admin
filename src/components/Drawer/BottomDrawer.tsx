@@ -1,27 +1,14 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
 import { type DrawerState, useDrawerContext } from './DrawerContext'
-import useResizeObserver from '@react-hook/resize-observer'
 
 export interface BottomDrawerProps extends DrawerProps {
   aboveComponentId?: string
   height?: string
   callback?: () => void
-}
-
-const useSize = (target) => {
-  const [size, setSize] = useState()
-
-  useLayoutEffect(() => {
-    setSize(target.current.getBoundingClientRect())
-  }, [target])
-
-  // Where the magic happens
-  useResizeObserver(target, (entry) => { setSize(entry.contentRect) })
-  return size
 }
 
 const BottomDrawer = ({
@@ -31,13 +18,6 @@ const BottomDrawer = ({
   ...rest
 }: BottomDrawerProps): ReactNode => {
   const target = useRef(null)
-  const size = useSize(target)
-
-  useEffect(() => {
-    console.log('newState', size)
-  }, [
-    size
-  ])
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -102,6 +82,7 @@ const BottomDrawer = ({
       >
         {bottomDrawer.isOpen ? <ExpandMore /> : <ExpandLess />}
       </IconButton >
+
       <Drawer
 
         anchor="bottom"
@@ -119,12 +100,8 @@ const BottomDrawer = ({
         }}
         {...rest}
       >
-        <div
-          ref={target}
-        >
-                  {childComponent}
 
-        </div>
+                  {childComponent}
       </Drawer>
     </>
   )

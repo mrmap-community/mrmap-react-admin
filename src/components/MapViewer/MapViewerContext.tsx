@@ -32,6 +32,7 @@ export interface MapViewerContextType {
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
+  setMap: Dispatch<SetStateAction<Map>>
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -55,6 +56,7 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
 }
 
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
+  const [map, setMap] = useState<Map>()
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
@@ -88,8 +90,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
             zoomOffset={-1}
             format='image/png'
             noWrap
-            // tileSize={map?.getSize()}
-
+            // does not work as expected... we need a single tile :/ tileSize={map?.getSize()}
         />)
       }
     })
@@ -99,7 +100,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }
 
     return _tiles
-  }, [wmsTrees, editor, geoJSON])
+  }, [wmsTrees, editor, map, geoJSON])
 
   const removeWmsTree = useCallback((treeId: Identifier) => {
     setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
@@ -175,7 +176,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           moveTreeDown,
           setEditor,
           geoJSON,
-          setGeoJSON
+          setGeoJSON,
+          setMap
         }
       }>
       {children}
