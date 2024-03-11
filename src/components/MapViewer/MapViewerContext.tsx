@@ -23,6 +23,7 @@ export interface WMSTree {
 export interface Tile {
   leafletTile: ReactNode
   getMapUrl?: URL
+  getFeatureinfoUrl?: URL
 }
 
 export interface MapViewerContextType {
@@ -109,6 +110,39 @@ const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdent
   params.set('WIDTH', size.x.toString())
   params.set('HEIGHT', size.y.toString())
   params.set('LAYERS', layerIdentifiers)
+
+  return url
+}
+
+const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tree: WMSTree): URL | undefined => {
+  if (getFeatureinfoUrl === '') {
+    return undefined
+  }
+
+  const url = new URL(getFeatureinfoUrl)
+  const params = url.searchParams
+  const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
+
+  if (!(params.has('SERVICE') || params.has('service'))) {
+    params.append('SERVICE', 'WMS')
+  }
+
+  if (!(params.has('VERSION') || params.has('version'))) {
+    params.append('VERSION', version)
+  }
+
+  if (!(params.has('REQUEST') || params.has('request'))) {
+    params.append('REQUEST', 'GetFeatureInfo')
+  }
+
+  params.append('LAYERS', getMapUrl.searchParams.get('LAYERS'))
+  params.append('QUERY_LAYERS', getMapUrl.searchParams.get('LAYERS'))
+  params.append('STYLES', getMapUrl.searchParams.get('STYLES'))
+  params.append('BBOX', getMapUrl.searchParams.get('BBOX'))
+  params.append('SRS', getMapUrl.searchParams.get('SRS'))
+  params.append('WIDTH', getMapUrl.searchParams.get('WIDTH'))
+  params.append('HEIGHT', getMapUrl.searchParams.get('HEIGHT'))
+
   return url
 }
 
@@ -139,6 +173,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       const checkedLayerIdentifiers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
+      const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
 
       if (getMapUrl === '') {
         console.warn('missing getmapurl for tree ', tree.id)
@@ -146,6 +181,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
         const _getMapUrl = prepareGetMapUrl(getMapUrl, map, tree, layerIdentifiers)
+
         _tiles.push(
           {
             leafletTile: <ImageOverlay
@@ -154,7 +190,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
             interactive={true}
             url={_getMapUrl.href}
           />,
-            getMapUrl: _getMapUrl
+            getMapUrl: _getMapUrl,
+            getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree)
           }
         )
       }
