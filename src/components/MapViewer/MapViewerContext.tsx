@@ -1,6 +1,6 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo } from 'react'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
 import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
-import { WMSTileLayer } from 'react-leaflet'
+import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
@@ -20,8 +20,13 @@ export interface WMSTree {
   checkedNodes?: TreeNode[]
 }
 
+export interface Tile {
+  leafletTile: ReactNode
+  getMapUrl?: URL
+}
+
 export interface MapViewerContextType {
-  tiles: ReactNode[]
+  tiles: Tile[]
   wmsTrees: WMSTree[]
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
   removeWmsTree: (wmsId: Identifier) => void
@@ -55,16 +60,79 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
+const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdentifiers: string): URL => {
+  const size = map.getSize()
+  const bounds = map.getBounds()
+  const southWest = bounds.getSouthWest()
+  const northEast = bounds.getNorthEast()
+  const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
+
+  const url = new URL(getMapUrl)
+  const params = url.searchParams
+
+  if (!(params.has('SERVICE') || params.has('service'))) {
+    params.append('SERVICE', 'WMS')
+  }
+
+  if (!(params.has('VERSION') || params.has('version'))) {
+    params.append('VERSION', version)
+  }
+
+  if (!(params.has('REQUEST') || params.has('request'))) {
+    params.append('REQUEST', 'GetMap')
+  }
+
+  if (!(params.has('FORMAT') || params.has('format'))) {
+    params.append('FORMAT', 'image/png')
+  }
+
+  if (!(params.has('TRANSPARENT') || params.has('transparent'))) {
+    // make it configurable
+    params.append('TRANSPARENT', 'true')
+  }
+
+  if (!(params.has('STYLES') || params.has('styles'))) {
+    // make it configurable
+    params.append('STYLES', '')
+  }
+
+  if (!(params.has('SRS') || params.has('srs'))) {
+    // make it configurable
+    params.append('SRS', 'EPSG:4326')
+  }
+  if (version === '1.3.0') {
+    params.set('BBOX', `${southWest.lat},${southWest.lng},${northEast.lat},${northEast.lng}`)
+  } else {
+    params.set('BBOX', `${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`)
+  }
+
+  params.set('WIDTH', size.x.toString())
+  params.set('HEIGHT', size.y.toString())
+  params.set('LAYERS', layerIdentifiers)
+  return url
+}
+
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [map, setMap] = useState<Map>()
+
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
 
   const dataProvider = useDataProvider()
 
+  const [invalidateTiles, setInvalidateTiles] = useState(true)
+
   const tiles = useMemo(() => {
-    const _tiles: ReactNode[] = []
+    const _tiles: Tile[] = []
+
+    if (map === undefined) {
+      return _tiles
+    }
+
+    if (invalidateTiles) {
+      setInvalidateTiles(false)
+    }
 
     const oldWmsTrees = [...wmsTrees].reverse()
     oldWmsTrees.forEach((tree, index) => {
@@ -77,30 +145,29 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
+        const _getMapUrl = prepareGetMapUrl(getMapUrl, map, tree, layerIdentifiers)
         _tiles.push(
-
-          <WMSTileLayer
+          {
+            leafletTile: <ImageOverlay
             key={(Math.random() + 1).toString(36).substring(7)}
-            url={getMapUrl}
-            params={
-              { layers: layerIdentifiers }
-            }
-            version={tree.record?.version === '' ? '1.3.0' : tree.record?.version}
-            transparent={true}
-            zoomOffset={-1}
-            format='image/png'
-            noWrap
-            // does not work as expected... we need a single tile :/ tileSize={map?.getSize()}
-        />)
+            bounds={map.getBounds()}
+            interactive={true}
+            url={_getMapUrl.href}
+          />,
+            getMapUrl: _getMapUrl
+          }
+        )
       }
     })
 
     if (editor) {
-      _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
+      _tiles.push({
+        leafletTile: <FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />
+      })
     }
 
     return _tiles
-  }, [wmsTrees, editor, map, geoJSON])
+  }, [wmsTrees, editor, map, geoJSON, invalidateTiles])
 
   const removeWmsTree = useCallback((treeId: Identifier) => {
     setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
@@ -161,6 +228,16 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       moveTree(treeId, currentIndex + 1)
     }
   }, [moveTree, wmsTrees])
+
+  useEffect(() => {
+    map?.addEventListener('moveend', (event) => {
+      setInvalidateTiles(true)
+    })
+
+    map?.addEventListener('zoomend', (event) => {
+      setInvalidateTiles(true)
+    })
+  }, [map])
 
   return (
     <context.Provider

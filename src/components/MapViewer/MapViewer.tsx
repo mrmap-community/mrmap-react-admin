@@ -50,7 +50,7 @@ const MapViewerCore = (): ReactNode => {
       scrollWheelZoom={true}
       style={{ flex: 1, height: '100%', width: '100%' }}
     >
-      {...tiles}
+      {...tiles.map(tile => tile.leafletTile)}
     </MapContainer>
   ), [tiles])
 
