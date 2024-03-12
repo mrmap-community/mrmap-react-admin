@@ -17,14 +17,14 @@ const SnackbarObserver = (): ReactNode => {
         taskId: id
       })
     })
-  }, [])
+  }, [enqueueSnackbar])
 
   useEffect(() => {
     // subscribe on mount
     dataProvider.subscribe('resource/BackgroundProcess', handleBusEvent)
     // unsubscribe on unmount
     return () => dataProvider.unsubscribe('resource/BackgroundProcess', handleBusEvent)
-  }, [dataProvider])
+  }, [dataProvider, handleBusEvent])
 
   return (
     <></>

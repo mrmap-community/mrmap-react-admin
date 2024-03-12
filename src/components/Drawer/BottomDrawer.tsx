@@ -17,12 +17,10 @@ const BottomDrawer = ({
   children,
   ...rest
 }: BottomDrawerProps): ReactNode => {
-  const target = useRef(null)
-
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const { bottomDrawer, setBottomDrawer, rightDrawer, setRightDrawer } = useDrawerContext()
-  const [lastRightDrawerState, setLastRightDrawerState] = useState<DrawerState>(rightDrawer)
+  const lastRightDrawerState = useRef<DrawerState>(rightDrawer)
   const childComponent = useMemo(() => {
     if (bottomDrawer.children !== undefined) {
       return bottomDrawer.children
@@ -42,18 +40,17 @@ const BottomDrawer = ({
     }
 
     if (bottomDrawer.isOpen) {
-      setLastRightDrawerState(rightDrawer)
       setRightDrawer({ ...rightDrawer, height: `calc(100vh - 50px - ${bottomDrawer.height})` })
     } else {
-      setRightDrawer({ ...rightDrawer, height: lastRightDrawerState?.height })
+      setRightDrawer({ ...rightDrawer, height: lastRightDrawerState?.current?.height })
     }
-  }, [aboveComponentId, bottomDrawer.isOpen])
+  }, [aboveComponentId, bottomDrawer.isOpen, lastRightDrawerState])
 
   const toggleVisible = useCallback(() => {
     setBottomDrawer({ ...bottomDrawer, isOpen: !bottomDrawer.isOpen })
     buttonRef.current?.blur()
     callback()
-  }, [bottomDrawer, buttonRef])
+  }, [bottomDrawer, callback, setBottomDrawer])
 
   return (
     <>

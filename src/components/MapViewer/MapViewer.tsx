@@ -15,7 +15,6 @@ import { Tabs } from '../Tab/Tabs'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
 import useResizeObserver from '@react-hook/resize-observer'
 import Accordion from '@mui/material/Accordion'
-import AccordionActions from '@mui/material/AccordionActions'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -36,13 +35,16 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
+  const mapRef = useRef(map)
   const { setMap: setMapContext, updateOrAppendWmsTree } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
+  const tilesRef = useRef(tiles)
 
   const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
   const [featureInfos, setFeatureInfos] = useState<any[]>([])
 
   const [size, setSize] = useState<DOMRectReadOnly>()
+  const sizeRef = useRef<DOMRectReadOnly>()
 
   const featureInfoMarker = useMemo(() => {
     if (featureInfoMarkerPosition !== undefined && featureInfos.length > 0) {
@@ -101,54 +103,48 @@ const MapViewerCore = (): ReactNode => {
     </MapContainer>
   ), [tiles, featureInfoMarker])
 
-  const mapContainer = useMemo(() => map?.getContainer() ?? null, [map])
-
-  useLayoutEffect(() => {
-    if (mapContainer !== null) {
-      setSize(mapContainer.getBoundingClientRect())
-    }
-  }, [mapContainer])
-
   useResizeObserver(map?.getContainer() ?? null, (entry) => { setSize(entry.contentRect) })
 
   useEffect(() => {
-    // on every size change, we need to tell the map context to invalidate the old size values.
-    // Otherwise the getSize() will not provide correct information about the current map container size
-    if (size !== undefined && map !== undefined) {
-      map.invalidateSize()
+    if (map !== undefined && map !== null && map !== mapRef.current) {
+      // map has changed, so we need to pass it through the context
+      mapRef.current = map
       setMapContext(map)
+      setSize(map.getContainer().getBoundingClientRect())
+      console.log('new map instance')
     }
-  }, [size, map, setMapContext])
 
-  useEffect(() => {
-    if (map !== undefined && map !== null) {
-      if (!map.hasEventListeners('click dragstart zoom')) {
-        map.on('click dragstart zoom', () => {
-          // disable ob click, dragstart and zoom
-        })
-      }
-      map.removeEventListener('contextmenu')
+    if (map !== undefined && map !== null && tiles !== undefined && tiles !== tilesRef.current) {
+      //
+      console.log('tiles has changed, update event handlers')
+      map.on('click dragstart zoom', () => {
+        setFeatureInfos([])
+      })
 
       map.on('contextmenu', (event) => {
         const pointRightClick: Point = event.containerPoint
         setFeatureInfoMarkerPosition(event.latlng)
-        setFeatureInfos([])
-        // ToDo: do a getfeatureinfo call to all wms layers
 
+        const _featureInfos: any[] = []
         tiles.forEach(tile => {
           const getFeatureinfoUrl = tile.getFeatureinfoUrl
-          getFeatureinfoUrl?.searchParams.set('x', Math.round(pointRightClick.x).toString())
-          getFeatureinfoUrl?.searchParams.set('y', Math.round(pointRightClick.y).toString())
+          if (getFeatureinfoUrl?.searchParams.get('VERSION') === '1.3.0') {
+            getFeatureinfoUrl?.searchParams.set('i', Math.round(pointRightClick.x).toString())
+            getFeatureinfoUrl?.searchParams.set('j', Math.round(pointRightClick.y).toString())
+          } else {
+            getFeatureinfoUrl?.searchParams.set('x', Math.round(pointRightClick.x).toString())
+            getFeatureinfoUrl?.searchParams.set('y', Math.round(pointRightClick.y).toString())
+          }
+
           getFeatureinfoUrl?.searchParams.set('INFO_FORMAT', 'text/html')
 
           if (getFeatureinfoUrl !== undefined) {
             axios.get(getFeatureinfoUrl?.href)
               .then(response => {
                 if (response.data !== undefined) {
-                  const _featureInfos = featureInfos
                   // TODO: handle content by info format check
                   _featureInfos.push(response.data)
-                  setFeatureInfos(featureInfos)
+                  setFeatureInfos(_featureInfos)
                 }
               })
               .catch(error => { console.log(error) })
@@ -156,7 +152,16 @@ const MapViewerCore = (): ReactNode => {
         })
       })
     }
-  }, [featureInfos, map, tiles])
+  }, [map, setMapContext, tiles])
+
+  useEffect(() => {
+    // on every size change, we need to tell the map context to invalidate the old size values.
+    // Otherwise the getSize() will not provide correct information about the current map container size
+    if (size !== undefined && map !== undefined && map !== null && size !== sizeRef.current) {
+      sizeRef.current = size
+      map.invalidateSize()
+    }
+  }, [size, map])
 
   return (
     <DrawerBase>

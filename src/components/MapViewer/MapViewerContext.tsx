@@ -114,7 +114,7 @@ const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdent
   return url
 }
 
-const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tree: WMSTree): URL | undefined => {
+const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tree: WMSTree, queryLayers: string[]): URL | undefined => {
   if (getFeatureinfoUrl === '') {
     return undefined
   }
@@ -136,7 +136,7 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
   }
 
   params.append('LAYERS', getMapUrl.searchParams.get('LAYERS'))
-  params.append('QUERY_LAYERS', getMapUrl.searchParams.get('LAYERS'))
+  params.append('QUERY_LAYERS', queryLayers?.join(',') ?? '')
   params.append('STYLES', getMapUrl.searchParams.get('STYLES'))
   params.append('BBOX', getMapUrl.searchParams.get('BBOX'))
   params.append('SRS', getMapUrl.searchParams.get('SRS'))
@@ -170,9 +170,14 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
     const oldWmsTrees = [...wmsTrees].reverse()
     oldWmsTrees.forEach((tree, index) => {
-      const checkedLayerIdentifiers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+      const checkedLayers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0)
+      const checkedLayerIdentifiers = checkedLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
+
+      const queryableLayers = checkedLayers?.filter(node => node.record.isQueryable)
+      const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
+
       const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
 
       if (getMapUrl === '') {
@@ -191,7 +196,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
             url={_getMapUrl.href}
           />,
             getMapUrl: _getMapUrl,
-            getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree)
+            getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree, queryableLayerIdentifiers)
           }
         )
       }
@@ -220,7 +225,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           meta: {
             jsonApiParams: {
               include: 'layers,operationUrls,layers.referenceSystems',
-              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,bbox_lat_lon'
+              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,is_queryable,bbox_lat_lon'
             }
           }
         }
