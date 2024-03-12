@@ -1,4 +1,4 @@
-import { type ReactNode, useId, type PropsWithChildren, useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { type ReactNode, useId, type PropsWithChildren, useMemo, useState, useEffect, useRef } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer, Popup, Marker } from 'react-leaflet'
 
@@ -46,62 +46,45 @@ const MapViewerCore = (): ReactNode => {
   const [size, setSize] = useState<DOMRectReadOnly>()
   const sizeRef = useRef<DOMRectReadOnly>()
 
+  const featureInfoAccordions = useMemo(() => featureInfos.map((featureInfoHtml, index) => {
+    return <Accordion
+      key={index}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls={`${index}-content`}
+        id={`${index}-header`}
+      >
+      {index}
+      </AccordionSummary>
+      <AccordionDetails
+        dangerouslySetInnerHTML={{ __html: featureInfoHtml }}
+      />
+    </Accordion>
+  }
+  ), [featureInfos])
+
   const featureInfoMarker = useMemo(() => {
     if (featureInfoMarkerPosition !== undefined && featureInfos.length > 0) {
       return <Marker
-      position={featureInfoMarkerPosition}
-      >
-      <Popup
-        minWidth={90}
-
-        eventHandlers={
-          {
-
-            remove: () => {
-              const position = featureInfoMarkerPosition
-              setFeatureInfoMarkerPosition(undefined)
-              setFeatureInfos([])
-              map?.flyTo(position)
+          position={featureInfoMarkerPosition}
+        >
+        <Popup
+          minWidth={90}
+          eventHandlers={
+            {
+              remove: () => {
+                // setFeatureInfoMarkerPosition(undefined)
+                // setFeatureInfos([])
+              }
             }
           }
-        }
-      >
-        {featureInfos.map((featureInfoHtml, index) => {
-          return (
-            <Accordion
-              key={index}
-            >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls={`${index}-content`}
-                id={`${index}-header`}
-              >
-               {index}
-              </AccordionSummary>
-              <AccordionDetails
-                dangerouslySetInnerHTML={{ __html: featureInfoHtml }}
-              />
-            </Accordion>
-          )
-        })}
-      </Popup>
-    </Marker>
+        >
+          {featureInfoAccordions}
+        </Popup>
+      </Marker>
     }
-  }, [featureInfoMarkerPosition, featureInfos, map])
-
-  const displayMap = useMemo(() => (
-    // TODO: ignore the ts error for ref... react leaflet expects a state setter here
-    <MapContainer
-      ref={setMap}
-      center={[51.505, -0.09]}
-      zoom={2}
-      scrollWheelZoom={true}
-      style={{ flex: 1, height: '100%', width: '100%' }}
-    >
-      {...tiles.map(tile => tile.leafletTile)}
-      {featureInfoMarker}
-    </MapContainer>
-  ), [tiles, featureInfoMarker])
+  }, [featureInfoMarkerPosition, featureInfos.length, featureInfoAccordions])
 
   useResizeObserver(map?.getContainer() ?? null, (entry) => { setSize(entry.contentRect) })
 
@@ -111,22 +94,19 @@ const MapViewerCore = (): ReactNode => {
       mapRef.current = map
       setMapContext(map)
       setSize(map.getContainer().getBoundingClientRect())
-      console.log('new map instance')
     }
 
     if (map !== undefined && map !== null && tiles !== undefined && tiles !== tilesRef.current) {
       //
-      console.log('tiles has changed, update event handlers')
-      map.on('click dragstart zoom', () => {
-        setFeatureInfos([])
-      })
-
+      // map.on('click dragstart zoom', () => {
+      //   setFeatureInfos([])
+      // })
+      map.removeEventListener('contextmenu')
       map.on('contextmenu', (event) => {
         const pointRightClick: Point = event.containerPoint
         setFeatureInfoMarkerPosition(event.latlng)
 
-        const _featureInfos: any[] = []
-        tiles.forEach(tile => {
+        const requests = tiles.map(tile => {
           const getFeatureinfoUrl = tile.getFeatureinfoUrl
           if (getFeatureinfoUrl?.searchParams.get('VERSION') === '1.3.0') {
             getFeatureinfoUrl?.searchParams.set('i', Math.round(pointRightClick.x).toString())
@@ -139,17 +119,24 @@ const MapViewerCore = (): ReactNode => {
           getFeatureinfoUrl?.searchParams.set('INFO_FORMAT', 'text/html')
 
           if (getFeatureinfoUrl !== undefined) {
-            axios.get(getFeatureinfoUrl?.href)
-              .then(response => {
-                if (response.data !== undefined) {
-                  // TODO: handle content by info format check
-                  _featureInfos.push(response.data)
-                  setFeatureInfos(_featureInfos)
-                }
-              })
-              .catch(error => { console.log(error) })
+            return getFeatureinfoUrl?.href
           }
-        })
+          return ''
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        }).filter(url => url !== '').map((url) => axios.get(url))
+
+        const _featureInfos: any[] = []
+
+        axios.all(requests).then(
+          (responses) => {
+            responses.forEach((response) => {
+              if (response.data !== undefined) {
+                _featureInfos.push(response.data)
+              }
+            })
+            setFeatureInfos(_featureInfos)
+          }
+        ).catch(reason => { console.log(reason) })
       })
     }
   }, [map, setMapContext, tiles])
@@ -168,7 +155,16 @@ const MapViewerCore = (): ReactNode => {
       <TabListBase>
         <Box id={containerId} sx={{ ...style }}>
 
-          {displayMap}
+        <MapContainer
+          ref={setMap}
+          center={[51.505, -0.09]}
+          zoom={2}
+          scrollWheelZoom={true}
+          style={{ flex: 1, height: '100%', width: '100%' }}
+        >
+          {...tiles.map(tile => tile.leafletTile)}
+          {featureInfoMarker}
+        </MapContainer>
         </Box>
         <RightDrawer
           leftComponentId={containerId}
