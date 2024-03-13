@@ -1,4 +1,4 @@
-import { type ReactNode, type SyntheticEvent, useMemo, useEffect, useState } from 'react'
+import { type ReactNode, type SyntheticEvent, useMemo, useCallback } from 'react'
 import Box from '@mui/material/Box'
 import Tab from '@mui/material/Tab'
 import TabContext from '@mui/lab/TabContext'
@@ -12,56 +12,43 @@ export interface TabsProps {
   defaultTabs?: TabListProps[]
 }
 
-export const Tabs = ({ defaultTabs }: TabsProps): ReactNode => {
+export const Tabs = ({
+  defaultTabs = []
+}: TabsProps): ReactNode => {
   const { tabList, setTabList } = useTabListContext()
-  const [init, setInit] = useState<boolean>(false)
 
-  const handleChange = (event: SyntheticEvent, newValue: string): void => {
+  const handleChange = useCallback((event: SyntheticEvent, newValue: string): void => {
     setTabList({ ...tabList, activeTab: newValue })
-  }
+  }, [setTabList, tabList])
 
-  const handleTabClose = (event, index: string): void => {
+  const handleTabClose = useCallback((event, index: number): void => {
     event.stopPropagation()
     const newTabList = tabList
     if (newTabList.tabs.length > 1) {
-      newTabList.tabs = newTabList.tabs.splice(parseInt(index), 1)
+      newTabList.tabs = newTabList.tabs.splice(index, 1)
     } else {
       newTabList.tabs = []
     }
     setTabList(newTabList)
-  }
+  }, [setTabList, tabList])
 
-  useEffect(() => {
-    if (defaultTabs !== undefined && !init) {
-      const newTabList = tabList
-      newTabList.tabs.push(...defaultTabs)
-      setTabList({ ...tabList, activeTab: String(newTabList.tabs.length - 1) })
-      setInit(true)
-    }
-  }, [defaultTabs])
-
-  const tabs = useMemo(() => {
-    return tabList.tabs.map((tabDef, index): ReactNode => (
+  const tabs = useMemo(() => [...defaultTabs, ...tabList.tabs].map((tabDef, index): ReactNode => (
       <Tab
         key={index}
         value={String(index)}
         {...tabDef.tab}
-        icon={
-          <IconButton onClick={(event) => { handleTabClose(event, index) }}>
+        icon={tabDef.closeable
+          ? <IconButton onClick={(event) => { handleTabClose(event, index) }}>
             <CancelIcon />
           </IconButton>
+          : <></>
         }
       />
-    )
-    )
-  }, [tabList, defaultTabs])
+  )), [defaultTabs, tabList.tabs, handleTabClose])
 
-  const tabPanels = useMemo(() => {
-    return tabList.tabs.map((tabDef, index): ReactNode => (
+  const tabPanels = useMemo(() => [...defaultTabs, ...tabList.tabs].map((tabDef, index): ReactNode => (
       <TabPanel key={index} {...tabDef.tabPanel} value={String(index)} />
-    )
-    )
-  }, [tabList])
+  )), [defaultTabs, tabList.tabs])
 
   return (
     <Box sx={{ width: '100%', typography: 'body1' }}>

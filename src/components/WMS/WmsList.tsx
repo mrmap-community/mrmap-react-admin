@@ -23,7 +23,7 @@ const WmsList = (): ReactNode => {
 
     <ListGuesser
       resource='WebMapService'
-      additionalActions={<TreeButton />}
+      // additionalActions={<TreeButton />}
     // aside={<TaskList />}
     />
 

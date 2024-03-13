@@ -1,9 +1,10 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo } from 'react'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
 import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
-import { WMSTileLayer } from 'react-leaflet'
+import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
+import { type Map } from 'leaflet'
 
 export interface TreeNode {
   id: Identifier
@@ -19,8 +20,14 @@ export interface WMSTree {
   checkedNodes?: TreeNode[]
 }
 
+export interface Tile {
+  leafletTile: ReactNode
+  getMapUrl?: URL
+  getFeatureinfoUrl?: URL
+}
+
 export interface MapViewerContextType {
-  tiles: ReactNode[]
+  tiles: Tile[]
   wmsTrees: WMSTree[]
   setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
   removeWmsTree: (wmsId: Identifier) => void
@@ -31,6 +38,7 @@ export interface MapViewerContextType {
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
+  setMap: Dispatch<SetStateAction<Map>>
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -53,50 +61,155 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
+const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdentifiers: string): URL => {
+  const size = map.getSize()
+  const bounds = map.getBounds()
+  const southWest = bounds.getSouthWest()
+  const northEast = bounds.getNorthEast()
+  const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
+
+  const url = new URL(getMapUrl)
+  const params = url.searchParams
+
+  if (!(params.has('SERVICE') || params.has('service'))) {
+    params.append('SERVICE', 'WMS')
+  }
+
+  if (!(params.has('VERSION') || params.has('version'))) {
+    params.append('VERSION', version)
+  }
+
+  if (!(params.has('REQUEST') || params.has('request'))) {
+    params.append('REQUEST', 'GetMap')
+  }
+
+  if (!(params.has('FORMAT') || params.has('format'))) {
+    params.append('FORMAT', 'image/png')
+  }
+
+  if (!(params.has('TRANSPARENT') || params.has('transparent'))) {
+    // make it configurable
+    params.append('TRANSPARENT', 'true')
+  }
+
+  if (!(params.has('STYLES') || params.has('styles'))) {
+    // make it configurable
+    params.append('STYLES', '')
+  }
+
+  if (!(params.has('SRS') || params.has('srs'))) {
+    // make it configurable
+    params.append('SRS', 'EPSG:4326')
+  }
+  if (version === '1.3.0') {
+    params.set('BBOX', `${southWest.lat},${southWest.lng},${northEast.lat},${northEast.lng}`)
+  } else {
+    params.set('BBOX', `${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`)
+  }
+
+  params.set('WIDTH', size.x.toString())
+  params.set('HEIGHT', size.y.toString())
+  params.set('LAYERS', layerIdentifiers)
+
+  return url
+}
+
+const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tree: WMSTree, queryLayers: string[]): URL | undefined => {
+  if (getFeatureinfoUrl === '') {
+    return undefined
+  }
+
+  const url = new URL(getFeatureinfoUrl)
+  const params = url.searchParams
+  const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
+
+  if (!(params.has('SERVICE') || params.has('service'))) {
+    params.append('SERVICE', 'WMS')
+  }
+
+  if (!(params.has('VERSION') || params.has('version'))) {
+    params.append('VERSION', version)
+  }
+
+  if (!(params.has('REQUEST') || params.has('request'))) {
+    params.append('REQUEST', 'GetFeatureInfo')
+  }
+
+  params.append('LAYERS', getMapUrl.searchParams.get('LAYERS'))
+  params.append('QUERY_LAYERS', queryLayers?.join(',') ?? '')
+  params.append('STYLES', getMapUrl.searchParams.get('STYLES'))
+  params.append('BBOX', getMapUrl.searchParams.get('BBOX'))
+  params.append('SRS', getMapUrl.searchParams.get('SRS'))
+  params.append('WIDTH', getMapUrl.searchParams.get('WIDTH'))
+  params.append('HEIGHT', getMapUrl.searchParams.get('HEIGHT'))
+
+  return url
+}
+
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
+  const [map, setMap] = useState<Map>()
+
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
 
   const dataProvider = useDataProvider()
 
+  const [invalidateTiles, setInvalidateTiles] = useState(true)
+
   const tiles = useMemo(() => {
-    const _tiles: ReactNode[] = []
+    const _tiles: Tile[] = []
+
+    if (map === undefined) {
+      return _tiles
+    }
+
+    if (invalidateTiles) {
+      setInvalidateTiles(false)
+    }
 
     const oldWmsTrees = [...wmsTrees].reverse()
     oldWmsTrees.forEach((tree, index) => {
-      const checkedLayerIdentifiers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0).map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
+      const checkedLayers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0)
+      const checkedLayerIdentifiers = checkedLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
       const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
       const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
+
+      const queryableLayers = checkedLayers?.filter(node => node.record.isQueryable)
+      const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
+
+      const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
 
       if (getMapUrl === '') {
         console.warn('missing getmapurl for tree ', tree.id)
       }
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
-        _tiles.push(
+        const _getMapUrl = prepareGetMapUrl(getMapUrl, map, tree, layerIdentifiers)
 
-          <WMSTileLayer
+        _tiles.push(
+          {
+            leafletTile: <ImageOverlay
             key={(Math.random() + 1).toString(36).substring(7)}
-            url={getMapUrl}
-            params={
-              { layers: layerIdentifiers }
-            }
-            version={tree.record?.version === '' ? '1.3.0' : tree.record?.version}
-            transparent={true}
-            zoomOffset={-1}
-            format='image/png'
-            noWrap
-        />)
+            bounds={map.getBounds()}
+            interactive={true}
+            url={_getMapUrl.href}
+          />,
+            getMapUrl: _getMapUrl,
+            getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree, queryableLayerIdentifiers)
+          }
+        )
       }
     })
 
     if (editor) {
-      _tiles.push(<FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />)
+      _tiles.push({
+        leafletTile: <FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />
+      })
     }
 
     return _tiles
-  }, [wmsTrees, editor, geoJSON])
+  }, [wmsTrees, editor, map, geoJSON, invalidateTiles])
 
   const removeWmsTree = useCallback((treeId: Identifier) => {
     setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
@@ -112,7 +225,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           meta: {
             jsonApiParams: {
               include: 'layers,operationUrls,layers.referenceSystems',
-              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,bbox_lat_lon'
+              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,is_queryable,bbox_lat_lon'
             }
           }
         }
@@ -158,6 +271,16 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }
   }, [moveTree, wmsTrees])
 
+  useEffect(() => {
+    map?.addEventListener('moveend', (event) => {
+      setInvalidateTiles(true)
+    })
+
+    map?.addEventListener('zoomend', (event) => {
+      setInvalidateTiles(true)
+    })
+  }, [map])
+
   return (
     <context.Provider
       value={
@@ -172,7 +295,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           moveTreeDown,
           setEditor,
           geoJSON,
-          setGeoJSON
+          setGeoJSON,
+          setMap
         }
       }>
       {children}
@@ -182,6 +306,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
 export const useMapViewerContext = (): MapViewerContextType => {
   const ctx = useContext(context)
+
   if (ctx === undefined) {
     throw new Error('useMapViewerContext must be inside a MapViewerBase')
   }
