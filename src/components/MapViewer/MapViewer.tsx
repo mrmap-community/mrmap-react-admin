@@ -154,17 +154,21 @@ const MapViewerCore = (): ReactNode => {
     <DrawerBase>
       <TabListBase>
         <Box id={containerId} sx={{ ...style }}>
-
-        <MapContainer
-          ref={setMap}
-          center={[51.505, -0.09]}
-          zoom={2}
-          scrollWheelZoom={true}
-          style={{ flex: 1, height: '100%', width: '100%' }}
-        >
-          {...tiles.map(tile => tile.leafletTile)}
-          {featureInfoMarker}
-        </MapContainer>
+          <MapContainer
+            ref={setMap}
+            center={[51.505, -0.09]}
+            zoom={2}
+            scrollWheelZoom={true}
+            style={{
+              flex: 1, height: '100%', width: '100%', position: 'relative'
+            //  display: 'flex',
+              // width: '100%',
+            // height: 'calc(100vh - 50px)'
+            }}
+          >
+            {...tiles.map(tile => tile.leafletTile)}
+            {featureInfoMarker}
+          </MapContainer>
         </Box>
         <RightDrawer
           leftComponentId={containerId}
@@ -187,7 +191,8 @@ const MapViewerCore = (): ReactNode => {
                       updateOrAppendWmsTree({ id: resource.id })
                     }}
                   />
-                }
+                },
+                closeable: false
               }]
             }
           />

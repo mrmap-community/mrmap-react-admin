@@ -5,6 +5,7 @@ import { type TabProps } from '@mui/material/Tab/Tab'
 export interface TabListProps {
   tab: TabProps
   tabPanel: TabPanelProps
+  closeable: boolean
 
 }
 

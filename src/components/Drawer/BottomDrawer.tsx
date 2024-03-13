@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
@@ -21,30 +21,33 @@ const BottomDrawer = ({
 
   const { bottomDrawer, setBottomDrawer, rightDrawer, setRightDrawer } = useDrawerContext()
   const lastRightDrawerState = useRef<DrawerState>(rightDrawer)
-  const childComponent = useMemo(() => {
-    if (bottomDrawer.children !== undefined) {
-      return bottomDrawer.children
-    }
-    return children
-  }, [bottomDrawer, children])
+  const bottomDrawerIsOpenRef = useRef<boolean>(bottomDrawer.isOpen)
 
   // adjust padding of map div
   useEffect(() => {
     if (aboveComponentId !== undefined) {
-      const div: any = document.querySelector(`#${CSS.escape(aboveComponentId)}`)
-      if (!bottomDrawer.isOpen) {
-        div.style.paddingBottom = '0'
-      } else {
-        div.style.paddingBottom = bottomDrawer.height
+      const div: HTMLElement | null = document.querySelector(`#${CSS.escape(aboveComponentId)}`)
+      if (div !== undefined && div !== null) {
+        if (!bottomDrawer.isOpen) {
+          div.style.paddingBottom = '0'
+        } else {
+          div.style.paddingBottom = bottomDrawer.height
+        }
       }
     }
+  }, [aboveComponentId, bottomDrawer.height, bottomDrawer.isOpen])
 
-    if (bottomDrawer.isOpen) {
-      setRightDrawer({ ...rightDrawer, height: `calc(100vh - 50px - ${bottomDrawer.height})` })
-    } else {
-      setRightDrawer({ ...rightDrawer, height: lastRightDrawerState?.current?.height })
+  useEffect(() => {
+    // to prevent infinity looping on rightDrawer state change
+    if (bottomDrawer.isOpen !== bottomDrawerIsOpenRef.current) {
+      bottomDrawerIsOpenRef.current = bottomDrawer.isOpen
+      if (bottomDrawer.isOpen) {
+        setRightDrawer({ ...rightDrawer, height: `calc(100vh - 50px - ${bottomDrawer.height})` })
+      } else {
+        setRightDrawer({ ...rightDrawer, height: lastRightDrawerState?.current?.height })
+      }
     }
-  }, [aboveComponentId, bottomDrawer.isOpen, lastRightDrawerState])
+  }, [bottomDrawer.height, bottomDrawer.isOpen, rightDrawer, setRightDrawer])
 
   const toggleVisible = useCallback(() => {
     setBottomDrawer({ ...bottomDrawer, isOpen: !bottomDrawer.isOpen })
@@ -73,15 +76,11 @@ const BottomDrawer = ({
           height: '30px',
           color: 'white',
           backgroundColor: '#002140'
-        }
-        }
-
+        }}
       >
         {bottomDrawer.isOpen ? <ExpandMore /> : <ExpandLess />}
       </IconButton >
-
       <Drawer
-
         anchor="bottom"
         open={bottomDrawer.isOpen}
         variant="persistent"
@@ -97,8 +96,7 @@ const BottomDrawer = ({
         }}
         {...rest}
       >
-
-                  {childComponent}
+        {children ?? bottomDrawer.children}
       </Drawer>
     </>
   )

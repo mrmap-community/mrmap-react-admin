@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
@@ -19,12 +19,7 @@ const RightDrawer = ({
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const { rightDrawer, setRightDrawer } = useDrawerContext()
-  const childComponent = useMemo(() => {
-    if (rightDrawer.children !== undefined) {
-      return rightDrawer.children
-    }
-    return children
-  }, [rightDrawer, children])
+
   // adjust padding of map div
   useEffect(() => {
     if (leftComponentId !== undefined) {
@@ -35,13 +30,13 @@ const RightDrawer = ({
         div.style.paddingRight = rightDrawer.width
       }
     }
-  }, [leftComponentId, rightDrawer.isOpen])
+  }, [leftComponentId, rightDrawer.isOpen, rightDrawer.width])
 
   const toggleVisible = useCallback(() => {
     setRightDrawer({ ...rightDrawer, isOpen: !rightDrawer.isOpen })
     buttonRef.current?.blur()
     callback()
-  }, [rightDrawer.isOpen, buttonRef])
+  }, [setRightDrawer, rightDrawer, callback])
 
   return (
     <>
@@ -90,7 +85,7 @@ const RightDrawer = ({
         }
         {...rest}
       >
-        {childComponent}
+        {children ?? rightDrawer.children}
       </Drawer >
 
     </>
