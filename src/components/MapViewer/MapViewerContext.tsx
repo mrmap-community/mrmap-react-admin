@@ -97,14 +97,19 @@ const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdent
     params.append('STYLES', '')
   }
 
-  if (!(params.has('SRS') || params.has('srs'))) {
-    // make it configurable
-    params.append('SRS', 'EPSG:4326')
-  }
+
   if (version === '1.3.0') {
     params.set('BBOX', `${southWest.lat},${southWest.lng},${northEast.lat},${northEast.lng}`)
+    if (!(params.has('CRS') || params.has('crs'))) {
+      // make it configurable
+      params.append('CRS', 'EPSG:4326')
+    }
   } else {
     params.set('BBOX', `${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`)
+    if (!(params.has('SRS') || params.has('srs'))) {
+      // make it configurable
+      params.append('SRS', 'EPSG:4326')
+    }
   }
 
   params.set('WIDTH', size.x.toString())
