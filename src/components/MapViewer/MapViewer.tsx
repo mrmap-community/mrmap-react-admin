@@ -3,7 +3,7 @@ import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer, Popup, Marker } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import { type LatLng, type Map, type Point } from 'leaflet'
+import { type LatLng, type Map, type Point, CRS } from 'leaflet'
 
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
@@ -19,6 +19,7 @@ import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
+import MapSettingsEditor from './MapSettings'
 
 const style = {
   position: 'relative',
@@ -37,7 +38,7 @@ const MapViewerCore = (): ReactNode => {
   const [map, setMap] = useState<Map>()
   const mapRef = useRef(map)
   const { setMap: setMapContext, updateOrAppendWmsTree } = useMapViewerContext()
-  const { tiles } = useMapViewerContext()
+  const { tiles, selectedCrs } = useMapViewerContext()
   const tilesRef = useRef(tiles)
 
   const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
@@ -150,20 +151,27 @@ const MapViewerCore = (): ReactNode => {
     }
   }, [size, map])
 
+  const crs = useMemo(() => {
+    return selectedCrs === 'EPSG:3395' ? CRS.EPSG3395 : selectedCrs === 'EPSG:3857' ? CRS.EPSG3857 : CRS.EPSG4326
+  }, [selectedCrs])
+
+  // new initialize map context if crs changes, by set a new key for mapcontainer component
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const time = useMemo(() => new Date().getTime(), [crs])
+
   return (
     <DrawerBase>
       <TabListBase>
         <Box id={containerId} sx={{ ...style }}>
           <MapContainer
+            key={time}
             ref={setMap}
             center={[51.505, -0.09]}
             zoom={2}
+            crs={crs}
             scrollWheelZoom={true}
             style={{
               flex: 1, height: '100%', width: '100%', position: 'relative'
-            //  display: 'flex',
-              // width: '100%',
-            // height: 'calc(100vh - 50px)'
             }}
           >
             {...tiles.map(tile => tile.leafletTile)}
@@ -183,6 +191,12 @@ const MapViewerCore = (): ReactNode => {
           <Tabs
             defaultTabs={
               [{
+                tab: { label: 'Map Settings' },
+                tabPanel: {
+                  children: <MapSettingsEditor/>
+                },
+                closeable: false
+              }, {
                 tab: { label: 'WMS List' },
                 tabPanel: {
                   children: <ListGuesser
