@@ -2,16 +2,18 @@ import { createContext, type Dispatch, type ReactNode, type SetStateAction, useC
 import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'react-admin'
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
-import type { MultiPolygon } from 'geojson'
+import type { MultiPolygon, GeoJSON } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
-import { type Map } from 'leaflet'
+import { type LatLngBounds, type Map } from 'leaflet'
 import proj4 from 'proj4'
+import L from 'leaflet'
 
 export interface MrMapCRS extends RaRecord {
   stringRepresentation: string
   code: string
   prefix: string
   wkt?: string
+  bbox?: GeoJSON
   isYxOrder: boolean
   isXyOrder: boolean
 }
@@ -77,14 +79,26 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
 const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
   const size = map.getSize()
   const bounds = map.getBounds()
+  const sw = bounds.getSouthWest()
+  const ne = bounds.getNorthEast()
 
-  let swLatLng = [bounds.getSouthWest().lat, bounds.getSouthWest().lng]
-  let neLatLng = [bounds.getNorthEast().lat, bounds.getNorthEast().lng]
+  console.log('current bounds', bounds.toBBoxString())
+  console.log('current center', bounds.getCenter())
+
+  let swLatLng = [sw.lat, sw.lng]
+  let neLatLng = [ne.lat, ne.lng]
 
   if (crs.stringRepresentation !== 'EPSG:4326') {
     const proj = proj4('EPSG:4326', crs.wkt)
-    swLatLng = proj.forward(swLatLng, true)
-    neLatLng = proj.forward(neLatLng, true)
+    swLatLng = proj.forward(swLatLng)
+    neLatLng = proj.forward(neLatLng)
+
+    const latLngs = swLatLng.concat(neLatLng)
+    const invalidValues = latLngs.some(Number.isNaN)
+
+    if (invalidValues) {
+      // map.zoomIn()
+    }
   }
 
   const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
@@ -120,16 +134,16 @@ const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdent
 
   if (version === '1.3.0') {
     if (crs.isXyOrder) {
-      console.log('huhu A', crs)
+      // no axis order correction needed.
       params.set('BBOX', `${swLatLng[1]},${swLatLng[0]},${neLatLng[1]},${neLatLng[0]}`)
     } else {
-      console.log('huhu B', crs)
       params.set('BBOX', `${swLatLng[0]},${swLatLng[1]},${neLatLng[0]},${neLatLng[1]}`)
     }
     if (!(params.has('CRS') || params.has('crs'))) {
       params.append('CRS', crs.stringRepresentation)
     }
   } else {
+    // always minx,miny,maxx,maxy (minLng,minLat,maxLng,maxLat)
     params.set('BBOX', `${swLatLng[1]},${swLatLng[0]},${neLatLng[1]},${neLatLng[0]}`)
     if (!(params.has('SRS') || params.has('srs'))) {
       params.append('SRS', crs.stringRepresentation)
@@ -181,6 +195,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
+  const [maxBounds, setMaxBounds] = useState<LatLngBounds>()
 
   const dataProvider = useDataProvider()
 
@@ -328,6 +343,27 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       setInvalidateTiles(true)
     })
   }, [map])
+
+  useEffect(() => {
+    if (selectedCrs?.bbox !== undefined) {
+      const bbox = JSON.parse(selectedCrs?.bbox)
+      const bboxGeoJSON = L.geoJSON(bbox)
+      console.log('new bounds: ', bbox, bboxGeoJSON)
+      setMaxBounds(bboxGeoJSON.getBounds())
+    }
+  }, [selectedCrs])
+
+  useEffect(() => {
+    if (maxBounds !== undefined) {
+      console.log('set max bounds for map to: ', maxBounds, map)
+
+      map?.stop()
+
+      map?.fitBounds(maxBounds)
+      // map?.setMaxBounds(maxBounds)
+      console.log('map bounds', map?.getBounds())
+    }
+  }, [map, maxBounds])
 
   useEffect(() => {
     if (crsIntersection.length > 0 && _selectedCrs === undefined) {

@@ -17,6 +17,7 @@ import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
 import L from 'leaflet'
 import { type Map } from 'leaflet'
+import proj4 from 'proj4'
 
 interface ContextMenuProps {
   node: TreeNode
@@ -71,8 +72,8 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
     const lowerLeft = L.latLng(node?.record?.bboxLatLon?.coordinates[0][0][1], node?.record?.bboxLatLon?.coordinates[0][0][0])
     const upperRight = L.latLng(node?.record?.bboxLatLon?.coordinates[0][2][1], node?.record?.bboxLatLon?.coordinates[0][2][0])
     const bounds = L.latLngBounds(upperRight, lowerLeft)
-
-    map?.flyToBounds(bounds)
+    console.log('center layer: ', bounds, node?.record?.bboxLatLon)
+    map?.panTo(bounds.getCenter())
   }, [map])
 
   return (

@@ -163,6 +163,7 @@ const MapViewerCore = (): ReactNode => {
             crs={CRS.EPSG4326}
             maxZoom={11}
             minZoom={0}
+            maxBoundsViscosity={0.8}
             continuousWorld={true}
             scrollWheelZoom={true}
             style={{

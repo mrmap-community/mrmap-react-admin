@@ -12,7 +12,6 @@ const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
   useEffect(() => {
     if (crs !== undefined && crsRef !== undefined && crs !== crsRef.current) {
       const newCrs = crsIntersection.find(_crs => _crs.stringRepresentation === crs)
-      console.log('crs changed:', crs, newCrs)
       if (newCrs !== undefined) {
         setSelectedCrs(newCrs)
       }
