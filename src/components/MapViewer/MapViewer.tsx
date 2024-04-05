@@ -20,7 +20,6 @@ import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
 import MapSettingsEditor from './MapSettings'
-import 'proj4leaflet'
 
 const style = {
   position: 'relative',

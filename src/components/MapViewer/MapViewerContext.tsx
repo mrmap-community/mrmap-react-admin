@@ -1,4 +1,4 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect, useRef } from 'react'
 import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'react-admin'
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
@@ -53,6 +53,7 @@ export interface MapViewerContextType {
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
+  map?: Map
   setMap: Dispatch<SetStateAction<Map>>
 }
 
@@ -76,14 +77,9 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
-const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
-  const size = map.getSize()
-  const bounds = map.getBounds()
+const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
-
-  console.log('current bounds', bounds.toBBoxString())
-  console.log('current center', bounds.getCenter())
 
   let swLatLng = [sw.lat, sw.lng]
   let neLatLng = [ne.lat, ne.lng]
@@ -191,6 +187,8 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
 
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [map, setMap] = useState<Map>()
+  const [mapBounds, setMapBounds] = useState(map?.getBounds())
+  const [mapSize, setMapSize] = useState(map?.getSize())
 
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
@@ -199,7 +197,12 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
   const dataProvider = useDataProvider()
 
-  const [invalidateTiles, setInvalidateTiles] = useState(true)
+  const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
+
+  const { data: selectedCrs, isLoading, error, refetch } = useGetOne(
+    'ReferenceSystem',
+    { id: _selectedCrs?.id }
+  )
 
   const crsIntersection = useMemo(() => {
     let referenceSystems: MrMapCRS[] = []
@@ -213,23 +216,15 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     return referenceSystems
   }, [wmsTrees])
 
-  const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
-
-  const { data: selectedCrs, isLoading, error, refetch } = useGetOne(
-    'ReferenceSystem',
-    { id: _selectedCrs?.id }
-  )
-
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
 
-    if (map === undefined) {
+    if (mapBounds === undefined || mapSize === undefined) {
+      console.log('huhu')
       return _tiles
     }
 
-    if (invalidateTiles) {
-      setInvalidateTiles(false)
-    }
+    console.log('calc tiles new')
 
     const oldWmsTrees = [...wmsTrees].reverse()
     oldWmsTrees.forEach((tree, index) => {
@@ -248,13 +243,13 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
-        const _getMapUrl = prepareGetMapUrl(getMapUrl, map, tree, layerIdentifiers, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
+        const _getMapUrl = prepareGetMapUrl(getMapUrl, mapSize, mapBounds, tree, layerIdentifiers, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
 
         _tiles.push(
           {
             leafletTile: <ImageOverlay
             key={(Math.random() + 1).toString(36).substring(7)}
-            bounds={map.getBounds()}
+            bounds={mapBounds}
             interactive={true}
             url={_getMapUrl.href}
           />,
@@ -265,14 +260,17 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
     })
 
-    if (editor) {
-      _tiles.push({
-        leafletTile: <FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />
-      })
-    }
-
     return _tiles
-  }, [map, invalidateTiles, wmsTrees, editor, selectedCrs, geoJSON])
+  }, [mapBounds, mapSize, wmsTrees, selectedCrs])
+
+  const editorLayer = useMemo(() => {
+    return {
+      leafletTile: <FeatureGroupEditor
+        geoJson={geoJSON}
+        geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }}
+        />
+    }
+  }, [geoJSON])
 
   const removeWmsTree = useCallback((treeId: Identifier) => {
     setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
@@ -335,12 +333,9 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [moveTree, wmsTrees])
 
   useEffect(() => {
-    map?.addEventListener('moveend', (event) => {
-      setInvalidateTiles(true)
-    })
-
-    map?.addEventListener('zoomend', (event) => {
-      setInvalidateTiles(true)
+    map?.addEventListener('resize moveend zoomend', (event) => {
+      setMapBounds(map.getBounds())
+      setMapSize(map.getSize())
     })
   }, [map])
 
@@ -348,20 +343,28 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     if (selectedCrs?.bbox !== undefined) {
       const bbox = JSON.parse(selectedCrs?.bbox)
       const bboxGeoJSON = L.geoJSON(bbox)
-      console.log('new bounds: ', bbox, bboxGeoJSON)
-      setMaxBounds(bboxGeoJSON.getBounds())
+      const newMaxBounds = bboxGeoJSON.getBounds()
+      setMaxBounds(newMaxBounds)
     }
   }, [selectedCrs])
 
   useEffect(() => {
-    if (maxBounds !== undefined) {
-      console.log('set max bounds for map to: ', maxBounds, map)
+    console.log(maxBounds)
+    if (maxBounds !== undefined && map !== undefined) {
+      const currentCenter = map.getCenter()
+      map.setMaxBounds(maxBounds)
+      if (maxBounds.contains(currentCenter)) {
+        console.log('nui')
 
-      map?.stop()
+        // do nothing... the current center is part of the maximum boundary of the crs system
+      } else {
+        // current center is not part of the boundary of the crs system. We need to center the map new
+        console.log('hui')
+        // map?.panTo(maxBounds.getCenter())
+        map?.fitBounds(maxBounds)
+      }
 
-      map?.fitBounds(maxBounds)
       // map?.setMaxBounds(maxBounds)
-      console.log('map bounds', map?.getBounds())
     }
   }, [map, maxBounds])
 
@@ -372,27 +375,31 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }
   }, [crsIntersection, _selectedCrs])
 
+  const value = useMemo<MapViewerContextType>(() => {
+    return {
+      tiles: editor ? tiles.concat([editorLayer]) : tiles,
+      wmsTrees,
+      setWmsTrees,
+      removeWmsTree,
+      updateOrAppendWmsTree,
+      moveTree,
+      moveTreeUp,
+      moveTreeDown,
+      crsIntersection,
+      selectedCrs,
+      setSelectedCrs,
+      setEditor,
+      geoJSON,
+      setGeoJSON,
+      map,
+      setMap
+    }
+  }, [crsIntersection, editor, editorLayer, geoJSON, map, moveTree, moveTreeDown, moveTreeUp, removeWmsTree, selectedCrs, tiles, updateOrAppendWmsTree, wmsTrees])
+
   return (
     <context.Provider
-      value={
-        {
-          tiles,
-          wmsTrees,
-          setWmsTrees,
-          removeWmsTree,
-          updateOrAppendWmsTree,
-          moveTree,
-          moveTreeUp,
-          moveTreeDown,
-          crsIntersection,
-          selectedCrs,
-          setSelectedCrs,
-          setEditor,
-          geoJSON,
-          setGeoJSON,
-          setMap
-        }
-      }>
+      value={value}
+    >
       {children}
     </context.Provider>
   )

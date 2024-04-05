@@ -15,7 +15,6 @@
     "@react-hook/resize-observer": "^1.2.6",
     "@types/inflection": "^1.13.0",
     "@types/proj4": "^2.5.5",
-    "@types/proj4leaflet": "^1.0.10",
     "jsonpointer": "^5.0.1",
     "leaflet": "^1.9.4",
     "notistack": "^3.0.1",
