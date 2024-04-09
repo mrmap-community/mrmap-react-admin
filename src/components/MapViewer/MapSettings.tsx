@@ -2,86 +2,50 @@ import { useState, type PropsWithChildren, type ReactNode, useEffect, useRef, us
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import { useMapViewerContext } from './MapViewerContext'
-import { Button, FormGroup } from '@mui/material'
-import { LatLngBounds } from 'leaflet'
-import { type Map } from 'leaflet'
-import L from 'leaflet'
+import { FormGroup } from '@mui/material'
+import { boundsToGeoJSON, featuresToCollection, latLngToGeoJSON, polygonToFeature } from './utils'
+import type { Polygon } from 'geojson'
+
+
+export interface DisplayPositionProps {
+  crsBbox?: Polygon
+}
 
 
 
-const center = [51.505, -0.09]
-const zoom = 13
+const DisplayPosition = ({
+  crsBbox
+}: DisplayPositionProps): ReactNode => {
 
-
-
-
-
-const DisplayPosition = (): ReactNode => {
   const { map } = useMapViewerContext()
 
   const [position, setPosition] = useState(() => map?.getCenter())
   const [bounds, setBounds] = useState(() => map?.getBounds())
 
   const positionGeoJSON = useMemo(()=>{
-    if (position === undefined){
-      return
-    }
-    return `
-      {
-        "type": "Feature",
-        "geometry": {
-          "type": "Point",
-          "coordinates": [${position.lng}, ${position.lat}]
-        },
-        "properties": {
-          "name": "center"
-        }
-      }
-    `
+    return position ? latLngToGeoJSON(position): undefined
   },[position])
 
   const boundsGeoJSON = useMemo(()=>{
-    if (bounds === undefined){
-      return
-    }
-    return `
-      {
-        "type": "Feature",
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[
-            [${bounds.getSouthWest().lng}, ${bounds.getSouthWest().lat}], 
-            [${bounds.getNorthEast().lng}, ${bounds.getSouthWest().lat}], 
-            [${bounds.getNorthEast().lng}, ${bounds.getNorthEast().lat}], 
-            [${bounds.getSouthWest().lng}, ${bounds.getNorthEast().lat}],
-            [${bounds.getSouthWest().lng}, ${bounds.getSouthWest().lat}]
-          ]]
-        },
-        "properties": {
-          "name": "bbox"
-        }
-      }
-    `
+    return bounds ? boundsToGeoJSON(bounds): undefined
   },[bounds])
 
   const featureCollection = useMemo(()=>{
-    if (position === undefined || bounds === undefined){
-      return
+    const features = []
+    if (crsBbox !== undefined){
+      features.push(polygonToFeature(crsBbox, "crs bbox"))
     }
-    return `
-    { 
-      "type": "FeatureCollection",
-      "features": [
-        ${positionGeoJSON},
-        ${boundsGeoJSON}
-      ]
+    if (positionGeoJSON !== undefined){
+      features.push(positionGeoJSON)
     }
-  `
+    if (boundsGeoJSON !== undefined){
+      features.push(boundsGeoJSON)
+    }
+      
+    return featuresToCollection(features)
   },[position, bounds])
 
-  const onClick = useCallback(() => {
-    map?.setView(center, zoom)
-  }, [map])
+
 
   const onMove = useCallback(() => {
     if (map !== undefined) {
@@ -102,10 +66,9 @@ const DisplayPosition = (): ReactNode => {
   return (
     <FormGroup>
       <div>
+        Current Boundary:
         {featureCollection}
       </div>
-
-      <Button onClick={onClick}>reset</Button>
     </FormGroup>
   )
 }
@@ -135,16 +98,11 @@ const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
   }, [crs, crsIntersection, setSelectedCrs])
 
 
-
-
   return (
       <>
-        <DisplayPosition />
-
-        <div>
-        crs bbox: {selectedCrs?.bbox}
-
-        </div>
+        <DisplayPosition 
+          crsBbox={selectedCrs?.bbox}
+        />
 
         <Select
             labelId="crs-select-label"
@@ -161,3 +119,4 @@ const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
 }
 
 export default MapSettingsEditor
+

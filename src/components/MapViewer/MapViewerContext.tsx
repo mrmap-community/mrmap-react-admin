@@ -2,7 +2,7 @@ import { createContext, type Dispatch, type ReactNode, type SetStateAction, useC
 import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'react-admin'
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
-import type { MultiPolygon, GeoJSON } from 'geojson'
+import type { MultiPolygon, Polygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
 import { type LatLngBounds, type Map } from 'leaflet'
 import proj4 from 'proj4'
@@ -13,7 +13,7 @@ export interface MrMapCRS extends RaRecord {
   code: string
   prefix: string
   wkt?: string
-  bbox?: GeoJSON
+  bbox?: Polygon
   isYxOrder: boolean
   isXyOrder: boolean
 }
@@ -78,23 +78,17 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
 }
 
 const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
+  
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
 
-  let swLatLng = [sw.lat, sw.lng]
-  let neLatLng = [ne.lat, ne.lng]
+  let minXy = {x: sw.lng, y: sw.lat}
+  let maxXy = {x: ne.lng, y: ne.lat}
 
   if (crs.stringRepresentation !== 'EPSG:4326') {
     const proj = proj4('EPSG:4326', crs.wkt)
-    swLatLng = proj.forward(swLatLng)
-    neLatLng = proj.forward(neLatLng)
-
-    const latLngs = swLatLng.concat(neLatLng)
-    const invalidValues = latLngs.some(Number.isNaN)
-
-    if (invalidValues) {
-      // map.zoomIn()
-    }
+    minXy = proj.forward(minXy)
+    maxXy = proj.forward(maxXy)
   }
 
   const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
@@ -131,16 +125,16 @@ const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds
   if (version === '1.3.0') {
     if (crs.isXyOrder) {
       // no axis order correction needed.
-      params.set('BBOX', `${swLatLng[1]},${swLatLng[0]},${neLatLng[1]},${neLatLng[0]}`)
+      params.set('BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
     } else {
-      params.set('BBOX', `${swLatLng[0]},${swLatLng[1]},${neLatLng[0]},${neLatLng[1]}`)
+      params.set('BBOX', `${minXy.y},${minXy.x},${maxXy.y},${maxXy.x}`)
     }
     if (!(params.has('CRS') || params.has('crs'))) {
       params.append('CRS', crs.stringRepresentation)
     }
   } else {
     // always minx,miny,maxx,maxy (minLng,minLat,maxLng,maxLat)
-    params.set('BBOX', `${swLatLng[1]},${swLatLng[0]},${neLatLng[1]},${neLatLng[0]}`)
+    params.set('BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
     if (!(params.has('SRS') || params.has('srs'))) {
       params.append('SRS', crs.stringRepresentation)
     }
@@ -220,11 +214,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     const _tiles: Tile[] = []
 
     if (mapBounds === undefined || mapSize === undefined) {
-      console.log('huhu')
       return _tiles
     }
-
-    console.log('calc tiles new')
 
     const oldWmsTrees = [...wmsTrees].reverse()
     oldWmsTrees.forEach((tree, index) => {
@@ -349,18 +340,13 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [selectedCrs])
 
   useEffect(() => {
-    console.log(maxBounds)
     if (maxBounds !== undefined && map !== undefined) {
       const currentCenter = map.getCenter()
       map.setMaxBounds(maxBounds)
       if (maxBounds.contains(currentCenter)) {
-        console.log('nui')
-
         // do nothing... the current center is part of the maximum boundary of the crs system
       } else {
         // current center is not part of the boundary of the crs system. We need to center the map new
-        console.log('hui')
-        // map?.panTo(maxBounds.getCenter())
         map?.fitBounds(maxBounds)
       }
 
