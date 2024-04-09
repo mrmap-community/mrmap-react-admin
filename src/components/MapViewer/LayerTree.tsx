@@ -72,7 +72,9 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
     const upperRight = L.latLng(node?.record?.bboxLatLon?.coordinates[0][2][1], node?.record?.bboxLatLon?.coordinates[0][2][0])
     const bounds = L.latLngBounds(upperRight, lowerLeft)
 
-    map?.flyToBounds(bounds)
+    // TODO: check current crs bounds
+
+    map?.panTo(bounds.getCenter())
   }, [map])
 
   return (

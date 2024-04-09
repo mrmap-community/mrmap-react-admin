@@ -1,5 +1,7 @@
 import { type RaRecord } from 'react-admin'
 import { type TreeNode } from './MapViewerContext'
+import { LatLng, LatLngBounds } from 'leaflet'
+import type { Polygon } from 'geojson'
 
 export const collectChildren = (node: TreeNode, includeSelf: boolean = false): TreeNode[] => {
   const children = []
@@ -34,4 +36,76 @@ export const isDescendantOf = (nodeA: RaRecord, nodeB: RaRecord): boolean => {
 
 export const isAncestorOf = (nodeA: RaRecord, nodeB: RaRecord): boolean => {
   return isDescendantOf(nodeB, nodeA)
+}
+
+export const latLngToGeoJSON = (point: LatLng) => {
+  if (point === undefined){
+    return
+  }
+  return `
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [${point.lng}, ${point.lat}]
+      },
+      "properties": {
+        "name": "viewer center"
+      }
+    }
+  `
+}
+
+export const boundsToGeoJSON = (bounds: LatLngBounds) => {
+  if (bounds === undefined){
+    return
+  }
+  return `
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [${bounds.getSouthWest().lng}, ${bounds.getSouthWest().lat}], 
+          [${bounds.getNorthEast().lng}, ${bounds.getSouthWest().lat}], 
+          [${bounds.getNorthEast().lng}, ${bounds.getNorthEast().lat}], 
+          [${bounds.getSouthWest().lng}, ${bounds.getNorthEast().lat}],
+          [${bounds.getSouthWest().lng}, ${bounds.getSouthWest().lat}]
+        ]]
+      },
+      "properties": {
+        "name": "viewer bbox"
+      }
+    }
+  `
+}
+
+export const featuresToCollection = (features: string[]) => {
+  if (features === undefined){
+    return
+  }
+  return `
+  { 
+    "type": "FeatureCollection",
+    "features": [
+      ${features.join(',')}
+    ]
+  }
+`
+}
+
+export const polygonToFeature = (geojson: Polygon, name: string) => {
+  if (geojson == undefined){
+    console.log(geojson)
+    return
+  }
+  return `
+    {
+      "type": "Feature",
+      "geometry": ${geojson},
+      "properties": {
+        "name": "${name}"
+      }
+    }
+  `
 }

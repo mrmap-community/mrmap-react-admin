@@ -1,10 +1,22 @@
-import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
-import { type RaRecord, type Identifier, useDataProvider } from 'react-admin'
+import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect, useRef } from 'react'
+import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'react-admin'
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
-import type { MultiPolygon } from 'geojson'
+import type { MultiPolygon, Polygon } from 'geojson'
 import { getChildren } from '../MapViewer/utils'
-import { type Map } from 'leaflet'
+import { type LatLngBounds, type Map } from 'leaflet'
+import proj4 from 'proj4'
+import L from 'leaflet'
+
+export interface MrMapCRS extends RaRecord {
+  stringRepresentation: string
+  code: string
+  prefix: string
+  wkt?: string
+  bbox?: Polygon
+  isYxOrder: boolean
+  isXyOrder: boolean
+}
 
 export interface TreeNode {
   id: Identifier
@@ -35,9 +47,13 @@ export interface MapViewerContextType {
   moveTree: (treeId: Identifier, newIndex: number) => void
   moveTreeUp: (treeId: Identifier) => void
   moveTreeDown: (treeId: Identifier) => void
+  crsIntersection: MrMapCRS[]
+  selectedCrs: MrMapCRS
+  setSelectedCrs: (crs: MrMapCRS) => void
   setEditor: Dispatch<SetStateAction<boolean>>
   geoJSON: MultiPolygon | undefined
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
+  map?: Map
   setMap: Dispatch<SetStateAction<Map>>
 }
 
@@ -61,11 +77,20 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
-const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdentifiers: string): URL => {
-  const size = map.getSize()
-  const bounds = map.getBounds()
-  const southWest = bounds.getSouthWest()
-  const northEast = bounds.getNorthEast()
+const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
+  
+  const sw = bounds.getSouthWest()
+  const ne = bounds.getNorthEast()
+
+  let minXy = {x: sw.lng, y: sw.lat}
+  let maxXy = {x: ne.lng, y: ne.lat}
+
+  if (crs.stringRepresentation !== 'EPSG:4326') {
+    const proj = proj4('EPSG:4326', crs.wkt)
+    minXy = proj.forward(minXy)
+    maxXy = proj.forward(maxXy)
+  }
+
   const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
 
   const url = new URL(getMapUrl)
@@ -97,18 +122,21 @@ const prepareGetMapUrl = (getMapUrl: string, map: Map, tree: WMSTree, layerIdent
     params.append('STYLES', '')
   }
 
-
   if (version === '1.3.0') {
-    params.set('BBOX', `${southWest.lat},${southWest.lng},${northEast.lat},${northEast.lng}`)
+    if (crs.isXyOrder) {
+      // no axis order correction needed.
+      params.set('BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
+    } else {
+      params.set('BBOX', `${minXy.y},${minXy.x},${maxXy.y},${maxXy.x}`)
+    }
     if (!(params.has('CRS') || params.has('crs'))) {
-      // make it configurable
-      params.append('CRS', 'EPSG:4326')
+      params.append('CRS', crs.stringRepresentation)
     }
   } else {
-    params.set('BBOX', `${southWest.lng},${southWest.lat},${northEast.lng},${northEast.lat}`)
+    // always minx,miny,maxx,maxy (minLng,minLat,maxLng,maxLat)
+    params.set('BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
     if (!(params.has('SRS') || params.has('srs'))) {
-      // make it configurable
-      params.append('SRS', 'EPSG:4326')
+      params.append('SRS', crs.stringRepresentation)
     }
   }
 
@@ -144,7 +172,7 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
   params.append('QUERY_LAYERS', queryLayers?.join(',') ?? '')
   params.append('STYLES', getMapUrl.searchParams.get('STYLES'))
   params.append('BBOX', getMapUrl.searchParams.get('BBOX'))
-  params.append('SRS', getMapUrl.searchParams.get('SRS'))
+  params.append('SRS', getMapUrl.searchParams.get('SRS') ?? getMapUrl.searchParams.get('CRS') ?? 'EPSG:4326')
   params.append('WIDTH', getMapUrl.searchParams.get('WIDTH'))
   params.append('HEIGHT', getMapUrl.searchParams.get('HEIGHT'))
 
@@ -153,24 +181,40 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
 
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [map, setMap] = useState<Map>()
+  const [mapBounds, setMapBounds] = useState(map?.getBounds())
+  const [mapSize, setMapSize] = useState(map?.getSize())
 
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
+  const [maxBounds, setMaxBounds] = useState<LatLngBounds>()
 
   const dataProvider = useDataProvider()
 
-  const [invalidateTiles, setInvalidateTiles] = useState(true)
+  const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
+
+  const { data: selectedCrs, isLoading, error, refetch } = useGetOne(
+    'ReferenceSystem',
+    { id: _selectedCrs?.id }
+  )
+
+  const crsIntersection = useMemo(() => {
+    let referenceSystems: MrMapCRS[] = []
+    wmsTrees.map(wms => wms.rootNode?.record.referenceSystems.filter((crs: MrMapCRS) => crs.prefix === 'EPSG')).forEach((_referenceSystems: MrMapCRS[], index) => {
+      if (index === 0) {
+        referenceSystems = referenceSystems.concat(_referenceSystems)
+      } else {
+        referenceSystems = referenceSystems.filter(crsA => _referenceSystems.some(crsB => crsA.stringRepresentation === crsB.stringRepresentation))
+      }
+    })
+    return referenceSystems
+  }, [wmsTrees])
 
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
 
-    if (map === undefined) {
+    if (mapBounds === undefined || mapSize === undefined) {
       return _tiles
-    }
-
-    if (invalidateTiles) {
-      setInvalidateTiles(false)
     }
 
     const oldWmsTrees = [...wmsTrees].reverse()
@@ -190,13 +234,13 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
 
       if (layerIdentifiers !== '' && getMapUrl !== '') {
-        const _getMapUrl = prepareGetMapUrl(getMapUrl, map, tree, layerIdentifiers)
+        const _getMapUrl = prepareGetMapUrl(getMapUrl, mapSize, mapBounds, tree, layerIdentifiers, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
 
         _tiles.push(
           {
             leafletTile: <ImageOverlay
             key={(Math.random() + 1).toString(36).substring(7)}
-            bounds={map.getBounds()}
+            bounds={mapBounds}
             interactive={true}
             url={_getMapUrl.href}
           />,
@@ -207,14 +251,17 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       }
     })
 
-    if (editor) {
-      _tiles.push({
-        leafletTile: <FeatureGroupEditor geoJson={geoJSON} geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }} />
-      })
-    }
-
     return _tiles
-  }, [wmsTrees, editor, map, geoJSON, invalidateTiles])
+  }, [mapBounds, mapSize, wmsTrees, selectedCrs])
+
+  const editorLayer = useMemo(() => {
+    return {
+      leafletTile: <FeatureGroupEditor
+        geoJson={geoJSON}
+        geoJsonCallback={(multiPolygon) => { setGeoJSON(multiPolygon) }}
+        />
+    }
+  }, [geoJSON])
 
   const removeWmsTree = useCallback((treeId: Identifier) => {
     setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
@@ -230,7 +277,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           meta: {
             jsonApiParams: {
               include: 'layers,operationUrls,layers.referenceSystems',
-              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,referemce_systems,service,is_spatial_secured,_is_secured,identifier,is_queryable,bbox_lat_lon'
+              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,reference_systems,service,is_spatial_secured,_is_secured,identifier,is_queryable,bbox_lat_lon'
             }
           }
         }
@@ -277,33 +324,68 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [moveTree, wmsTrees])
 
   useEffect(() => {
-    map?.addEventListener('moveend', (event) => {
-      setInvalidateTiles(true)
-    })
-
-    map?.addEventListener('zoomend', (event) => {
-      setInvalidateTiles(true)
+    map?.addEventListener('resize moveend zoomend', (event) => {
+      setMapBounds(map.getBounds())
+      setMapSize(map.getSize())
     })
   }, [map])
 
+  useEffect(() => {
+    if (selectedCrs?.bbox !== undefined) {
+      const bbox = JSON.parse(selectedCrs?.bbox)
+      const bboxGeoJSON = L.geoJSON(bbox)
+      const newMaxBounds = bboxGeoJSON.getBounds()
+      setMaxBounds(newMaxBounds)
+    }
+  }, [selectedCrs])
+
+  useEffect(() => {
+    if (maxBounds !== undefined && map !== undefined) {
+      const currentCenter = map.getCenter()
+      map.setMaxBounds(maxBounds)
+      if (maxBounds.contains(currentCenter)) {
+        // do nothing... the current center is part of the maximum boundary of the crs system
+      } else {
+        // current center is not part of the boundary of the crs system. We need to center the map new
+        map?.fitBounds(maxBounds)
+      }
+
+      // map?.setMaxBounds(maxBounds)
+    }
+  }, [map, maxBounds])
+
+  useEffect(() => {
+    if (crsIntersection.length > 0 && _selectedCrs === undefined) {
+      const defaultCrs = crsIntersection.find(crs => crs.stringRepresentation === 'EPSG:4326') ?? crsIntersection[0]
+      setSelectedCrs(defaultCrs)
+    }
+  }, [crsIntersection, _selectedCrs])
+
+  const value = useMemo<MapViewerContextType>(() => {
+    return {
+      tiles: editor ? tiles.concat([editorLayer]) : tiles,
+      wmsTrees,
+      setWmsTrees,
+      removeWmsTree,
+      updateOrAppendWmsTree,
+      moveTree,
+      moveTreeUp,
+      moveTreeDown,
+      crsIntersection,
+      selectedCrs,
+      setSelectedCrs,
+      setEditor,
+      geoJSON,
+      setGeoJSON,
+      map,
+      setMap
+    }
+  }, [crsIntersection, editor, editorLayer, geoJSON, map, moveTree, moveTreeDown, moveTreeUp, removeWmsTree, selectedCrs, tiles, updateOrAppendWmsTree, wmsTrees])
+
   return (
     <context.Provider
-      value={
-        {
-          tiles,
-          wmsTrees,
-          setWmsTrees,
-          removeWmsTree,
-          updateOrAppendWmsTree,
-          moveTree,
-          moveTreeUp,
-          moveTreeDown,
-          setEditor,
-          geoJSON,
-          setGeoJSON,
-          setMap
-        }
-      }>
+      value={value}
+    >
       {children}
     </context.Provider>
   )

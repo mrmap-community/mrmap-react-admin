@@ -3,7 +3,7 @@ import { type SimpleShowLayoutProps } from 'react-admin'
 import { MapContainer, Popup, Marker } from 'react-leaflet'
 
 import { Box } from '@mui/material'
-import { type LatLng, type Map, type Point } from 'leaflet'
+import { type LatLng, type Map, type Point, CRS } from 'leaflet'
 
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
@@ -19,6 +19,7 @@ import AccordionSummary from '@mui/material/AccordionSummary'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
+import MapSettingsEditor from './MapSettings'
 
 const style = {
   position: 'relative',
@@ -158,12 +159,14 @@ const MapViewerCore = (): ReactNode => {
             ref={setMap}
             center={[51.505, -0.09]}
             zoom={2}
+            crs={CRS.EPSG4326}
+            maxZoom={11}
+            minZoom={0}
+            maxBoundsViscosity={0.8}
+            continuousWorld={true}
             scrollWheelZoom={true}
             style={{
               flex: 1, height: '100%', width: '100%', position: 'relative'
-            //  display: 'flex',
-              // width: '100%',
-            // height: 'calc(100vh - 50px)'
             }}
           >
             {...tiles.map(tile => tile.leafletTile)}
@@ -183,6 +186,12 @@ const MapViewerCore = (): ReactNode => {
           <Tabs
             defaultTabs={
               [{
+                tab: { label: 'Map Settings' },
+                tabPanel: {
+                  children: <MapSettingsEditor/>
+                },
+                closeable: false
+              }, {
                 tab: { label: 'WMS List' },
                 tabPanel: {
                   children: <ListGuesser
