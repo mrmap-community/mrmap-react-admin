@@ -1,5 +1,6 @@
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState, type PropsWithChildren, useEffect } from 'react'
 import { useSidebarState } from 'react-admin'
+import { useStore } from 'react-admin'
 
 export interface DrawerState {
   isOpen: boolean
@@ -22,8 +23,8 @@ export const DrawerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [open] = useSidebarState()
   const [lastOpenState, setLastOpenState] = useState<boolean>()
 
-  const [rightDrawer, setRightDrawer] = useState<DrawerState>({ isOpen: false, height: 'calc(100vh - 50px)', width: '20vw' })
-  const [bottomDrawer, setBottomDrawer] = useState<DrawerState>({ isOpen: false, height: '30vh', width: '100vw', marginLeft: `${open ? '250px' : '58px'}` })
+  const [rightDrawer, setRightDrawer] = useStore<DrawerState>('mrmap.drawer.rightdrawer', { isOpen: false, height: 'calc(100vh - 50px)', width: '20vw' });
+  const [bottomDrawer, setBottomDrawer] = useStore<DrawerState>('mrmap.drawer.bottomdrawer', { isOpen: false, height: '30vh', width: '100vw', marginLeft: `${open ? '250px' : '58px'}` })
 
   useEffect(() => {
     if (lastOpenState === undefined || (open !== lastOpenState)) {
