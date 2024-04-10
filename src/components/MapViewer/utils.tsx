@@ -1,7 +1,24 @@
-import { type RaRecord } from 'react-admin'
-import { type TreeNode } from './MapViewerContext'
+import { Identifier, type RaRecord } from 'react-admin'
+import { WMSTree, type TreeNode } from './MapViewerContext'
 import { LatLng, LatLngBounds } from 'leaflet'
 import type { Polygon } from 'geojson'
+
+export const deflatTree = (node: TreeNode): TreeNode[] => {
+  const nodes = [node]
+  if (node.children.length > 0){
+    node.children.forEach(childNode => {
+      nodes.push(...deflatTree(childNode))
+    })
+  }
+  return nodes
+}
+
+export const findChildrenById = (tree: WMSTree, id: Identifier): TreeNode | undefined => {
+  if (tree.rootNode !== undefined){
+    const flatTree = deflatTree(tree.rootNode)
+    return flatTree.find(node => node.id === id)
+  }
+}
 
 export const collectChildren = (node: TreeNode, includeSelf: boolean = false): TreeNode[] => {
   const children = []
