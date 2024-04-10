@@ -1,11 +1,11 @@
 import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult, type DeleteResult } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
-import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
+import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray, AxiosRequestConfig } from 'openapi-client-axios'
 
-import { type JsonApiDocument, type JsonApiErrorObject, JsonApiMimeType, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
+import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
-import { TOKENNAME } from './authProvider'
+import { TOKENNAME, getParsedAuthToken } from './authProvider'
 import { type Token } from '../components/MrMapFrontend'
 
 export interface RelatedResource {
@@ -65,6 +65,7 @@ export interface CheckAuthReturn {
   headers: AxiosHeaders
 }
 
+let socket: WebSocket| undefined = undefined
 let subscriptions: Subscription[] = []
 
 const handleApiError = (error: AxiosError): void => {
@@ -103,6 +104,29 @@ const realtimeOnMessage = (event: MessageEvent): void => {
       observer => { observer.callback(raEvent) })
 }
 
+const createRealtimeSocket = (realtimeBus: string) => {
+  if (socket !== undefined){
+    return
+  }
+  const authToken = getParsedAuthToken()
+  if (authToken !== null && authToken !== undefined) {
+    if (realtimeBus !== '') {
+      socket = new WebSocket(`${realtimeBus}?token=${authToken.token}`)
+      socket.onopen = (event) => { console.log('open', event) }
+      socket.onmessage = realtimeOnMessage
+      socket.onerror = (event) => { console.log('error', event) }
+    }
+  }
+}
+
+const updateAuthHeader = (axiosRequestConf: AxiosRequestConfig) => {
+  const authToken = getParsedAuthToken()
+  if (authToken?.token !== '' && !axiosRequestConf.headers?.hasAuthorization()){
+    axiosRequestConf?.headers?.setAuthorization(`Token ${authToken?.token}`)
+  }
+  return axiosRequestConf
+}
+
 const dataProvider = ({
   headers = new AxiosHeaders(
     {
@@ -114,23 +138,12 @@ const dataProvider = ({
   total = '/meta/pagination/count',
   realtimeBus = '',
   httpClient,
-  user,
   ...rest
 }: JsonApiDataProviderOptions): DataProvider => {
-  if (user?.token !== '' && user?.token !== undefined) {
-    headers.setAuthorization(`Token ${user?.token}`)
-
-    if (realtimeBus !== '') {
-      const socket = new WebSocket(`${realtimeBus}?token=${user?.token}`)
-      socket.onopen = (event) => { console.log('open', event) }
-      socket.onmessage = realtimeOnMessage
-      socket.onerror = (event) => { console.log('error', event) }
-    }
-  }
 
   // TODO: get baseURL from open api client
   const axiosRequestConf = { baseURL: rest.entrypoint, headers }
-
+  
   const updateResource = async (resource: string, params: UpdateParams): Promise<UpdateResult<any>> =>
     await httpClient.then(async (client) => {
       const operationId = `partial_update_${resource}`
@@ -140,7 +153,7 @@ const dataProvider = ({
       }
 
       // FIXME: only post the edited fields for partial update
-      const conf = client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
+      const conf = client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, updateAuthHeader(axiosRequestConf)])
       return await client.request(conf)
     }).then((response) => {
       const jsonApiDocument = response.data as JsonApiDocument
@@ -150,7 +163,7 @@ const dataProvider = ({
 
   const deleteResource = async (resource: string, params: DeleteParams): Promise<DeleteResult<any>> =>
     await httpClient.then(async (client) => {
-      const conf = client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }, undefined, axiosRequestConf])
+      const conf = client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }, undefined, updateAuthHeader(axiosRequestConf)])
       return await client.request(conf)
     }).then((response) => {
       return { data: { id: params.id } }
@@ -192,7 +205,7 @@ const dataProvider = ({
       }
 
       return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(operationId, [parameters, undefined, axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(operationId, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)
       })
         .then((response) => {
@@ -223,7 +236,7 @@ const dataProvider = ({
         // json:api specific stuff like 'include' or 'fields[Resource]'
         Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
-        const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)
       }).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument
@@ -240,7 +253,7 @@ const dataProvider = ({
       ]
 
       return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)
       })
         .then((response) => {
@@ -270,7 +283,7 @@ const dataProvider = ({
       query[`filter[${params.target}]`] = params.id
 
       return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)
       })
         .then((response) => {
@@ -293,7 +306,7 @@ const dataProvider = ({
           throw new Error('create operation not found')
         }
 
-        const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, axiosRequestConf])
+        const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)
       }).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument
@@ -366,6 +379,7 @@ const dataProvider = ({
 
     // async realtime features
     subscribe: async (topic: string, callback: (event: CrudEvent) => void) => {
+      createRealtimeSocket(realtimeBus)
       subscriptions.push({ topic, callback })
       return await Promise.resolve({ data: null })
     },

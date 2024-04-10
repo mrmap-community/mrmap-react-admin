@@ -1,28 +1,28 @@
 import { type AuthProvider } from 'ra-core'
-import { type Dispatch, type SetStateAction } from 'react'
-
-export interface Options {
-  token: string
-  tokenSetter: Dispatch<SetStateAction<any>>
-  loginUrl?: string
-  logoutUrl?: string
-
-}
 
 export interface LoginParams {
   username: string
   password: string
 }
 
-export const TOKENNAME = 'token'
+export interface AuthToken {
+  token: string
+  expiry: string
+}
+
+export const getParsedAuthToken = (): AuthToken | undefined => {
+  const tokenObjectString= window.localStorage.getItem(TOKENNAME)
+  if (tokenObjectString !== null) {
+      return JSON.parse(tokenObjectString)
+  }
+  return undefined
+}
+
+export const TOKENNAME = 'mrmap.token'
 
 const tokenAuthProvider = (
-  {
-    token,
-    tokenSetter,
     loginUrl = 'http://localhost:8001/api/auth/login',
     logoutUrl = 'http://localhost:8001/api/auth/logout'
-  }: Options
 ): AuthProvider => {
   return {
     login: async ({ username, password }: LoginParams) => {
@@ -33,7 +33,7 @@ const tokenAuthProvider = (
       const response = await fetch(request)
       if (response.ok) {
         const responseJson = await response.json()
-        tokenSetter(JSON.stringify(responseJson))
+        window.localStorage.setItem(TOKENNAME, JSON.stringify(responseJson))
         return
       }
       if (response.headers.get('content-type') !== 'application/json') {
@@ -46,21 +46,20 @@ const tokenAuthProvider = (
     },
     logout: async () => {
       // TODO: call logoutUrl with token
-      tokenSetter(undefined)
+      window.localStorage.removeItem(TOKENNAME)
       await Promise.resolve()
     },
     checkAuth: async () => {
-      const authToken = (token !== undefined) ? JSON.parse(token) : undefined
-      const validAuth = (authToken !== undefined) && !(new Date(authToken.tokenExpiry) > new Date())
-
-      validAuth
-        ? await Promise.resolve()
-        : await Promise.reject(new Error('Your Session has expired. Please authenticate again.'))
+      const authToken = getParsedAuthToken()
+      const expired = authToken !== undefined ? new Date(authToken.expiry) < new Date(): true
+      expired
+        ? await Promise.reject(new Error('Your Session has expired. Please authenticate again.'))
+        : await Promise.resolve()
     },
     checkError: async error => {
       const status = error.status
-      if (status === 401 || status === 403) {
-        localStorage.removeItem('token')
+      if (status === 401) {
+        window.localStorage.removeItem(TOKENNAME)
         await Promise.reject(new Error('unauthorized')); return
       }
       await Promise.resolve()

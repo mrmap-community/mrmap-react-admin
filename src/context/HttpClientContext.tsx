@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useEffect, useState } from 'react'
 
-import OpenAPIClientAxios, { type OpenAPIClient, type UnknownOperationMethods, type UnknownPathsDictionary } from 'openapi-client-axios'
+import OpenAPIClientAxios, { type OpenAPIClient, type UnknownOperationMethods, type UnknownPathsDictionary, AxiosHeaders } from 'openapi-client-axios'
 
 export interface HttpClientContextType {
   client?: OpenAPIClient<UnknownOperationMethods, UnknownPathsDictionary>
@@ -13,6 +13,8 @@ const init: HttpClientContextType = {
 }
 
 export const HttpClientContext = createContext(init)
+
+
 
 export const HttpClientProvider = ({ children }: any): ReactNode => {
   const [client, setClient] = useState<any>()
