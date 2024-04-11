@@ -127,7 +127,7 @@ export interface OWSResource extends Feature {
 
 export interface OWSContext extends FeatureCollection {
     id: string // String type that SHALL contain a URI value
-    properties: GeoJsonProperties
+    properties: OWSContextProperties
     bbox?: BBox
     date?: string // iso-8601 date
     features: OWSResource[]
