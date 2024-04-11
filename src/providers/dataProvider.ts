@@ -5,7 +5,7 @@ import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray, Ax
 
 import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
-import { TOKENNAME, getParsedAuthToken } from './authProvider'
+import { getParsedAuthToken } from './authProvider'
 import { type Token } from '../components/MrMapFrontend'
 
 export interface RelatedResource {
@@ -69,17 +69,17 @@ let socket: WebSocket| undefined = undefined
 let subscriptions: Subscription[] = []
 
 const handleApiError = (error: AxiosError): void => {
-  if (error.response?.status === 403) {
-    const apiErrors = error.response?.data as JsonApiDocument
-    apiErrors?.errors?.forEach(
-      (apiError: JsonApiErrorObject) => {
-        if (apiError.detail === 'Invalid token.') {
-          localStorage.removeItem(TOKENNAME)
-          window.location.href = '/login'
-        }
-      }
-    )
-  }
+  // if (error.response?.status === 403) {
+  //   const apiErrors = error.response?.data as JsonApiDocument
+  //   apiErrors?.errors?.forEach(
+  //     (apiError: JsonApiErrorObject) => {
+  //       if (apiError.detail === 'Invalid token.') {
+  //         localStorage.removeItem(TOKENNAME)
+  //         window.location.href = '/login'
+  //       }
+  //     }
+  //   )
+  // }
 }
 
 const getTotal = (response: JsonApiDocument, total: string): number => {
