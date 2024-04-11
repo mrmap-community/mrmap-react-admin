@@ -5,7 +5,7 @@ import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray, Ax
 
 import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
-import { TOKENNAME, getParsedAuthToken } from './authProvider'
+import { getParsedAuthToken } from './authProvider'
 import { type Token } from '../components/MrMapFrontend'
 
 export interface RelatedResource {
@@ -121,7 +121,6 @@ const createRealtimeSocket = (realtimeBus: string) => {
 
 const updateAuthHeader = (axiosRequestConf: AxiosRequestConfig) => {
   const authToken = getParsedAuthToken()
-  console.log('token:',authToken)
   if (authToken?.token !== '' && !axiosRequestConf.headers?.hasAuthorization()){
     axiosRequestConf?.headers?.setAuthorization(`Token ${authToken?.token}`)
   }
