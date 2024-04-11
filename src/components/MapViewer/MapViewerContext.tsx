@@ -3,10 +3,16 @@ import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'reac
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon, Polygon } from 'geojson'
-import { getChildren } from '../MapViewer/utils'
+import { findChildrenById, getChildren } from '../MapViewer/utils'
 import { type LatLngBounds, type Map } from 'leaflet'
 import proj4 from 'proj4'
 import L from 'leaflet'
+import { useStore } from 'react-admin'
+
+export interface StoredWmsTree {
+  id: Identifier
+  checkedNodes: Identifier[]
+}
 
 export interface MrMapCRS extends RaRecord {
   stringRepresentation: string
@@ -20,16 +26,16 @@ export interface MrMapCRS extends RaRecord {
 
 export interface TreeNode {
   id: Identifier
-  name: string
+  name?: string
   children: TreeNode[]
-  record: RaRecord
+  record?: RaRecord
 }
 
 export interface WMSTree {
   id: Identifier
   rootNode?: TreeNode
   record?: RaRecord
-  checkedNodes?: TreeNode[]
+  checkedNodes: TreeNode[]
 }
 
 export interface Tile {
@@ -184,6 +190,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [mapBounds, setMapBounds] = useState(map?.getBounds())
   const [mapSize, setMapSize] = useState(map?.getSize())
 
+  const [wmsTreeStored, setWmsTreeStored] = useStore<StoredWmsTree[]>('mrmap.mapviewer.wmstree', []);
+
   const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
@@ -214,6 +222,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     const _tiles: Tile[] = []
 
     if (mapBounds === undefined || mapSize === undefined) {
+      console.log('discard recalc', map, mapBounds, mapSize)
       return _tiles
     }
 
@@ -250,7 +259,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
         )
       }
     })
-
+    console.log('recalced tiles')
     return _tiles
   }, [mapBounds, mapSize, wmsTrees, selectedCrs])
 
@@ -282,7 +291,16 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
           }
         }
       ).then(({ data }) => {
-        setWmsTrees(prevWmsTrees => [...prevWmsTrees, raRecordToTopDownTree(data)])
+        const convertedTree = raRecordToTopDownTree(data)
+        if (newTree.checkedNodes?.length > 0){
+          // this is a new fetched tree, but there are provided default checked layer ids
+          const checkedNodes: TreeNode[] = newTree.checkedNodes.map(checkedNode => {
+            return findChildrenById(convertedTree, checkedNode.id)
+          }).filter(node => node !== undefined)
+          convertedTree.checkedNodes = checkedNodes
+
+        }
+        setWmsTrees(prevWmsTrees => [...prevWmsTrees, convertedTree])
       }).catch(error => {
         console.error('something went wrong while loading wms tree', error)
       })
@@ -324,6 +342,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [moveTree, wmsTrees])
 
   useEffect(() => {
+    setMapBounds(map?.getBounds())
+    setMapSize(map?.getSize())
     map?.addEventListener('resize moveend zoomend', (event) => {
       setMapBounds(map.getBounds())
       setMapSize(map.getSize())
@@ -360,6 +380,29 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       setSelectedCrs(defaultCrs)
     }
   }, [crsIntersection, _selectedCrs])
+
+  useEffect(()=>{
+    if (wmsTrees?.length > 0){
+      const wmsTreeToStore: StoredWmsTree[] = wmsTrees.map(tree =>  {
+        return {
+          id: tree.id,
+          checkedNodes: tree.checkedNodes?.flatMap(checkedNode => checkedNode.id) ?? []
+        }
+      })
+      setWmsTreeStored(wmsTreeToStore)
+    }
+  },[wmsTrees])
+
+  useEffect(()=>{
+    // initial wmsTrees from store on component mount
+    wmsTreeStored.forEach(storedTree => {
+      updateOrAppendWmsTree({
+        id: storedTree.id,
+        checkedNodes: storedTree.checkedNodes.map(id => { return {id: id, children: []}})
+      })
+    })
+    
+  },[])
 
   const value = useMemo<MapViewerContextType>(() => {
     return {

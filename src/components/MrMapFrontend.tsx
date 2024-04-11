@@ -38,25 +38,16 @@ const MrMapFrontend = (): ReactElement => {
 
   const { client, isLoading } = useContext(HttpClientContext)
 
-  const [token, setToken] = useStore<string>(TOKENNAME, undefined)
-
-  const parsedToken: Token = useMemo(() => {
-    return (token !== undefined) ? JSON.parse(token) : undefined
-  }, [token])
-
   const dataProvider = useMemo(() => {
     if (!isLoading && client !== undefined) {
       const asyncClient = client.api.getClient()
       return jsonApidataProvider({
         entrypoint: 'http://localhost:8001/',
         httpClient: asyncClient,
-        realtimeBus: 'ws://localhost:8001/ws/default/',
-        user: {
-          token: parsedToken?.token
-        }
+        realtimeBus: 'ws://localhost:8001/ws/default/'
       })
     }
-  }, [isLoading, client, parsedToken?.token])
+  }, [isLoading, client])
 
   if (dataProvider === undefined) {
     return (
@@ -69,7 +60,7 @@ const MrMapFrontend = (): ReactElement => {
         darkTheme={darkTheme}
         lightTheme={customTheme}
         dataProvider={dataProvider}
-        authProvider={authProvider({ token, tokenSetter: setToken })}
+        authProvider={authProvider()}
         layout={MyLayout}
         store={localStorageStore(STORE_VERSION)}
       >
