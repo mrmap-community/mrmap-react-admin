@@ -69,17 +69,17 @@ let socket: WebSocket| undefined = undefined
 let subscriptions: Subscription[] = []
 
 const handleApiError = (error: AxiosError): void => {
-  if (error.response?.status === 403) {
-    const apiErrors = error.response?.data as JsonApiDocument
-    apiErrors?.errors?.forEach(
-      (apiError: JsonApiErrorObject) => {
-        if (apiError.detail === 'Invalid token.') {
-          localStorage.removeItem(TOKENNAME)
-          window.location.href = '/login'
-        }
-      }
-    )
-  }
+  // if (error.response?.status === 403) {
+  //   const apiErrors = error.response?.data as JsonApiDocument
+  //   apiErrors?.errors?.forEach(
+  //     (apiError: JsonApiErrorObject) => {
+  //       if (apiError.detail === 'Invalid token.') {
+  //         localStorage.removeItem(TOKENNAME)
+  //         window.location.href = '/login'
+  //       }
+  //     }
+  //   )
+  // }
 }
 
 const getTotal = (response: JsonApiDocument, total: string): number => {
@@ -121,6 +121,7 @@ const createRealtimeSocket = (realtimeBus: string) => {
 
 const updateAuthHeader = (axiosRequestConf: AxiosRequestConfig) => {
   const authToken = getParsedAuthToken()
+  console.log('token:',authToken)
   if (authToken?.token !== '' && !axiosRequestConf.headers?.hasAuthorization()){
     axiosRequestConf?.headers?.setAuthorization(`Token ${authToken?.token}`)
   }
