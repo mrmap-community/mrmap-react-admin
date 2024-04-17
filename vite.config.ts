@@ -16,4 +16,5 @@ export default defineConfig({
     //         '@api-platform/admin/src/InputGuesser': './node_modules/@api-platform/admin/src/InputGuesser'
     //     }
     // }
+
 });

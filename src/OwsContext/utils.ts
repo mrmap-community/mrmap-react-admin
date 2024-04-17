@@ -14,3 +14,15 @@ export const OWSContextDocument = (): OWSContext => {
         
     }
 }
+
+
+
+
+export const wmsToOWSContext = (capabilities: any): OWSContext =>  {
+
+    const contextDoc = OWSContextDocument()
+
+
+    return contextDoc
+
+}
