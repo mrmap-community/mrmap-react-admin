@@ -2,7 +2,7 @@
 import jsonpointer from 'jsonpointer'
 import { getDocument } from './utils'
 import { Polygon } from 'geojson'
-import { ElevationDimension, TempDimension, TimeDimension, WmsCapabilitites, WmsLayer } from './types'
+import { ElevationDimension, Style, TempDimension, TimeDimension, WmsCapabilitites, WmsLayer } from './types'
 import {duration} from 'moment'
 
 export const layerBboxToGeoJSON = (bbox: any): Polygon | undefined => {
@@ -18,14 +18,6 @@ export const layerBboxToGeoJSON = (bbox: any): Polygon | undefined => {
             [bbox["westBoundLongitude"], bbox["northBoundLatitude"]],
             [bbox["westBoundLongitude"], bbox["southBoundLatitude"]]
         ]
-    }
-}
-
-export const parseStyle = (style: any) => {
-    return {
-        name: jsonpointer.get(style, "/Name"),
-        title: jsonpointer.get(style, "/Title"),
-        abstract: jsonpointer.get(style, "/Abstract"),
     }
 }
 
@@ -66,6 +58,22 @@ export const parseDimension = (dimension: any): TimeDimension | TempDimension | 
     }
 }
 
+export const parseStyle = (style: any): Style => {
+    return {
+        metadata: {
+            name: jsonpointer.get(style, '/Name'),
+            title: jsonpointer.get(style, '/Title'),
+            abstract: jsonpointer.get(style, '/Abstract')
+        },
+        legendUrl: {
+            mimeType: jsonpointer.get(style, '/LegendURL/Format'),
+            href: jsonpointer.get(style, '/LegendURL/OnlineResource/@_href'),
+            width: jsonpointer.get(style, '/LegendURL/@_width'),
+            height: jsonpointer.get(style, '/LegendURL/@_height')
+        }
+    }
+}
+
 export const parseLayer = (layer: any): WmsLayer => {
     const layerObj: WmsLayer = {
         metadata: {
@@ -75,6 +83,7 @@ export const parseLayer = (layer: any): WmsLayer => {
         },
         referenceSystems: jsonpointer.get(layer, '/CRS'),
         bbox: layerBboxToGeoJSON(jsonpointer.get(layer, '/EX_GeographicBoundingBox')),
+        styles: [jsonpointer.get(layer, '/Style').map((style: any) => parseStyle(style))]
     }
 
     const sublayer = jsonpointer.get(layer, '/Layer')
@@ -104,32 +113,36 @@ export const parseLayer = (layer: any): WmsLayer => {
 
 export const parseWms = (xml: string): WmsCapabilitites => {
 
-    const capabilites = getDocument(xml)
+    const parsedCapabilites = getDocument(xml)
     
-    return {
-        version: jsonpointer.get(capabilites, '/WMS_Capabilities/@_version'),
+    const capabilities = {
+        version: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/@_version'),
         metadata: {
-            name: jsonpointer.get(capabilites, '/WMS_Capabilities/Service/Name'),
-            title: jsonpointer.get(capabilites, '/WMS_Capabilities/Service/Title'),
-            abstract: jsonpointer.get(capabilites, '/WMS_Capabilities/Service/Abstract'),
+            name: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Service/Name'),
+            title: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Service/Title'),
+            abstract: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Service/Abstract'),
         },
         operationUrls: {
             getCapabilities: {
-                mimeTypes: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/Format'),
-                get: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Get/OnlineResource/@_href'),
-                post: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Post/OnlineResource/@_href')
+                mimeTypes: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/Format'),
+                get: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Get/OnlineResource/@_href'),
+                post: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetCapabilities/DCPType/HTTP/Post/OnlineResource/@_href')
             },
             getMap: {
-                mimeTypes: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetMap/Format'),
-                get: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Get/OnlineResource/@_href'),
-                post: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Post/OnlineResource/@_href')
+                mimeTypes: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetMap/Format'),
+                get: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Get/OnlineResource/@_href'),
+                post: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetMap/DCPType/HTTP/Post/OnlineResource/@_href')
             },
             getFeatureInfo: {
-                mimeTypes: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/Format'),
-                get: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Get/OnlineResource/@_href'),
-                post: jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Post/OnlineResource/@_href')
+                mimeTypes: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/Format'),
+                get: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Get/OnlineResource/@_href'),
+                post: jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Request/GetFeatureInfo/DCPType/HTTP/Post/OnlineResource/@_href')
             }
         },
-        rootLayer: parseLayer(jsonpointer.get(capabilites, '/WMS_Capabilities/Capability/Layer'))
+        rootLayer: parseLayer(jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Layer'))
     }
+
+
+
+    return capabilities
 }

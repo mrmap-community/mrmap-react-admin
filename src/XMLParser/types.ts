@@ -29,12 +29,25 @@ export interface TimeDimension {
     resolution?: Duration
 }
 
+export interface LegendUrl {
+    href: URL
+    mimeType: string
+    width: number
+    height: number
+}
+
+export interface Style {
+    metadata: Metadata
+    legendUrl?: LegendUrl
+}
+
 export interface WmsLayer {
     metadata: Metadata
     referenceSystems: string[]
     bbox?: Polygon
     dimension?: TimeDimension | TempDimension | ElevationDimension
     children?: WmsLayer[]
+    styles: Style[]
 }
 
 

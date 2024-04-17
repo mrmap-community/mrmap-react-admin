@@ -1,4 +1,4 @@
-import { Feature, FeatureCollection, GeoJsonProperties, BBox } from 'geojson'
+import { Feature, FeatureCollection, Geometry, BBox } from 'geojson'
 
 export interface Link {
     href: string
@@ -53,7 +53,7 @@ export interface StyleSet {
 
 export interface Offering {
     code: string
-    operation?: Operation[]
+    operations?: Operation[]
     contents?: Content[]
     styles?: StyleSet[]
     [name: string]: any // extension, any other
@@ -119,13 +119,13 @@ export interface OWSResourceProperties {
     [name: string]: any // extension, any other
 }
 
-export interface OWSResource extends Feature {
+export interface OWSResource extends Omit<Feature, "geometry"> {
     title: string
     properties: OWSResourceProperties
-    //geometry?: Geometry
+    geometry?: Geometry
 }
 
-export interface OWSContext extends FeatureCollection {
+export interface OWSContext extends Omit<FeatureCollection, "features"> {
     id: string // String type that SHALL contain a URI value
     properties: OWSContextProperties
     bbox?: BBox
