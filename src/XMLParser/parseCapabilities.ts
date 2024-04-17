@@ -74,16 +74,27 @@ export const parseStyle = (style: any): Style => {
     }
 }
 
+export const forceArray = (obj: any): Array<any> => {
+    return Array.isArray(obj) ? obj : [obj]
+}
+
 export const parseLayer = (layer: any): WmsLayer => {
+    const abstract = jsonpointer.get(layer, '/Abstract')
+    const parsedCrs = jsonpointer.get(layer, '/CRS')
+    const crs = parsedCrs === undefined ? [] : forceArray(parsedCrs)
+
+    const parsedStyles: any = jsonpointer.get(layer, '/Style')
+    const styles = parsedStyles === undefined ? [] : forceArray(parsedStyles).map((style: any) => parseStyle(style))
+
     const layerObj: WmsLayer = {
         metadata: {
             title: jsonpointer.get(layer, '/Title'),
             name: jsonpointer.get(layer, '/Name'),
-            abstract: jsonpointer.get(layer, '/Abstract')
+            ...(abstract && {abstract: abstract})
         },
-        referenceSystems: jsonpointer.get(layer, '/CRS'),
+        ...(crs?.length > 0 && {referenceSystems: crs}),
         bbox: layerBboxToGeoJSON(jsonpointer.get(layer, '/EX_GeographicBoundingBox')),
-        styles: [jsonpointer.get(layer, '/Style').map((style: any) => parseStyle(style))]
+        ...(styles?.length > 0 && {styles: styles})
     }
 
     const sublayer = jsonpointer.get(layer, '/Layer')

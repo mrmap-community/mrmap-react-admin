@@ -43,11 +43,11 @@ export interface Style {
 
 export interface WmsLayer {
     metadata: Metadata
-    referenceSystems: string[]
+    referenceSystems?: string[]
     bbox?: Polygon
     dimension?: TimeDimension | TempDimension | ElevationDimension
     children?: WmsLayer[]
-    styles: Style[]
+    styles?: Style[]
 }
 
 
@@ -62,7 +62,6 @@ export interface Capabilites {
     metadata: Metadata
     operationUrls: {
         getCapabilities: OperationUrl
-        [key: string]: OperationUrl
     }
 }
 
@@ -71,7 +70,6 @@ export interface WmsCapabilitites extends Capabilites {
     operationUrls: {
         getCapabilities: OperationUrl
         getMap: OperationUrl
-        getFeatureInfo: OperationUrl // this is optional operation
-        [key: string]: OperationUrl
+        getFeatureInfo?: OperationUrl // this shall be optional operation
     }
 }

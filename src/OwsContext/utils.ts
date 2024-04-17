@@ -69,13 +69,15 @@ export const layerToFeature = (capabilities: WmsCapabilitites, node: WmsLayer, f
                     },
                     // todo: add GetFeatureInfo url
                 ],
-                styles: node.styles.map((style): StyleSet => {
-                    return {
-                        name: style.metadata.name,
-                        title: style.metadata.title,
-                        abstract: style.metadata.abstract,
-                        legendURL: style.legendUrl?.href.toString()
-                    }
+                ...(node.styles && {
+                    styles: node.styles?.map((style): StyleSet => {
+                        return {
+                            name: style.metadata.name,
+                            title: style.metadata.title,
+                            abstract: style.metadata.abstract,
+                            legendURL: style.legendUrl?.href.toString()
+                        }
+                    })
                 }),
             },
             folder: folder
@@ -84,28 +86,26 @@ export const layerToFeature = (capabilities: WmsCapabilitites, node: WmsLayer, f
 }
 
 export const deflatLayerTree = (
-    features: OWSResource[] = [], 
+    features: OWSResource[], 
     capabilities: WmsCapabilitites, 
     node?: WmsLayer,
     parentFolder?: string
 ): OWSResource[] => {
 
-    if (node === undefined){
-        // first run of the recursion; get the root node
-        features.push(layerToFeature(capabilities, capabilities.rootLayer, `/${capabilities.rootLayer}`))
-    } else {
-        const newSubFolder = `${parentFolder}/${capabilities.rootLayer}`
-        features.push(layerToFeature(capabilities, node, newSubFolder))
-        node.children?.forEach(subnode => {
-            features.push(...deflatLayerTree(features, capabilities, subnode, newSubFolder))
-        })
-    }
+    let _node: WmsLayer= node ?? capabilities.rootLayer
+    let folder = node === undefined ? `/${capabilities.rootLayer.metadata.name}` : `${parentFolder}/${_node.metadata.name}`
+    
+    features.push(layerToFeature(capabilities, _node, folder))
 
+    // iterate children if they exists
+    _node.children?.forEach(subnode => {
+        subnode !== undefined && deflatLayerTree(features, capabilities, subnode, folder)
+    })
+    
     return features
 }
 
 export const wmsToOWSContext = (capabilities: WmsCapabilitites): OWSContext =>  {
-
     const contextDoc = OWSContextDocument()
     contextDoc.features = deflatLayerTree(
         [],
