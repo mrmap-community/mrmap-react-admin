@@ -51,6 +51,7 @@ export interface StyleSet {
     [name: string]: any // extension, any other
 }
 
+
 export interface Offering {
     code: string
     operations?: Operation[]
@@ -58,6 +59,7 @@ export interface Offering {
     styles?: StyleSet[]
     [name: string]: any // extension, any other
 }
+
 
 export interface OWSResourceLinks {
     alternates?: Link
@@ -110,7 +112,7 @@ export interface OWSResourceProperties {
     rights?: string
     date?: string // iso-8601 format
     links?: OWSResourceLinks
-    offering?: Offering
+    offering?: Offering[]
     active?: boolean // default is true
     categories?: Category[]   
     minscaledenominator?: number 
@@ -125,6 +127,12 @@ export interface OWSResource extends Omit<Feature, "geometry"> {
     geometry?: Geometry
 }
 
+
+export interface TreeifiedOWSResource extends OWSResource{
+    children: TreeifiedOWSResource[]
+  }
+  
+
 export interface OWSContext extends Omit<FeatureCollection, "features"> {
     id: string // String type that SHALL contain a URI value
     properties: OWSContextProperties
@@ -132,3 +140,4 @@ export interface OWSContext extends Omit<FeatureCollection, "features"> {
     date?: string // iso-8601 date
     features: OWSResource[]
 }
+

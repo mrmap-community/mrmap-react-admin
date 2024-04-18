@@ -1,6 +1,8 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { wmsToOWSContext } from '../utils'
+import { treeify, wmsToOWSContext } from '../utils'
+import { OWSContext } from '../types'
+
 
 test('wmsToOWSContext', () => {
     const capabilities: WmsCapabilitites = {
@@ -61,4 +63,66 @@ test('wmsToOWSContext', () => {
 
     expect(contextDoc).toBeDefined()
     expect(contextDoc.features.length).equals(5)
+})
+
+
+test('treeify', () => {
+
+    const owsContext: OWSContext = {
+        id: 'huhu',
+        type: 'FeatureCollection',
+        properties: {
+            lang: 'en',
+            title: 'test context',
+            updated: new Date().toISOString()
+        },
+        features: [
+            {
+                type: 'Feature',
+                title: 'node0',
+                properties: {
+                    updated: new Date().toISOString(),
+                    folder: '/node0'
+                }
+            },
+            {
+                type: 'Feature',
+                title: 'node1.1',
+                properties: {
+                    updated: new Date().toISOString(),
+                    folder: '/node0/node11'
+                }
+            },
+            {
+                type: 'Feature',
+                title: 'node1.2',
+                properties: {
+                    updated: new Date().toISOString(),
+                    folder: '/node0/node12'
+                }
+            },
+            {
+                type: 'Feature',
+                title: 'node1.2.1',
+                properties: {
+                    updated: new Date().toISOString(),
+                    folder: '/node0/node12/node121'
+                }
+            },
+            {
+                type: 'Feature',
+                title: 'node1.3',
+                properties: {
+                    updated: new Date().toISOString(),
+                    folder: '/node0/node13'
+                }
+            }
+        ]
+    }
+
+    const tree = treeify(owsContext)
+
+    expect(tree.length).equals(1)
+
+
 })

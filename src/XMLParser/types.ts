@@ -50,7 +50,6 @@ export interface WmsLayer {
     styles?: Style[]
 }
 
-
 export interface OperationUrl {
     mimeTypes: string[]
     get: string
