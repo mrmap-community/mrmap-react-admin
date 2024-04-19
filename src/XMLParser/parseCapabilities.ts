@@ -3,7 +3,7 @@ import jsonpointer from 'jsonpointer'
 import { getDocument } from './utils'
 import { Polygon } from 'geojson'
 import { ElevationDimension, Style, TempDimension, TimeDimension, WmsCapabilitites, WmsLayer } from './types'
-import {duration} from 'moment'
+import duration from 'moment'
 
 export const layerBboxToGeoJSON = (bbox: any): Polygon | undefined => {
     if (bbox === undefined){

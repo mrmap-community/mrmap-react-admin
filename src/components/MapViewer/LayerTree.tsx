@@ -17,6 +17,22 @@ import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
 import L from 'leaflet'
 import { type Map } from 'leaflet'
+import { TreeifiedOWSResource } from '../../OwsContext/types'
+import {v4 as uuidv4} from 'uuid'
+import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import NavigationIcon from '@mui/icons-material/Navigation';
+import Typography from '@mui/material/Typography';
+import Modal, {type ModalOwnProps} from '@mui/material/Modal';
+import AddResourceDialog from './AddResourceDialog'
+
+
+
+
 
 interface ContextMenuProps {
   node: TreeNode
@@ -32,7 +48,7 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
   const { setEditor } = useMapViewerContext()
   const { bottomDrawer, setBottomDrawer } = useDrawerContext()
   const { tabList, setTabList } = useTabListContext()
-  const { removeWmsTree, moveTreeUp, moveTreeDown } = useMapViewerContext()
+  //const { removeWmsTree, moveTreeUp, moveTreeDown } = useMapViewerContext()
 
   const handleContextMenu = (event: MouseEvent): void => {
     event.stopPropagation()
@@ -91,9 +107,9 @@ const ContextMenu = ({ node, map }: ContextMenuProps): ReactNode => {
         }
       >
         <MenuItem onClick={handleSecuityEditorCall}>Security Editor</MenuItem>
-        <MenuItem onClick={() => { removeWmsTree(node.record?.service?.id) }}>Remove</MenuItem>
-        <MenuItem onClick={() => { moveTreeUp(node.record?.service?.id) }}>Move up</MenuItem>
-        <MenuItem onClick={() => { moveTreeDown(node.record?.service?.id) }}>Move Down</MenuItem>
+       {/*  //<MenuItem onClick={() => { removeWmsTree(node.record?.service?.id) }}>Remove</MenuItem>
+        //<MenuItem onClick={() => { moveTreeUp(node.record?.service?.id) }}>Move up</MenuItem>
+        //<MenuItem onClick={() => { moveTreeDown(node.record?.service?.id) }}>Move Down</MenuItem> */}
         <MenuItem onClick={() => { flyToLayer(node) }}>Center Layer</MenuItem>
 
       </Menu>
@@ -106,10 +122,30 @@ export interface LayerTreeProps {
   map?: Map
 }
 
-const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
-  const { wmsTrees } = useMapViewerContext()
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
 
+const darkStyle = {
+  ...style,
+}
+
+
+const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
+  const { trees } = useMapViewerContext()
   const [expanded, setExpanded] = useState<string[]>([])
+  const [open, setOpen] = useState(false)
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
+
 
   const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
     const newExpanded = expanded
@@ -130,34 +166,34 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
     }
   }, [expanded])
 
-  const renderTreeItemLabel = useCallback((node: TreeNode) => {
-    const securityRuleButton = (
+  const renderTreeItemLabel = useCallback((node: TreeifiedOWSResource) => {
+    /* const securityRuleButton = (
       <IconButton>
         {node.record.isSpatialSecured ? <Tooltip title="Spatial secured"><VpnLockIcon /></Tooltip> : node.record.isSecured ? <Tooltip title="Secured"><LockIcon /></Tooltip> : null}
       </IconButton>
     )
-
+ */
     return (
       <>
         <TreeNodeCheckbox node={node} />
-        {securityRuleButton}
-        {node.name}
-        <ContextMenu node={node} map={map}/>
+        {/* {securityRuleButton} */}
+        {node.title}
+        {/* <ContextMenu node={node} map={map}/> */}
       </>
     )
   }, [map])
 
-  const renderTree = useCallback((node?: TreeNode): ReactNode => {
-    if (node !== undefined) {
+  const renderTree = useCallback((rootNode?: TreeifiedOWSResource): ReactNode => {
+    if (rootNode !== undefined) {
       return (
         < TreeItem
-          key={node.id}
-          nodeId={node.id as string}
-          label={renderTreeItemLabel(node)}
+          key={rootNode.id ?? uuidv4()}
+          nodeId={rootNode.id ?? rootNode.properties.folder ?? uuidv4()}
+          label={rootNode.title}
         >
           {
-            Array.isArray(node.children)
-              ? node.children.map((node) => { return renderTree(node) })
+            Array.isArray(rootNode.children)
+              ? rootNode.children.map((node) => { return renderTree(node) })
               : <></>
           }
         </TreeItem >
@@ -167,7 +203,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   }, [renderTreeItemLabel])
 
   const treeViews = useMemo(() => {
-    return wmsTrees?.map(tree => {
+    return trees?.map(tree => {
       return (
         <SimpleTreeView
           key={tree.id}
@@ -175,14 +211,40 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
           expandedNodes={expanded}
           multiSelect
         >
-          {renderTree(tree.rootNode)}
+          
+          {renderTree(tree)}
 
         </SimpleTreeView>
       )
     })
-  }, [wmsTrees, handleToggle, expanded, renderTree])
+  }, [ handleToggle, expanded, renderTree])
 
-  return treeViews
+  return (
+    <>
+      <Box sx={{ '& > :not(style)': { m: 1 } }}>
+      <Tooltip title="Add Resource">
+        <Fab color="primary" aria-label="add" size="small" onClick={handleOpen}>
+          <AddIcon />
+        </Fab>
+      </Tooltip>
+      <AddResourceDialog open={open} setOpen={setOpen}/>
+
+
+      <Tooltip title="Edit OWS Context">
+        <Fab color="secondary" aria-label="edit" size="small">
+          <EditIcon />
+        </Fab>
+      </Tooltip>
+      
+    </Box>
+
+      <Divider/>
+
+      {treeViews}
+
+    </>
+    
+  )
 }
 
 export default LayerTree

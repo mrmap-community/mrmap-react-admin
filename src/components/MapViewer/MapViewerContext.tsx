@@ -8,8 +8,10 @@ import { type LatLngBounds, type Map } from 'leaflet'
 import proj4 from 'proj4'
 import L from 'leaflet'
 import { useStore } from 'react-admin'
-import { OWSContext, OWSResource } from '../../OwsContext/types'
+import { OWSContext, OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
 import jsonpointer from 'jsonpointer'
+import { OWSContextDocument, getOptimizedGetMapUrls, treeify, wmsToOWSResources } from '../../OwsContext/utils'
+import { parseWms } from '../../XMLParser/parseCapabilities'
 
 export interface StoredWmsTree {
   id: Identifier
@@ -46,20 +48,10 @@ export interface Tile {
   getFeatureinfoUrl?: URL
 }
 
-export interface WebMapServiceInfo {
-  folder: string // /rootnode/parent/child
-  getMapUrl: URL
-}
+
 
 export interface MapViewerContextType {
   tiles: Tile[]
-  wmsTrees: WMSTree[]
-  setWmsTrees: Dispatch<SetStateAction<WMSTree[]>>
-  removeWmsTree: (wmsId: Identifier) => void
-  updateOrAppendWmsTree: (wmsTree: WMSTree) => void
-  moveTree: (treeId: Identifier, newIndex: number) => void
-  moveTreeUp: (treeId: Identifier) => void
-  moveTreeDown: (treeId: Identifier) => void
   crsIntersection: MrMapCRS[]
   selectedCrs: MrMapCRS
   setSelectedCrs: (crs: MrMapCRS) => void
@@ -68,6 +60,11 @@ export interface MapViewerContextType {
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
   map?: Map
   setMap: Dispatch<SetStateAction<Map>>
+  owsContext: OWSContext
+  addWMSByUrl: (url: string) => void
+  trees: TreeifiedOWSResource[]
+  activeFeatures: OWSResource[]
+  setFeatureActive: (id: string | number, active: boolean) => void
 }
 
 
@@ -92,7 +89,7 @@ const raRecordToTopDownTree = (node: RaRecord): WMSTree => {
   }
 }
 
-const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds, tree: WMSTree, layerIdentifiers: string, crs: MrMapCRS): URL => {
+const prepareGetMapUrl = (getMapUrl: URL, size: L.Point, bounds: LatLngBounds, crs: MrMapCRS): URL => {
   
   const sw = bounds.getSouthWest()
   const ne = bounds.getNorthEast()
@@ -105,11 +102,10 @@ const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds
     minXy = proj.forward(minXy)
     maxXy = proj.forward(maxXy)
   }
-
-  const version = tree.record?.version === '' ? '1.3.0' : tree.record?.version
-
   const url = new URL(getMapUrl)
   const params = url.searchParams
+
+  const version = params.get('VERSION') ?? params.get('version') ?? '1.3.0' 
 
   if (!(params.has('SERVICE') || params.has('service'))) {
     params.append('SERVICE', 'WMS')
@@ -157,7 +153,6 @@ const prepareGetMapUrl = (getMapUrl: string, size: L.Point, bounds: LatLngBounds
 
   params.set('WIDTH', size.x.toString())
   params.set('HEIGHT', size.y.toString())
-  params.set('LAYERS', layerIdentifiers)
 
   return url
 }
@@ -194,16 +189,6 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
   return url
 }
 
-const isGetMapUrlEqual = (url1: URL, url2:URL): boolean =>  {
-  return (url1.origin === url2.origin) &&
-  (url1.pathname === url2.pathname) &&
-  ((url1.searchParams.get('SERVICE') ?? url1.searchParams.get('service')) === (url2.searchParams.get('SERVICE') ?? url2.searchParams.get('service'))) &&
-  ((url1.searchParams.get('VERSION') ?? url1.searchParams.get('version')) === (url2.searchParams.get('VERSION') ?? url2.searchParams.get('version')))
-}
-
-const isChildOf = (child: string, ancestor: string): boolean => {
-  return child.split('/').length > ancestor.split('/').length && child.includes(ancestor)
-}
 
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   /** map specific states */
@@ -212,17 +197,11 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [mapSize, setMapSize] = useState(map?.getSize())
   const [maxBounds, setMaxBounds] = useState<LatLngBounds>()
 
+  const [owsContext, setOwsContext] = useState<OWSContext>( OWSContextDocument())
 
-  const [wmsTreeStored, setWmsTreeStored] = useStore<StoredWmsTree[]>('mrmap.mapviewer.wmstree', [])
-
-  const [owsContext, setOwsContext] = useStore<OWSContext>('mrmap.mapviewer.owscontext', undefined)
-
-
-  const [wmsTrees, setWmsTrees] = useState<WMSTree[]>([])
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
   
-
   const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
 
   const dataProvider = useDataProvider()
@@ -231,163 +210,68 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     { id: _selectedCrs?.id }
   )
 
-  const treeifiedOWSResources = useMemo(() => {
-    if (owsContext === undefined) return
-
-    const trees: TreeifiedOWSResource[] = []
-
-    /**
-     * /node1
-     * /node1/node1.1
-     * /node1/node1.2
-     * /node1/node1.3
-     * /node1/node1.3/node1.3.1
-     * 
-     * 
-     * */
-    
-
-    owsContext.features.forEach(feature => {
-      // by default the order of the features array may be used to visualize the layer structure.
-      // if there is a folder attribute setted; this should be used and overwrites the array order
-      //feature.properties.folder && jsonpointer.set(trees, feature.properties.folder, feature)
-
-      const folders = feature.properties.folder?.split('/')
-      const depth = folders?.length ?? 0 - 1 // -1 is signals unvalid folder definition
-
-      if (depth === 0){
-        // root node
-        trees.push({...feature, children: []})
-      } else {
-        // find root node first
-        let node = trees.find(tree => tree.properties.folder === folders?.[0])
-        if (node === undefined) throw new Error('parsingerror... the context is not well ordered.')
-        
-        for (let currentDepth = 1; currentDepth < depth; currentDepth++){
-          const currentSubFolder = folders?.slice(0, currentDepth).join('/')
-          node = node.children.find(n => n.properties.folder === currentSubFolder)
-          if (node === undefined) throw new Error('parsingerror... the context is not well ordered.')
-        }
-        node.children.push({...feature, children: []})
-      }
-    })
-
-
+  const trees = useMemo(() => {
+    if (owsContext === undefined) return []
+    return treeify(owsContext)
   }, [owsContext])
 
-  /** Calculates the groupable GetMap request
-   * by comparing the basis GetMap href and the folder structure
-   */
-  const atomicOwsResources = useMemo(()=>{
-    if (owsContext === undefined) return
+  const getMapUrls = useMemo(()=>{
+    if (trees === undefined) return
+    return getOptimizedGetMapUrls(trees)
+  }, [trees])
 
-    const activeWmsFeatures = owsContext.features.filter(feature => feature.properties.offering?.find(offering => offering?.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms') && feature.properties.active)
-
-    const groupedWmsFeatures: WebMapServiceInfo[] = []
-
-    const currentIndex = 0
-
-    activeWmsFeatures.forEach(feature => {
-      const rootFolder = `/${feature.properties.folder?.split('/')?.[0]}` ?? '/'
-      const wmsOffering = feature.properties.offering?.find(offering => 
-        offering.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms')?.operations?.find(operation => 
-          operation.code === 'GetMap' && operation.method.toLowerCase() === 'get')
-      if (wmsOffering?.href === undefined) return
-
-      const getMapUrl = new URL(wmsOffering.href)
-      /** Notes about Layeridentifier handling
-       *  
-       * - At this point the ows context spec does only provide abstract information about to configure a wms offering.
-       *   So in this point of view, an wms offering could also handle multiple wms layers as one GetMap request
-       *     
-       * - layeridentifier could be present as value inside the searchparams of the href of the mandatory GetMap operation (anticipated and in my pov most common way)
-       * - layeridentifier could also be added as an extension ==> operation.identifier (not clear if needed)
-       * 
-       * - If there are multiple identifiers, there will be several issues to handle for the goal of grouping GetMap requests:
-       *   ~ the layer identifiers needs to be checked aboud there correct ordering in correlation of the layer structure inside the capabilities document.
-       *     Otherwise it is possible that in the final layerIdentifiers array will be goup layer identifiers aside of correlated sublayers
-       */
-      const currentLayerIdentifiers = (getMapUrl.searchParams.get('LAYERS') ?? getMapUrl.searchParams.get('layers'))?.split(',') ?? []
-      
-      const lastFolder = ''
-
-      const existingWms = groupedWmsFeatures.findLast(element => {
-        
-
-        isChildOf(feature.properties.folder ?? '/', element.folder)
-      })
-
-      if (existingWms && isGetMapUrlEqual(existingWms.getMapUrl, getMapUrl)){
-        // update the definition
-        const existingLayerIdentifiers = (existingWms.getMapUrl.searchParams.get('LAYERS') ?? existingWms.getMapUrl.searchParams.get('layers'))?.split(',') ?? []
-        const newLayersParam = existingLayerIdentifiers?.concat(currentLayerIdentifiers)
-        existingWms.getMapUrl.searchParams.set('LAYERS', newLayersParam?.join(','))
-      } else {
-        // new definition
-        groupedWmsFeatures.push({folder: feature.properties.folder ?? '/', getMapUrl: getMapUrl})
-      }
-    })
-  
-  }, [owsContext])
-
+  const activeFeatures = useMemo(()=>{
+    return owsContext.features.filter(feature => feature.properties.active)
+  },[owsContext.features])
 
   const crsIntersection = useMemo(() => {
+    // TODO: refactor this by using the crs from the ows context resources
     let referenceSystems: MrMapCRS[] = []
-    wmsTrees.map(wms => wms.rootNode?.record.referenceSystems.filter((crs: MrMapCRS) => crs.prefix === 'EPSG')).forEach((_referenceSystems: MrMapCRS[], index) => {
+    /* wmsTrees.map(wms => wms.rootNode?.record.referenceSystems.filter((crs: MrMapCRS) => crs.prefix === 'EPSG')).forEach((_referenceSystems: MrMapCRS[], index) => {
       if (index === 0) {
         referenceSystems = referenceSystems.concat(_referenceSystems)
       } else {
         referenceSystems = referenceSystems.filter(crsA => _referenceSystems.some(crsB => crsA.stringRepresentation === crsB.stringRepresentation))
       }
-    })
+    }) */
     return referenceSystems
-  }, [wmsTrees])
+  }, [owsContext])
 
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
 
-    if (mapBounds === undefined || mapSize === undefined) {
+    if (mapBounds === undefined || mapSize === undefined || getMapUrls === undefined) {
       console.log('discard recalc', map, mapBounds, mapSize)
       return _tiles
     }
 
-    const oldWmsTrees = [...wmsTrees].reverse()
-    oldWmsTrees.forEach((tree, index) => {
-      // checked layers filtered by leave nodes. So GroupLayers will not be used. (otherwise DWD WMS (geoserver) will response with an error)
-      const checkedLayers = tree.checkedNodes?.sort((a: TreeNode, b: TreeNode) => b.record.mpttLft - a.record.mpttLft).filter(node => Math.floor((node.record?.mpttRgt - node.record?.mpttLft) / 2) === 0)
-      const checkedLayerIdentifiers = checkedLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined))
-      const layerIdentifiers = checkedLayerIdentifiers?.join(',') ?? ''
-      const getMapUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetMap' && operationUrl.method === 'Get')?.url ?? ''
+    [...getMapUrls].reverse().forEach(url => {
 
-      const queryableLayers = checkedLayers?.filter(node => node.record.isQueryable)
-      const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
+      // TODO: how to implement getFeatureinfoUrl here from owscontext as path of truth
 
-      const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
+      //const queryableLayers = checkedLayers?.filter(node => node.record.isQueryable)
+      //const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
+      //const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
 
-      if (getMapUrl === '') {
-        console.warn('missing getmapurl for tree ', tree.id)
-      }
+      const getMapUrl = prepareGetMapUrl(url, mapSize, mapBounds, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
 
-      if (layerIdentifiers !== '' && getMapUrl !== '') {
-        const _getMapUrl = prepareGetMapUrl(getMapUrl, mapSize, mapBounds, tree, layerIdentifiers, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
-
-        _tiles.push(
-          {
-            leafletTile: <ImageOverlay
-            key={(Math.random() + 1).toString(36).substring(7)}
-            bounds={mapBounds}
-            interactive={true}
-            url={_getMapUrl.href}
-          />,
-            getMapUrl: _getMapUrl,
-            getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree, queryableLayerIdentifiers)
-          }
-        )
-      }
+      _tiles.push(
+        {
+          leafletTile: <ImageOverlay
+          key={(Math.random() + 1).toString(36).substring(7)}
+          bounds={mapBounds}
+          interactive={true}
+          url={getMapUrl.href}
+        />,
+          getMapUrl: getMapUrl,
+          //getFeatureinfoUrl: prepareGetFeatureinfoUrl(_getMapUrl, getFeatureinfoUrl, tree, queryableLayerIdentifiers)
+        }
+      )
+      
     })
     console.log('recalced tiles')
     return _tiles
-  }, [mapBounds, mapSize, wmsTrees, selectedCrs])
+  }, [mapBounds, mapSize, selectedCrs])
 
   const editorLayer = useMemo(() => {
     return {
@@ -398,74 +282,29 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }
   }, [geoJSON])
 
-  const removeWmsTree = useCallback((treeId: Identifier) => {
-    setWmsTrees(prevWmsTrees => prevWmsTrees.filter(tree => tree.id !== treeId))
-  }, [])
-
-  const updateOrAppendWmsTree = useCallback((newTree: WMSTree) => {
-    const index = wmsTrees.findIndex(tree => tree.id === newTree.id)
-    if (index < 0) {
-      dataProvider.getOne(
-        'WebMapService',
-        {
-          id: newTree.id,
-          meta: {
-            jsonApiParams: {
-              include: 'layers,operationUrls,layers.referenceSystems',
-              'fields[Layer]': 'title,mptt_lft,mptt_rgt,mptt_depth,reference_systems,service,is_spatial_secured,_is_secured,identifier,is_queryable,bbox_lat_lon'
-            }
-          }
-        }
-      ).then(({ data }) => {
-        const convertedTree = raRecordToTopDownTree(data)
-        if (newTree.checkedNodes?.length > 0){
-          // this is a new fetched tree, but there are provided default checked layer ids
-          const checkedNodes: TreeNode[] = newTree.checkedNodes.map(checkedNode => {
-            return findChildrenById(convertedTree, checkedNode.id)
-          }).filter(node => node !== undefined)
-          convertedTree.checkedNodes = checkedNodes
-
-        }
-        setWmsTrees(prevWmsTrees => [...prevWmsTrees, convertedTree])
-      }).catch(error => {
-        console.error('something went wrong while loading wms tree', error)
-      })
-    } else {
-      setWmsTrees(prevWmsTrees => {
-        const updatedWmsTrees = [...prevWmsTrees]
-        updatedWmsTrees[index] = newTree
-        return updatedWmsTrees
-      })
-    }
-  }, [wmsTrees, dataProvider])
-
-  const moveTree = useCallback((treeId: Identifier, newIndex: number) => {
-    setWmsTrees(prevWmsTrees => {
-      const currentIndex = prevWmsTrees.findIndex(tree => tree.id === treeId)
-
-      if (newIndex >= prevWmsTrees.length) {
-        newIndex = prevWmsTrees.length - 1
-      }
-
-      const newTrees = [...prevWmsTrees]
-      newTrees.splice(newIndex, 0, newTrees.splice(currentIndex, 1)[0])
-      return newTrees
+  const addWMSByUrl = useCallback((url: string)=>{
+    const request = new Request(url, {
+      method: 'GET',
     })
-  }, [])
+    fetch(request).then(response => response.text).then(xmlString => {
+      const parsedWms = parseWms(xmlString.toString())
+      const features = wmsToOWSResources(parsedWms)
+      
+      const newOwsContext = {...owsContext}
+      newOwsContext.features.push(...features)
+      setOwsContext(newOwsContext)
+    }      
+  )
 
-  const moveTreeUp = useCallback((treeId: Identifier) => {
-    const currentIndex = wmsTrees.findIndex(tree => tree.id === treeId)
-    if (currentIndex !== 0) {
-      moveTree(treeId, currentIndex - 1)
-    }
-  }, [moveTree, wmsTrees])
+  },[owsContext])
 
-  const moveTreeDown = useCallback((treeId: Identifier) => {
-    const currentIndex = wmsTrees.findIndex(tree => tree.id === treeId)
-    if (currentIndex !== wmsTrees.length - 1) {
-      moveTree(treeId, currentIndex + 1)
+  const setFeatureActive = useCallback((id: string | number, active: boolean)=>{
+    const feature = owsContext.features.find(feature => feature.id === id)
+    if (feature !== undefined){
+      feature.properties.active = active
+      // TODO: set al descendant active states as well
     }
-  }, [moveTree, wmsTrees])
+  },[owsContext])
 
   useEffect(() => {
     setMapBounds(map?.getBounds())
@@ -507,7 +346,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }
   }, [crsIntersection, _selectedCrs])
 
-  useEffect(()=>{
+/*   useEffect(()=>{
     if (wmsTrees?.length > 0){
       const wmsTreeToStore: StoredWmsTree[] = wmsTrees.map(tree =>  {
         return {
@@ -517,9 +356,9 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       })
       setWmsTreeStored(wmsTreeToStore)
     }
-  },[wmsTrees])
+  },[wmsTrees]) */
 
-  useEffect(()=>{
+/*   useEffect(()=>{
     // initial wmsTrees from store on component mount
     wmsTreeStored.forEach(storedTree => {
       updateOrAppendWmsTree({
@@ -528,18 +367,11 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       })
     })
     
-  },[])
+  },[]) */
 
   const value = useMemo<MapViewerContextType>(() => {
     return {
       tiles: editor ? tiles.concat([editorLayer]) : tiles,
-      wmsTrees,
-      setWmsTrees,
-      removeWmsTree,
-      updateOrAppendWmsTree,
-      moveTree,
-      moveTreeUp,
-      moveTreeDown,
       crsIntersection,
       selectedCrs,
       setSelectedCrs,
@@ -547,7 +379,12 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       geoJSON,
       setGeoJSON,
       map,
-      setMap
+      setMap,
+      owsContext,
+      addWMSByUrl,
+      trees,
+      activeFeatures,
+      setFeatureActive
     }
   }, [
     crsIntersection, 
@@ -555,14 +392,13 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     editorLayer, 
     geoJSON, 
     map, 
-    moveTree, 
-    moveTreeDown,
-    moveTreeUp, 
-    removeWmsTree, 
     selectedCrs, 
-    tiles, 
-    updateOrAppendWmsTree, 
-    wmsTrees
+    tiles,
+    owsContext,
+    addWMSByUrl,
+    trees,
+    activeFeatures,
+    setFeatureActive
   ])
 
   return (

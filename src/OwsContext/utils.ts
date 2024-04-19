@@ -1,18 +1,22 @@
 import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
+import {v4 as uuidv4} from 'uuid';
 
-export const OWSContextDocument = (): OWSContext => {
+export const OWSContextDocument = (
+    id: string = uuidv4(),
+    language: string = 'en',
+    title: string = 'mrmap ows context'
+): OWSContext => {
 
     return {
-        id: "huhu",
+        id: id,
         type: "FeatureCollection",
         properties: {
-            lang: "en",
-            title: "this is my first collection",
+            lang: language,
+            title: title,
             updated: new Date().toISOString()
         },
         features: [],
-        
     }
 }
 
@@ -105,15 +109,12 @@ export const deflatLayerTree = (
     return features
 }
 
-export const wmsToOWSContext = (capabilities: WmsCapabilitites): OWSContext =>  {
-    const contextDoc = OWSContextDocument()
-    contextDoc.features = deflatLayerTree(
+export const wmsToOWSResources = (capabilities: WmsCapabilitites): OWSResource[] =>  {
+    return deflatLayerTree(
         [],
         capabilities, 
         undefined,
     )
-
-    return contextDoc
 }
 
 export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
@@ -150,4 +151,66 @@ export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
     })
 
     return trees
+}
+
+
+export const treeToList = (node: TreeifiedOWSResource) => {
+    const flatNodes = [node]
+    if (node.children.length > 0) {
+        node.children.forEach(child => flatNodes.push(...treeToList(child)))
+    }
+    return flatNodes
+}
+
+export const isGetMapUrlEqual = (url1: URL, url2:URL): boolean =>  {
+    return (url1.origin === url2.origin) &&
+    (url1.pathname === url2.pathname) &&
+    ((url1.searchParams.get('SERVICE') ?? url1.searchParams.get('service')) === (url2.searchParams.get('SERVICE') ?? url2.searchParams.get('service'))) &&
+    ((url1.searchParams.get('VERSION') ?? url1.searchParams.get('version')) === (url2.searchParams.get('VERSION') ?? url2.searchParams.get('version')))
+}
+
+export const appendLayerIdentifiers = (url1: URL, url2: URL) => {
+    const layerIdentifiers1 = (url1.searchParams.get('LAYERS') ?? url1.searchParams.get('layers'))?.split(',') ?? []
+    const layerIdentifiers2 = (url2.searchParams.get('LAYERS') ?? url2.searchParams.get('layers'))?.split(',') ?? []
+    
+    const newLayersParam = layerIdentifiers1?.concat(layerIdentifiers2)
+
+    url1.searchParams.has('LAYERS') && url1.searchParams.set('LAYERS', newLayersParam?.join(','))
+    url1.searchParams.has('layers') && url1.searchParams.set('layers', newLayersParam?.join(','))
+}
+
+/** Calculates the groupable GetMap request
+ * by comparing the basis GetMap href and the folder structure
+ */
+export const getOptimizedGetMapUrls = (trees: TreeifiedOWSResource[]) => {
+    
+    const getMapUrls: URL[] = []
+    
+    /** 
+     * every tree is 1..* atomic wms
+     */
+    trees.forEach((tree) => {
+      const activeWmsFeatures = treeToList(tree).filter(feature => feature.properties.offering?.find(offering => offering?.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms') && feature.properties.active)
+      
+      activeWmsFeatures.forEach((feature, index) => {
+
+        const wmsOffering = feature.properties.offering?.find(offering => 
+            offering.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms')?.operations?.find(operation => 
+              operation.code === 'GetMap' && operation.method.toLowerCase() === 'get')
+      
+        if (wmsOffering?.href === undefined) return
+        
+        const getMapUrl = new URL(wmsOffering.href)
+        const lastUrl = getMapUrls[-1]
+        if (index === 0 || !isGetMapUrlEqual(lastUrl, getMapUrl)){
+            // index 0 signals always a root node ==> just push it; nothing else to do here
+            // index > 0 and last url not equals current => define new atomic wms; not mergeable resources
+            getMapUrls.push(getMapUrl)
+        }
+        else if (isGetMapUrlEqual(lastUrl, getMapUrl)) {
+            appendLayerIdentifiers(lastUrl, getMapUrl)
+        } 
+      })
+    })
+    return getMapUrls
 }

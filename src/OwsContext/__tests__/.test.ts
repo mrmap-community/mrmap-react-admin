@@ -59,10 +59,10 @@ test('wmsToOWSContext', () => {
     }
     
     
-    const contextDoc = wmsToOWSContext(capabilities)
+    const features = wmsToOWSContext(capabilities)
 
-    expect(contextDoc).toBeDefined()
-    expect(contextDoc.features.length).equals(5)
+    expect(features).toBeDefined()
+    expect(features.length).equals(5)
 })
 
 

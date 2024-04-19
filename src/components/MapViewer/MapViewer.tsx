@@ -37,7 +37,7 @@ const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
   const mapRef = useRef(map)
-  const { setMap: setMapContext, updateOrAppendWmsTree } = useMapViewerContext()
+  const { setMap: setMapContext } = useMapViewerContext()
   const { tiles } = useMapViewerContext()
   const tilesRef = useRef(tiles)
 
@@ -197,7 +197,7 @@ const MapViewerCore = (): ReactNode => {
                   children: <ListGuesser
                     resource='WebMapService'
                     onRowClick={(resource) => {
-                      updateOrAppendWmsTree({ id: resource.id })
+                      console.log('clicked: ',resource)
                     }}
                   />
                 },
