@@ -122,23 +122,28 @@ export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
     context.features.forEach(feature => {
       // by default the order of the features array may be used to visualize the layer structure.
       // if there is a folder attribute setted; this should be used and overwrites the array order
-      //feature.properties.folder && jsonpointer.set(trees, feature.properties.folder, feature)
-
-      const folders = feature.properties.folder?.split('/')
-      const depth = folders?.length ?? 0 - 1 // -1 is signals unvalid folder definition
+      // feature.properties.folder && jsonpointer.set(trees, feature.properties.folder, feature)
+      
+      const folders = feature.properties.folder?.split('/').splice(1)
+      const depth = folders?.length ? folders.length - 1: 0 -1 // -1 is signals unvalid folder definition
 
       if (depth === 0){
         // root node
         trees.push({...feature, children: []})
       } else {
         // find root node first
-        let node = trees.find(tree => tree.properties.folder === folders?.[0])
-        if (node === undefined) throw new Error('parsingerror... the context is not well ordered.')
+        let node = trees.find(tree => tree.properties.folder === `/${folders?.[0]}`)
         
-        for (let currentDepth = 1; currentDepth < depth; currentDepth++){
-          const currentSubFolder = folders?.slice(0, currentDepth).join('/')
+        if (node === undefined) {
+            throw new Error('parsingerror... the context is not well ordered.')
+        }
+        
+        for (let currentDepth = 2; currentDepth <= depth; currentDepth++){
+          const currentSubFolder = `/${folders?.slice(0, currentDepth).join('/')}`
           node = node.children.find(n => n.properties.folder === currentSubFolder)
-          if (node === undefined) throw new Error('parsingerror... the context is not well ordered.')
+          if (node === undefined) {
+            throw new Error('parsingerror... the context is not well ordered.')
+          }
         }
         node.children.push({...feature, children: []})
       }

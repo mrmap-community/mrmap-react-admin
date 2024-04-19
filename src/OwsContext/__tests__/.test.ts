@@ -66,9 +66,8 @@ test('wmsToOWSContext', () => {
 })
 
 
-test('treeify', () => {
-
-    const owsContext: OWSContext = {
+const getOwsContext = (): OWSContext => {
+    return {
         id: 'huhu',
         type: 'FeatureCollection',
         properties: {
@@ -119,10 +118,25 @@ test('treeify', () => {
             }
         ]
     }
+}
 
-    const tree = treeify(owsContext)
+
+test('treeify success', () => {
+    const tree = treeify(getOwsContext())
 
     expect(tree.length).equals(1)
+    expect(tree[0].children.length).equals(3)
+    expect(tree[0].children[0].children.length).equals(0)
+    expect(tree[0].children[1].children.length).equals(1)
+    expect(tree[0].children[1].children[0].children.length).equals(0)
+    expect(tree[0].children[2].children.length).equals(0)
+})
 
+test('treeify wrong feature order', () => {
+    const context = getOwsContext()
+    context.features.splice(2, 1)   
+    
+    expect(()=>treeify(context)).toThrowError('parsingerror... the context is not well ordered.')
 
+    
 })
