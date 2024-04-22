@@ -50,39 +50,42 @@ export const prepareGetMapUrl = (
 }
 
 export const layerToFeature = (capabilities: WmsCapabilitites, node: WmsLayer, folder: string): OWSResource => {
+    
     return {
         type: "Feature",
-        title: node.metadata.title,
         properties: {
+            title: node.metadata.title,
             updated: new Date().toISOString(),
-            offering: [{
-                code: "http://www.opengis.net/spec/owc-geojson/1.0/req/wms",
-                operations: [
-                    {
-                        code: "GetCapabilitites",
-                        href: capabilities.operationUrls.getCapabilities.get,
-                        method: "GET",
-                        type: "application/xml"
-                    },
-                    {
-                        code: "GetMap",
-                        href: prepareGetMapUrl(capabilities, node).toString(),
-                        method: "GET",
-                        type: "image/png"
-                    },
-                    // todo: add GetFeatureInfo url
-                ],
-                ...(node.styles && {
-                    styles: node.styles?.map((style): StyleSet => {
-                        return {
-                            name: style.metadata.name,
-                            title: style.metadata.title,
-                            abstract: style.metadata.abstract,
-                            legendURL: style.legendUrl?.href.toString()
-                        }
-                    })
-                }),
-            }],
+            ...(node.metadata.name !== undefined && {
+                offerings: [{
+                    code: "http://www.opengis.net/spec/owc/1.0/req/wms",
+                    operations: [
+                        {
+                            code: "GetCapabilitites",
+                            href: capabilities.operationUrls.getCapabilities.get,
+                            method: "GET",
+                            type: "application/xml"
+                        },
+                        {
+                            code: "GetMap",
+                            href: prepareGetMapUrl(capabilities, node).toString(),
+                            method: "GET",
+                            type: "image/png"
+                        },
+                        // todo: add GetFeatureInfo url
+                    ],
+                    ...(node.styles && {
+                        styles: node.styles?.map((style): StyleSet => {
+                            return {
+                                name: style.metadata.name,
+                                title: style.metadata.title,
+                                abstract: style.metadata.abstract,
+                                legendURL: style.legendUrl?.href.toString()
+                            }
+                        })
+                    }),
+                }],
+            }),
             folder: folder
         }
     }
@@ -92,28 +95,31 @@ export const layerToFeature = (capabilities: WmsCapabilitites, node: WmsLayer, f
 export const deflatLayerTree = (
     features: OWSResource[], 
     capabilities: WmsCapabilitites, 
+    parentFolder: string,
+    currentIndex: number,
     node?: WmsLayer,
-    parentFolder?: string
 ): OWSResource[] => {
 
-    let _node: WmsLayer= node ?? capabilities.rootLayer
-    let folder = node === undefined ? `/${capabilities.rootLayer.metadata.name}` : `${parentFolder}/${_node.metadata.name}`
-    
+    const _node: WmsLayer= node ?? capabilities.rootLayer
+
+    const folder = `${parentFolder}/${currentIndex}`
     features.push(layerToFeature(capabilities, _node, folder))
 
     // iterate children if they exists
-    _node.children?.forEach(subnode => {
-        subnode !== undefined && deflatLayerTree(features, capabilities, subnode, folder)
+    _node.children?.forEach((subnode, index) => {
+        subnode !== undefined && deflatLayerTree(features, capabilities, folder, index, subnode )
     })
     
     return features
 }
 
-export const wmsToOWSResources = (capabilities: WmsCapabilitites): OWSResource[] =>  {
+export const wmsToOWSResources = (capabilities: WmsCapabilitites, treeId: number = 0): OWSResource[] =>  {
     return deflatLayerTree(
         [],
-        capabilities, 
-        undefined,
+        capabilities,
+        '',
+        treeId,
+        undefined
     )
 }
 
@@ -130,7 +136,7 @@ export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
 
       if (depth === 0){
         // root node
-        trees.push({...feature, children: []})
+        trees.push({...feature, id: uuidv4(), children: []})
       } else {
         // find root node first
         let node = trees.find(tree => tree.properties.folder === `/${folders?.[0]}`)
@@ -163,6 +169,7 @@ export const treeToList = (node: TreeifiedOWSResource) => {
 }
 
 export const isGetMapUrlEqual = (url1: URL, url2:URL): boolean =>  {
+    if (url1 === undefined || url2 === undefined) return false
     return (url1.origin === url2.origin) &&
     (url1.pathname === url2.pathname) &&
     ((url1.searchParams.get('SERVICE') ?? url1.searchParams.get('service')) === (url2.searchParams.get('SERVICE') ?? url2.searchParams.get('service'))) &&
@@ -184,24 +191,25 @@ export const appendLayerIdentifiers = (url1: URL, url2: URL) => {
  */
 export const getOptimizedGetMapUrls = (trees: TreeifiedOWSResource[]) => {
     
+
     const getMapUrls: URL[] = []
     
     /** 
      * every tree is 1..* atomic wms
      */
     trees.forEach((tree) => {
-      const activeWmsFeatures = treeToList(tree).filter(feature => feature.properties.offering?.find(offering => offering?.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms') && feature.properties.active)
-      
+      const activeWmsFeatures = treeToList(tree).filter(feature => feature.properties.offerings?.find(offering => offering?.code === 'http://www.opengis.net/spec/owc/1.0/req/wms') && feature.properties.active)
       activeWmsFeatures.forEach((feature, index) => {
 
-        const wmsOffering = feature.properties.offering?.find(offering => 
-            offering.code === 'http://www.opengis.net/spec/owc-geojson/1.0/req/wms')?.operations?.find(operation => 
+        const wmsOffering = feature.properties.offerings?.find(offering => 
+            offering.code === 'http://www.opengis.net/spec/owc/1.0/req/wms')?.operations?.find(operation => 
               operation.code === 'GetMap' && operation.method.toLowerCase() === 'get')
       
         if (wmsOffering?.href === undefined) return
         
         const getMapUrl = new URL(wmsOffering.href)
-        const lastUrl = getMapUrls[-1]
+        const lastUrl = getMapUrls.slice(-1)?.[0]
+
         if (index === 0 || !isGetMapUrlEqual(lastUrl, getMapUrl)){
             // index 0 signals always a root node ==> just push it; nothing else to do here
             // index > 0 and last url not equals current => define new atomic wms; not mergeable resources

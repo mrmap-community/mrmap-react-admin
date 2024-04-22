@@ -29,8 +29,8 @@ import NavigationIcon from '@mui/icons-material/Navigation';
 import Typography from '@mui/material/Typography';
 import Modal, {type ModalOwnProps} from '@mui/material/Modal';
 import AddResourceDialog from './AddResourceDialog'
-
-
+import InitialFromOwsContextDialog from './InitialFromOwsContextDialog'
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 
 
@@ -144,6 +144,10 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   const [expanded, setExpanded] = useState<string[]>([])
   const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(true)
+
+  const [openInitialDialog, setOpenInitialDialog] = useState(false)
+  const handleOpenInitialDialog = () => setOpenInitialDialog(true)
+
   const handleClose = () => setOpen(false)
 
 
@@ -177,23 +181,23 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
       <>
         <TreeNodeCheckbox node={node} />
         {/* {securityRuleButton} */}
-        {node.title}
+        {node.properties.title}
         {/* <ContextMenu node={node} map={map}/> */}
       </>
     )
   }, [map])
 
-  const renderTree = useCallback((rootNode?: TreeifiedOWSResource): ReactNode => {
-    if (rootNode !== undefined) {
+  const renderTree = useCallback((node?: TreeifiedOWSResource): ReactNode => {
+    if (node !== undefined) {
       return (
         < TreeItem
-          key={rootNode.id ?? uuidv4()}
-          nodeId={rootNode.id ?? rootNode.properties.folder ?? uuidv4()}
-          label={rootNode.title}
+          key={node.properties.folder ?? uuidv4()}
+          nodeId={node.properties.folder ?? uuidv4()}
+          label={renderTreeItemLabel(node)}
         >
           {
-            Array.isArray(rootNode.children)
-              ? rootNode.children.map((node) => { return renderTree(node) })
+            Array.isArray(node.children)
+              ? node.children.map((node) => { return renderTree(node) })
               : <></>
           }
         </TreeItem >
@@ -217,17 +221,25 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         </SimpleTreeView>
       )
     })
-  }, [ handleToggle, expanded, renderTree])
+  }, [ trees, handleToggle, expanded, renderTree])
 
   return (
     <>
       <Box sx={{ '& > :not(style)': { m: 1 } }}>
+      <Tooltip title="Initial">
+        <Fab color="primary" aria-label="add" size="small" onClick={handleOpenInitialDialog}>
+          <AutoFixHighIcon />
+        </Fab>
+      </Tooltip>
+      <InitialFromOwsContextDialog open={openInitialDialog} setOpen={setOpenInitialDialog}/>
+      
       <Tooltip title="Add Resource">
         <Fab color="primary" aria-label="add" size="small" onClick={handleOpen}>
           <AddIcon />
         </Fab>
       </Tooltip>
       <AddResourceDialog open={open} setOpen={setOpen}/>
+      
 
 
       <Tooltip title="Edit OWS Context">

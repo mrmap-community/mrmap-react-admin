@@ -14,7 +14,7 @@ const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
   
   const handleChange = useCallback((event: ChangeEvent, checked: boolean) => {
     event.stopPropagation()
-    setFeatureActive(node.id as string, checked)
+    setFeatureActive(node.properties.folder as string, checked)
 
   }, [])
 

@@ -62,9 +62,10 @@ export interface MapViewerContextType {
   setMap: Dispatch<SetStateAction<Map>>
   owsContext: OWSContext
   addWMSByUrl: (url: string) => void
+  initialFromOwsContext: (url: string) => void
   trees: TreeifiedOWSResource[]
   activeFeatures: OWSResource[]
-  setFeatureActive: (id: string | number, active: boolean) => void
+  setFeatureActive: (folder: string, active: boolean) => void
 }
 
 
@@ -97,7 +98,7 @@ const prepareGetMapUrl = (getMapUrl: URL, size: L.Point, bounds: LatLngBounds, c
   let minXy = {x: sw.lng, y: sw.lat}
   let maxXy = {x: ne.lng, y: ne.lat}
 
-  if (crs.stringRepresentation !== 'EPSG:4326') {
+  if (crs.stringRepresentation !== 'EPSG:4326' && crs.stringRepresentation !== '') {
     const proj = proj4('EPSG:4326', crs.wkt)
     minXy = proj.forward(minXy)
     maxXy = proj.forward(maxXy)
@@ -224,6 +225,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     return owsContext.features.filter(feature => feature.properties.active)
   },[owsContext.features])
 
+  
+
   const crsIntersection = useMemo(() => {
     // TODO: refactor this by using the crs from the ows context resources
     let referenceSystems: MrMapCRS[] = []
@@ -241,7 +244,6 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     const _tiles: Tile[] = []
 
     if (mapBounds === undefined || mapSize === undefined || getMapUrls === undefined) {
-      console.log('discard recalc', map, mapBounds, mapSize)
       return _tiles
     }
 
@@ -253,7 +255,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       //const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
       //const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
 
-      const getMapUrl = prepareGetMapUrl(url, mapSize, mapBounds, selectedCrs ?? { stringRepresentation: 'EPSG:4326' })
+      const getMapUrl = prepareGetMapUrl(url, mapSize, mapBounds, { code: '4326', prefix: 'EPSG', stringRepresentation: 'EPSG:4326', isYxOrder: true, isXyOrder: false, id: 4326 })
 
       _tiles.push(
         {
@@ -269,9 +271,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       )
       
     })
-    console.log('recalced tiles')
     return _tiles
-  }, [mapBounds, mapSize, selectedCrs])
+  }, [getMapUrls, mapBounds, mapSize, selectedCrs])
 
   const editorLayer = useMemo(() => {
     return {
@@ -286,23 +287,38 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     const request = new Request(url, {
       method: 'GET',
     })
-    fetch(request).then(response => response.text).then(xmlString => {
-      const parsedWms = parseWms(xmlString.toString())
-      const features = wmsToOWSResources(parsedWms)
-      
+    fetch(request).then(response => response.text()).then(xmlString => {
       const newOwsContext = {...owsContext}
+      
+      const parsedWms = parseWms(xmlString)
+
+      // TODO: pass in the correct next free available treeid
+      const features = wmsToOWSResources(parsedWms)
       newOwsContext.features.push(...features)
+
       setOwsContext(newOwsContext)
     }      
   )
-
   },[owsContext])
 
-  const setFeatureActive = useCallback((id: string | number, active: boolean)=>{
-    const feature = owsContext.features.find(feature => feature.id === id)
+  const initialFromOwsContext = useCallback((url: string)=>{
+    const request = new Request(url, {
+      method: 'GET',
+    })
+    fetch(request).then(response => response.json()).then(owsContext => {
+      setOwsContext(owsContext)
+    }      
+  )
+  },[owsContext])
+
+  const setFeatureActive = useCallback((folder: string, active: boolean)=>{
+    
+    const feature = owsContext.features.find(feature => feature.properties.folder === folder)
+    
     if (feature !== undefined){
       feature.properties.active = active
-      // TODO: set al descendant active states as well
+      // TODO: set all descendant active states as well
+      setOwsContext({...owsContext})
     }
   },[owsContext])
 
@@ -369,6 +385,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     
   },[]) */
 
+
   const value = useMemo<MapViewerContextType>(() => {
     return {
       tiles: editor ? tiles.concat([editorLayer]) : tiles,
@@ -382,6 +399,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       setMap,
       owsContext,
       addWMSByUrl,
+      initialFromOwsContext,
       trees,
       activeFeatures,
       setFeatureActive
@@ -396,6 +414,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     tiles,
     owsContext,
     addWMSByUrl,
+    initialFromOwsContext,
     trees,
     activeFeatures,
     setFeatureActive

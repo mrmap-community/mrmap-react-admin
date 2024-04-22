@@ -11,10 +11,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/src/XMLParser/__tests__/.test.js",
+            //"program": "${workspaceFolder}/src/XMLParser/__tests__/.test.js",
             "outFiles": [
-                "${workspaceFolder}/**/*.js"
-            ]
+                "${workspaceFolder}/mrmap-react-admin/**"
+            ],
         }
     ]
 }

@@ -105,6 +105,7 @@ export interface OWSContextProperties {
 }
 
 export interface OWSResourceProperties {
+    title: string
     abstract?: string
     updated: string // RFC-3339 date format
     authors?: Author[]
@@ -112,7 +113,7 @@ export interface OWSResourceProperties {
     rights?: string
     date?: string // iso-8601 format
     links?: OWSResourceLinks
-    offering?: Offering[]
+    offerings?: Offering[]
     active?: boolean // default is true
     categories?: Category[]   
     minscaledenominator?: number 
@@ -122,7 +123,6 @@ export interface OWSResourceProperties {
 }
 
 export interface OWSResource extends Omit<Feature, "geometry"> {
-    title: string
     properties: OWSResourceProperties
     geometry?: Geometry
 }
