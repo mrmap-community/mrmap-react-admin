@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { treeify, wmsToOWSContext } from '../utils'
+import { isDescendantOf, treeify, wmsToOWSResources } from '../utils'
 import { OWSContext } from '../types'
 
 
@@ -59,7 +59,7 @@ test('wmsToOWSContext', () => {
     }
     
     
-    const features = wmsToOWSContext(capabilities)
+    const features = wmsToOWSResources(capabilities)
 
     expect(features).toBeDefined()
     expect(features.length).equals(5)
@@ -76,44 +76,50 @@ const getOwsContext = (): OWSContext => {
             updated: new Date().toISOString()
         },
         features: [
+            // 0
             {
                 type: 'Feature',
-                title: 'node0',
                 properties: {
+                    title: 'node1',
                     updated: new Date().toISOString(),
-                    folder: '/node0'
+                    folder: '/0'
                 }
             },
+            // 1
             {
                 type: 'Feature',
-                title: 'node1.1',
                 properties: {
+                    title: 'node1.1',
                     updated: new Date().toISOString(),
-                    folder: '/node0/node11'
+                    folder: '/0/0'
                 }
             },
+            // 2
             {
                 type: 'Feature',
-                title: 'node1.2',
                 properties: {
+                    title: 'node1.2',
                     updated: new Date().toISOString(),
-                    folder: '/node0/node12'
+                    folder: '/0/1'
                 }
             },
+            // 3
             {
                 type: 'Feature',
-                title: 'node1.2.1',
                 properties: {
+                    title: 'node1.2.1',
                     updated: new Date().toISOString(),
-                    folder: '/node0/node12/node121'
+                    folder: '/0/1/0'
                 }
             },
+            // 4
             {
                 type: 'Feature',
-                title: 'node1.3',
                 properties: {
+                    title: 'node1.3',
+
                     updated: new Date().toISOString(),
-                    folder: '/node0/node13'
+                    folder: '/0/2'
                 }
             }
         ]
@@ -139,4 +145,19 @@ test('treeify wrong feature order', () => {
     expect(()=>treeify(context)).toThrowError('parsingerror... the context is not well ordered.')
 
     
+})
+
+test('isDescandantOf', () => {
+    const context = getOwsContext()
+    // some descendant
+    expect(isDescendantOf(context.features[0], context.features[3])).toBeTruthy()
+    // some uncle
+    expect(isDescendantOf(context.features[3], context.features[4])).toBeFalsy()
+    // some nephew
+    expect(isDescendantOf(context.features[4], context.features[3])).toBeFalsy()
+    
+    expect(isDescendantOf(context.features[4], context.features[0])).toBeFalsy()
+    // siblings
+    expect(isDescendantOf(context.features[4], context.features[2])).toBeFalsy()
+
 })

@@ -141,6 +141,7 @@ export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
         // find root node first
         let node = trees.find(tree => tree.properties.folder === `/${folders?.[0]}`)
         
+        // TODO: just create a new node if it wasnt find
         if (node === undefined) {
             throw new Error('parsingerror... the context is not well ordered.')
         }
@@ -149,6 +150,7 @@ export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
           const currentSubFolder = `/${folders?.slice(0, currentDepth).join('/')}`
           node = node.children.find(n => n.properties.folder === currentSubFolder)
           if (node === undefined) {
+            // TODO: just create a new node if it wasnt find
             throw new Error('parsingerror... the context is not well ordered.')
           }
         }
@@ -221,4 +223,28 @@ export const getOptimizedGetMapUrls = (trees: TreeifiedOWSResource[]) => {
       })
     })
     return getMapUrls
+}
+
+export const isDescendantOf = (anchestor: OWSResource, descendant: OWSResource) => {
+    if (anchestor.properties.folder === undefined || descendant.properties.folder === undefined) return false
+    if (descendant.properties.folder.split('/').length < anchestor.properties.folder.split('/').length) return false
+
+    const desFolders = descendant.properties.folder.split('/')
+    const ancFolders = anchestor.properties.folder.split('/')
+
+    for (const [index, folder] of desFolders.entries()){
+        if (index < ancFolders?.length ){
+            if (ancFolders[index] !== folder ) return false
+        } else {
+            return true
+        }
+    }
+    return true
+}
+
+export const isAnchestorOf = (descendant: OWSResource, anchestor: OWSResource) => {
+    return descendant.properties.folder !== undefined &&
+    anchestor.properties.folder !== undefined &&
+    anchestor.properties.folder.split('/').length < descendant.properties.folder.split('/').length &&
+    descendant.properties.folder?.includes(anchestor.properties.folder)
 }

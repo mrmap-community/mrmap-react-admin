@@ -142,13 +142,14 @@ const darkStyle = {
 const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   const { trees } = useMapViewerContext()
   const [expanded, setExpanded] = useState<string[]>([])
-  const [open, setOpen] = useState(false)
-  const handleOpen = () => setOpen(true)
+
+  const [openAddResourceDialog, setOpenAddResourceDialog] = useState(false)
+  const handleOpenAddResourceDialog = () => setOpenAddResourceDialog(true)
 
   const [openInitialDialog, setOpenInitialDialog] = useState(false)
   const handleOpenInitialDialog = () => setOpenInitialDialog(true)
 
-  const handleClose = () => setOpen(false)
+  const handleClose = () => setOpenAddResourceDialog(false)
 
 
   const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
@@ -156,7 +157,6 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
     if (isExpanded) {
       if (!newExpanded.includes(nodeId)) {
         newExpanded.push(nodeId)
-        // TODO: fetch children of node and append them
       }
     } else {
       const index = newExpanded.indexOf(nodeId)
@@ -198,7 +198,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
           {
             Array.isArray(node.children)
               ? node.children.map((node) => { return renderTree(node) })
-              : <></>
+              : null
           }
         </TreeItem >
       )
@@ -234,11 +234,11 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
       <InitialFromOwsContextDialog open={openInitialDialog} setOpen={setOpenInitialDialog}/>
       
       <Tooltip title="Add Resource">
-        <Fab color="primary" aria-label="add" size="small" onClick={handleOpen}>
+        <Fab color="primary" aria-label="add" size="small" onClick={handleOpenAddResourceDialog}>
           <AddIcon />
         </Fab>
       </Tooltip>
-      <AddResourceDialog open={open} setOpen={setOpen}/>
+      <AddResourceDialog open={openAddResourceDialog} setOpen={setOpenAddResourceDialog}/>
       
 
 

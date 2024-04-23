@@ -10,7 +10,7 @@ import L from 'leaflet'
 import { useStore } from 'react-admin'
 import { OWSContext, OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
 import jsonpointer from 'jsonpointer'
-import { OWSContextDocument, getOptimizedGetMapUrls, treeify, wmsToOWSResources } from '../../OwsContext/utils'
+import { OWSContextDocument, getOptimizedGetMapUrls, isDescendantOf, treeify, wmsToOWSResources } from '../../OwsContext/utils'
 import { parseWms } from '../../XMLParser/parseCapabilities'
 
 export interface StoredWmsTree {
@@ -198,18 +198,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   const [mapSize, setMapSize] = useState(map?.getSize())
   const [maxBounds, setMaxBounds] = useState<LatLngBounds>()
 
-  const [owsContext, setOwsContext] = useState<OWSContext>( OWSContextDocument())
-
-  const [editor, setEditor] = useState<boolean>(false)
-  const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
-  
-  const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
-
-  const dataProvider = useDataProvider()
-  const { data: selectedCrs, isLoading, error, refetch } = useGetOne(
-    'ReferenceSystem',
-    { id: _selectedCrs?.id }
-  )
+  /** ows context */
+  const [owsContext, setOwsContext] = useState<OWSContext>(OWSContextDocument())
 
   const trees = useMemo(() => {
     if (owsContext === undefined) return []
@@ -222,10 +212,24 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [trees])
 
   const activeFeatures = useMemo(()=>{
-    return owsContext.features.filter(feature => feature.properties.active)
-  },[owsContext.features])
+    return owsContext.features.filter(feature => feature.properties.active === true)
+  },[owsContext])
 
+
+  /** editor */
+  const [editor, setEditor] = useState<boolean>(false)
+  const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
   
+
+
+  /** crs handling*/
+  const [_selectedCrs, setSelectedCrs] = useState<MrMapCRS>()
+
+  const dataProvider = useDataProvider()
+  const { data: selectedCrs, isLoading, error, refetch } = useGetOne(
+    'ReferenceSystem',
+    { id: _selectedCrs?.id }
+  )
 
   const crsIntersection = useMemo(() => {
     // TODO: refactor this by using the crs from the ows context resources
@@ -239,6 +243,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     }) */
     return referenceSystems
   }, [owsContext])
+
+
 
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
@@ -312,12 +318,20 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   },[owsContext])
 
   const setFeatureActive = useCallback((folder: string, active: boolean)=>{
-    
     const feature = owsContext.features.find(feature => feature.properties.folder === folder)
-    
+
     if (feature !== undefined){
       feature.properties.active = active
-      // TODO: set all descendant active states as well
+      // activate all descendants
+      owsContext.features.forEach(possibleDescendant => {
+        if (isDescendantOf(feature, possibleDescendant)){
+          possibleDescendant.properties.active = active
+        } 
+      })
+      if (active === false) {
+        const parent = owsContext.features.find(parent => parent.properties.folder === folder.split('/').slice(0,-1).join('/'))
+        if (parent !== undefined) parent.properties.active = false
+      }
       setOwsContext({...owsContext})
     }
   },[owsContext])
@@ -332,6 +346,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [map])
 
   useEffect(() => {
+
     if (selectedCrs?.bbox !== undefined) {
       const bbox = JSON.parse(selectedCrs?.bbox)
       const bboxGeoJSON = L.geoJSON(bbox)
@@ -361,30 +376,6 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       setSelectedCrs(defaultCrs)
     }
   }, [crsIntersection, _selectedCrs])
-
-/*   useEffect(()=>{
-    if (wmsTrees?.length > 0){
-      const wmsTreeToStore: StoredWmsTree[] = wmsTrees.map(tree =>  {
-        return {
-          id: tree.id,
-          checkedNodes: tree.checkedNodes?.flatMap(checkedNode => checkedNode.id) ?? []
-        }
-      })
-      setWmsTreeStored(wmsTreeToStore)
-    }
-  },[wmsTrees]) */
-
-/*   useEffect(()=>{
-    // initial wmsTrees from store on component mount
-    wmsTreeStored.forEach(storedTree => {
-      updateOrAppendWmsTree({
-        id: storedTree.id,
-        checkedNodes: storedTree.checkedNodes.map(id => { return {id: id, children: []}})
-      })
-    })
-    
-  },[]) */
-
 
   const value = useMemo<MapViewerContextType>(() => {
     return {
