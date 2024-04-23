@@ -10,8 +10,6 @@ import MenuItem from '@mui/material/MenuItem'
 import { useDrawerContext } from '../Drawer/DrawerContext'
 import { SecurityCreate } from '../SecurityEditor/Forms'
 import { collectChildren } from './utils'
-import VpnLockIcon from '@mui/icons-material/VpnLock'
-import LockIcon from '@mui/icons-material/Lock'
 import Tooltip from '@mui/material/Tooltip'
 import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
@@ -24,12 +22,8 @@ import Box from '@mui/material/Box';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import NavigationIcon from '@mui/icons-material/Navigation';
-import Typography from '@mui/material/Typography';
-import Modal, {type ModalOwnProps} from '@mui/material/Modal';
-import AddResourceDialog from './AddResourceDialog'
-import InitialFromOwsContextDialog from './InitialFromOwsContextDialog'
+import AddResourceDialog from './OwsContextGuiActions/AddResourceDialog'
+import InitialFromOwsContextDialog from './OwsContextGuiActions/InitialFromOwsContextDialog'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 
@@ -143,15 +137,6 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
   const { trees } = useMapViewerContext()
   const [expanded, setExpanded] = useState<string[]>([])
 
-  const [openAddResourceDialog, setOpenAddResourceDialog] = useState(false)
-  const handleOpenAddResourceDialog = () => setOpenAddResourceDialog(true)
-
-  const [openInitialDialog, setOpenInitialDialog] = useState(false)
-  const handleOpenInitialDialog = () => setOpenInitialDialog(true)
-
-  const handleClose = () => setOpenAddResourceDialog(false)
-
-
   const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
     const newExpanded = expanded
     if (isExpanded) {
@@ -225,37 +210,8 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
 
   return (
     <>
-      <Box sx={{ '& > :not(style)': { m: 1 } }}>
-      <Tooltip title="Initial">
-        <Fab color="primary" aria-label="add" size="small" onClick={handleOpenInitialDialog}>
-          <AutoFixHighIcon />
-        </Fab>
-      </Tooltip>
-      <InitialFromOwsContextDialog open={openInitialDialog} setOpen={setOpenInitialDialog}/>
-      
-      <Tooltip title="Add Resource">
-        <Fab color="primary" aria-label="add" size="small" onClick={handleOpenAddResourceDialog}>
-          <AddIcon />
-        </Fab>
-      </Tooltip>
-      <AddResourceDialog open={openAddResourceDialog} setOpen={setOpenAddResourceDialog}/>
-      
-
-
-      <Tooltip title="Edit OWS Context">
-        <Fab color="secondary" aria-label="edit" size="small">
-          <EditIcon />
-        </Fab>
-      </Tooltip>
-      
-    </Box>
-
-      <Divider/>
-
       {treeViews}
-
     </>
-    
   )
 }
 

@@ -20,6 +20,7 @@ import AccordionDetails from '@mui/material/AccordionDetails'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
 import MapSettingsEditor from './MapSettings'
+import { OwsContextActionButtons } from './OwsContextGuiActions/OwsContextActionButtons'
 
 const style = {
   position: 'relative',
@@ -177,6 +178,7 @@ const MapViewerCore = (): ReactNode => {
           leftComponentId={containerId}
           callback={() => map?.invalidateSize()}
         >
+          <OwsContextActionButtons />
           <LayerTree map={map}/>
         </RightDrawer>
         <BottomDrawer

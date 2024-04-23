@@ -294,12 +294,22 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       method: 'GET',
     })
     fetch(request).then(response => response.text()).then(xmlString => {
-      const newOwsContext = {...owsContext}
+      
+      let nextTreeId = 0
+
+      owsContext.features.filter(feature => feature.properties.folder && feature.properties.folder.split('/').length === 2).forEach(rootNode => {
+        const rootFolder = parseInt(rootNode.properties.folder?.split('/')[1] ?? '-1')
+        if (rootFolder === nextTreeId){
+          
+          nextTreeId = rootFolder + 1
+        }
+      })
       
       const parsedWms = parseWms(xmlString)
 
-      // TODO: pass in the correct next free available treeid
-      const features = wmsToOWSResources(parsedWms)
+      const features = wmsToOWSResources(parsedWms, nextTreeId)
+      
+      const newOwsContext = {...owsContext}
       newOwsContext.features.push(...features)
 
       setOwsContext(newOwsContext)

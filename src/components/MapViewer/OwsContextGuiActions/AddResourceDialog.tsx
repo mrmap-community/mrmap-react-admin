@@ -6,17 +6,17 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { ReactNode } from 'react';
-import { useMapViewerContext } from './MapViewerContext';
+import { useMapViewerContext } from '../MapViewerContext';
 
 
-export interface InitialFromOwsContextDialogProps {
+export interface AddResourceDialogProps {
     open: boolean
     setOpen: (open: boolean) => void
 }
 
 
-const InitialFromOwsContextDialog = ({open, setOpen}: InitialFromOwsContextDialogProps): ReactNode => {
-  const { initialFromOwsContext } = useMapViewerContext() 
+const AddResourceDialog = ({open, setOpen}: AddResourceDialogProps): ReactNode => {
+  const { addWMSByUrl } = useMapViewerContext() 
 
   return (
       <Dialog
@@ -29,12 +29,13 @@ const InitialFromOwsContextDialog = ({open, setOpen}: InitialFromOwsContextDialo
             const formData = new FormData(event.currentTarget);
             const formJson = Object.fromEntries((formData as any).entries());
             const getCapabilitiesUrl = formJson.getCapabilitiesUrl;
-            initialFromOwsContext(getCapabilitiesUrl)
+
+            addWMSByUrl(getCapabilitiesUrl)
             setOpen(false)
           },
         }}
       >
-        <DialogTitle>Initial</DialogTitle>
+        <DialogTitle>Subscribe</DialogTitle>
         <DialogContent>
           <DialogContentText>
             To add a Web Map Service to the current OWS Context, please enter a valid GetCapabilitiesUrl.
@@ -59,4 +60,4 @@ const InitialFromOwsContextDialog = ({open, setOpen}: InitialFromOwsContextDialo
   );
 }
 
-export default InitialFromOwsContextDialog
+export default AddResourceDialog
