@@ -3,15 +3,15 @@ import { type RaRecord, type Identifier, useDataProvider, useGetOne } from 'reac
 import { ImageOverlay } from 'react-leaflet'
 import FeatureGroupEditor from '../FeatureGroupEditor'
 import type { MultiPolygon, Polygon } from 'geojson'
-import { findChildrenById, getChildren } from '../MapViewer/utils'
-import { type LatLngBounds, type Map } from 'leaflet'
+import { getChildren } from '../MapViewer/utils'
+import { LatLngBounds, Point, type Map } from 'leaflet'
 import proj4 from 'proj4'
 import L from 'leaflet'
-import { useStore } from 'react-admin'
-import { OWSContext, OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
-import jsonpointer from 'jsonpointer'
+import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
 import { OWSContextDocument, getOptimizedGetMapUrls, isDescendantOf, treeify, wmsToOWSResources } from '../../OwsContext/utils'
 import { parseWms } from '../../XMLParser/parseCapabilities'
+import { BBox } from 'geojson'
+import _ from 'lodash'
 
 export interface StoredWmsTree {
   id: Identifier
@@ -60,15 +60,15 @@ export interface MapViewerContextType {
   setGeoJSON: Dispatch<SetStateAction<MultiPolygon | undefined>>
   map?: Map
   setMap: Dispatch<SetStateAction<Map>>
+  features: OWSResource[]
   owsContext: OWSContext
+
   addWMSByUrl: (url: string) => void
   initialFromOwsContext: (url: string) => void
   trees: TreeifiedOWSResource[]
   activeFeatures: OWSResource[]
   setFeatureActive: (folder: string, active: boolean) => void
 }
-
-
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
 
@@ -190,36 +190,58 @@ const prepareGetFeatureinfoUrl = (getMapUrl: URL, getFeatureinfoUrl: string, tre
   return url
 }
 
+const boundsToBbox = (bounds: LatLngBounds): BBox => [bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat]
+
+const bboxToBounds = (bbox: BBox): LatLngBounds => new LatLngBounds({lat: bbox[1], lng: bbox[0]}, {lat: bbox[3], lng: bbox[2]})
+
+const sizeToDisplay = (size: Point): CreatorDisplay => {
+  return {
+    pixelWidth: size.x,
+    pixelHeight: size.y
+  }
+}
 
 export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   /** map specific states */
   const [map, setMap] = useState<Map>()
-  const [mapBounds, setMapBounds] = useState(map?.getBounds())
-  const [mapSize, setMapSize] = useState(map?.getSize())
+
   const [maxBounds, setMaxBounds] = useState<LatLngBounds>()
 
   /** ows context */
-  const [owsContext, setOwsContext] = useState<OWSContext>(OWSContextDocument())
 
+  // area of interest in crs 4326
+  const [bbox, setBbox] = useState<BBox>(map?.getBounds() ? boundsToBbox(map.getBounds()) : [-180, -90, 180, 90])
+  const [display, setDisplay] = useState<CreatorDisplay>(map?.getSize() ? sizeToDisplay(map.getSize()): {})
+  const [features, setFeatures] = useState<OWSResource[]>([])
+  
+  const owsContext = useMemo(()=>{
+    const doc = OWSContextDocument()
+    
+    return {
+      ...doc,
+      ...(bbox && {bbox: bbox}),
+      ...(features && {features: bbox}),
+      ...(display && {properties: {...doc.properties, display: display}})
+    }
+  }, [bbox, features])
+
+  
   const trees = useMemo(() => {
-    if (owsContext === undefined) return []
-    return treeify(owsContext)
-  }, [owsContext])
+    return treeify(features)
+  }, [features])
 
   const getMapUrls = useMemo(()=>{
-    if (trees === undefined) return
     return getOptimizedGetMapUrls(trees)
   }, [trees])
 
   const activeFeatures = useMemo(()=>{
-    return owsContext.features.filter(feature => feature.properties.active === true)
-  },[owsContext])
+    return features.filter(feature => feature.properties.active === true)
+  }, [features])
 
 
   /** editor */
   const [editor, setEditor] = useState<boolean>(false)
   const [geoJSON, setGeoJSON] = useState<MultiPolygon>()
-  
 
 
   /** crs handling*/
@@ -245,11 +267,11 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [owsContext])
 
 
-
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
 
-    if (mapBounds === undefined || mapSize === undefined || getMapUrls === undefined) {
+
+    if (bbox === undefined || display?.pixelWidth === undefined || display?.pixelHeight === undefined || getMapUrls === undefined) {
       return _tiles
     }
 
@@ -260,14 +282,14 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       //const queryableLayers = checkedLayers?.filter(node => node.record.isQueryable)
       //const queryableLayerIdentifiers = queryableLayers?.map(node => node.record?.identifier).filter(identifier => !(identifier === null || identifier === undefined)) ?? []
       //const getFeatureinfoUrl: string = tree.record?.operationUrls?.find((operationUrl: RaRecord) => operationUrl.operation === 'GetFeatureInfo' && operationUrl.method === 'Get')?.url ?? ''
-
-      const getMapUrl = prepareGetMapUrl(url, mapSize, mapBounds, { code: '4326', prefix: 'EPSG', stringRepresentation: 'EPSG:4326', isYxOrder: true, isXyOrder: false, id: 4326 })
+      const bounds = bboxToBounds(bbox)
+      const getMapUrl = prepareGetMapUrl(url, {x: display.pixelWidth, y: display.pixelHeight}, bounds, { code: '4326', prefix: 'EPSG', stringRepresentation: 'EPSG:4326', isYxOrder: true, isXyOrder: false, id: 4326 })
 
       _tiles.push(
         {
           leafletTile: <ImageOverlay
           key={(Math.random() + 1).toString(36).substring(7)}
-          bounds={mapBounds}
+          bounds={bounds}
           interactive={true}
           url={getMapUrl.href}
         />,
@@ -278,7 +300,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       
     })
     return _tiles
-  }, [getMapUrls, mapBounds, mapSize, selectedCrs])
+  }, [getMapUrls, display, bbox, selectedCrs])
 
   const editorLayer = useMemo(() => {
     return {
@@ -297,7 +319,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       
       let nextTreeId = 0
 
-      owsContext.features.filter(feature => feature.properties.folder && feature.properties.folder.split('/').length === 2).forEach(rootNode => {
+      features.filter(feature => feature.properties.folder && feature.properties.folder.split('/').length === 2).forEach(rootNode => {
         const rootFolder = parseInt(rootNode.properties.folder?.split('/')[1] ?? '-1')
         if (rootFolder === nextTreeId){
           
@@ -306,52 +328,68 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       })
       
       const parsedWms = parseWms(xmlString)
+      const additionalFeatures = wmsToOWSResources(parsedWms, nextTreeId)
 
-      const features = wmsToOWSResources(parsedWms, nextTreeId)
-      
-      const newOwsContext = {...owsContext}
-      newOwsContext.features.push(...features)
+      setFeatures([...features, ...additionalFeatures])
 
-      setOwsContext(newOwsContext)
     }      
   )
-  },[owsContext])
+  }, [features])
 
   const initialFromOwsContext = useCallback((url: string)=>{
     const request = new Request(url, {
       method: 'GET',
     })
-    fetch(request).then(response => response.json()).then(owsContext => {
-      setOwsContext(owsContext)
+    fetch(request).then(response => response.json()).then((json: any) => {
+      // todo: check type before setting features.
+      // todo: set also other variables
+      setFeatures(json.features)
+      json.bbox && setBbox(json.bbox)
+
+      // TODO: initial map with current display if exists  map?.fitBounds()
     }      
   )
-  },[owsContext])
+  }, [])
 
   const setFeatureActive = useCallback((folder: string, active: boolean)=>{
-    const feature = owsContext.features.find(feature => feature.properties.folder === folder)
+    const feature = features.find(feature => feature.properties.folder === folder)
 
     if (feature !== undefined){
       feature.properties.active = active
       // activate all descendants
-      owsContext.features.forEach(possibleDescendant => {
+      features.forEach(possibleDescendant => {
         if (isDescendantOf(feature, possibleDescendant)){
           possibleDescendant.properties.active = active
         } 
       })
       if (active === false) {
-        const parent = owsContext.features.find(parent => parent.properties.folder === folder.split('/').slice(0,-1).join('/'))
+        const parent = features.find(parent => parent.properties.folder === folder.split('/').slice(0,-1).join('/'))
         if (parent !== undefined) parent.properties.active = false
       }
-      setOwsContext({...owsContext})
+      setFeatures([...features])
     }
-  },[owsContext])
+  }, [features])
+
+
+  const updateBbox = useCallback((bounds: LatLngBounds) => {
+    const newBbox = boundsToBbox(bounds)
+    !_.isEqual(bbox, newBbox) && setBbox(newBbox)
+  },[bbox])
+
+  const updateDisplay = useCallback((size: Point) => {
+    const newDisplay = sizeToDisplay(size)
+    !_.isEqual(display, newDisplay) && setDisplay(newDisplay)
+  }, [display])
+
 
   useEffect(() => {
-    setMapBounds(map?.getBounds())
-    setMapSize(map?.getSize())
+    // initial if map is there
+    map?.getBounds() && updateBbox(map.getBounds())
+    map?.getSize() && updateDisplay(map.getSize())
+
     map?.addEventListener('resize moveend zoomend', (event) => {
-      setMapBounds(map.getBounds())
-      setMapSize(map.getSize())
+      updateBbox(map.getBounds())
+      updateDisplay(map.getSize())
     })
   }, [map])
 
@@ -399,6 +437,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       map,
       setMap,
       owsContext,
+      features,
       addWMSByUrl,
       initialFromOwsContext,
       trees,
@@ -414,6 +453,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     selectedCrs, 
     tiles,
     owsContext,
+    features,
     addWMSByUrl,
     initialFromOwsContext,
     trees,

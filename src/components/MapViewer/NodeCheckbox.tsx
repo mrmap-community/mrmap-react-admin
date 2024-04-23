@@ -11,7 +11,7 @@ export interface TreeNodeCheckboxProps {
 }
 
 const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
-  const { owsContext, setFeatureActive } = useMapViewerContext()
+  const { features, setFeatureActive } = useMapViewerContext()
 
   const handleChange = useCallback((event: ChangeEvent | MouseEvent, checked?: boolean) => {
     event.stopPropagation()
@@ -19,11 +19,11 @@ const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
   }, [node, setFeatureActive])
 
   const isIndeterminate = useMemo(() => {
-    const hasActiveDescendants = owsContext.features.filter(
+    const hasActiveDescendants = features.filter(
       feature => feature.properties.active).find((
         activeFeature: OWSResource) => isAnchestorOf(activeFeature, node))
     return Boolean(hasActiveDescendants && !node.properties.active)
-  }, [owsContext.features, node])
+  }, [features, node])
 
   return (
     <Checkbox

@@ -5,7 +5,8 @@ import {v4 as uuidv4} from 'uuid';
 export const OWSContextDocument = (
     id: string = uuidv4(),
     language: string = 'en',
-    title: string = 'mrmap ows context'
+    title: string = 'mrmap ows context',
+    features: OWSResource[] = []
 ): OWSContext => {
 
     return {
@@ -16,7 +17,7 @@ export const OWSContextDocument = (
             title: title,
             updated: new Date().toISOString()
         },
-        features: [],
+        features: features,
     }
 }
 
@@ -123,10 +124,10 @@ export const wmsToOWSResources = (capabilities: WmsCapabilitites, treeId: number
     )
 }
 
-export const treeify = (context: OWSContext): TreeifiedOWSResource[] => {
+export const treeify = (features: OWSResource[]): TreeifiedOWSResource[] => {
     const trees: TreeifiedOWSResource[] = []
 
-    context.features.forEach(feature => {
+    features.forEach(feature => {
       // by default the order of the features array may be used to visualize the layer structure.
       // if there is a folder attribute setted; this should be used and overwrites the array order
       // feature.properties.folder && jsonpointer.set(trees, feature.properties.folder, feature)
