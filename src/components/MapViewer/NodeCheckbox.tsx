@@ -4,7 +4,7 @@ import { Checkbox } from '@mui/material'
 
 import { useMapViewerContext } from './MapViewerContext'
 import { OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
-import { isAnchestorOf, isDescendantOf } from '../../OwsContext/utils'
+import { isAncestorOf, isDescendantOf } from '../../OwsContext/utils'
 
 export interface TreeNodeCheckboxProps {
   node: TreeifiedOWSResource
@@ -21,7 +21,7 @@ const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
   const isIndeterminate = useMemo(() => {
     const hasActiveDescendants = features.filter(
       feature => feature.properties.active).find((
-        activeFeature: OWSResource) => isAnchestorOf(activeFeature, node))
+        activeFeature: OWSResource) => isAncestorOf(activeFeature, node))
     return Boolean(hasActiveDescendants && !node.properties.active)
   }, [features, node])
 

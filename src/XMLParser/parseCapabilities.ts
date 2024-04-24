@@ -86,6 +86,13 @@ export const parseLayer = (layer: any): WmsLayer => {
     const parsedStyles: any = jsonpointer.get(layer, '/Style')
     const styles = parsedStyles === undefined ? [] : forceArray(parsedStyles).map((style: any) => parseStyle(style))
 
+    const minScaleDenominator = jsonpointer.get(layer, '/MinScaleDenomnator')
+    const maxScaleDenominator = jsonpointer.get(layer, '/MaxScaleDenomnator')
+
+    const isQueryable = jsonpointer.get(layer, '/@_queryable')
+    const isOpaque = jsonpointer.get(layer, '/@_opaque')
+    const isCascaded = jsonpointer.get(layer, '/@_cascaded')
+
     const layerObj: WmsLayer = {
         metadata: {
             title: jsonpointer.get(layer, '/Title'),
@@ -94,7 +101,12 @@ export const parseLayer = (layer: any): WmsLayer => {
         },
         ...(crs?.length > 0 && {referenceSystems: crs}),
         bbox: layerBboxToGeoJSON(jsonpointer.get(layer, '/EX_GeographicBoundingBox')),
-        ...(styles?.length > 0 && {styles: styles})
+        ...(styles?.length > 0 && {styles: styles}),
+        ...(minScaleDenominator && {minScaleDenominator: Number.parseFloat(minScaleDenominator)}),
+        ...(maxScaleDenominator && {maxScaleDenominator: Number.parseFloat(maxScaleDenominator)}),
+        ...(isQueryable && {isQueryable: Boolean(Number(isQueryable))}),
+        ...(isOpaque && {isOpaque: Boolean(Number(isOpaque))}),
+        ...(isCascaded && {isCascaded: Boolean(Number(isCascaded))})
     }
 
     const sublayer = jsonpointer.get(layer, '/Layer')
@@ -152,8 +164,6 @@ export const parseWms = (xml: string): WmsCapabilitites => {
         },
         rootLayer: parseLayer(jsonpointer.get(parsedCapabilites, '/WMS_Capabilities/Capability/Layer'))
     }
-
-
 
     return capabilities
 }

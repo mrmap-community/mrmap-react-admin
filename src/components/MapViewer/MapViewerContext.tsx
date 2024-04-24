@@ -8,7 +8,7 @@ import { LatLngBounds, Point, type Map } from 'leaflet'
 import proj4 from 'proj4'
 import L from 'leaflet'
 import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
-import { OWSContextDocument, getOptimizedGetMapUrls, isDescendantOf, treeify, wmsToOWSResources } from '../../OwsContext/utils'
+import { OWSContextDocument, getNextRootId, getOptimizedGetMapUrls, isDescendantOf, treeify, wmsToOWSResources } from '../../OwsContext/utils'
 import { parseWms } from '../../XMLParser/parseCapabilities'
 import { BBox } from 'geojson'
 import _ from 'lodash'
@@ -267,6 +267,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [owsContext])
 
 
+  // TODO: this is viewer specific stuff; move this outside
   const tiles = useMemo(() => {
     const _tiles: Tile[] = []
 
@@ -317,18 +318,10 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     })
     fetch(request).then(response => response.text()).then(xmlString => {
       
-      let nextTreeId = 0
-
-      features.filter(feature => feature.properties.folder && feature.properties.folder.split('/').length === 2).forEach(rootNode => {
-        const rootFolder = parseInt(rootNode.properties.folder?.split('/')[1] ?? '-1')
-        if (rootFolder === nextTreeId){
-          
-          nextTreeId = rootFolder + 1
-        }
-      })
+      const nextRootId = getNextRootId(features)
       
       const parsedWms = parseWms(xmlString)
-      const additionalFeatures = wmsToOWSResources(parsedWms, nextTreeId)
+      const additionalFeatures = wmsToOWSResources(parsedWms, nextRootId)
 
       setFeatures([...features, ...additionalFeatures])
 
@@ -381,6 +374,17 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     !_.isEqual(display, newDisplay) && setDisplay(newDisplay)
   }, [display])
 
+  const moveFeature = useCallback((feature: OWSResource, target: OWSResource, position: Position = Position.lastChild)=>{
+
+
+    
+    const treeA = features.filter(feature => {
+      if (feature.properties.folder === undefined) return false
+
+      feature.properties.folder?.split('/')?.[1] === currentIndex
+    })
+
+  },[])
 
   useEffect(() => {
     // initial if map is there

@@ -1,5 +1,6 @@
 import { Feature, FeatureCollection, Geometry, BBox } from 'geojson'
 
+
 export interface Link {
     href: string
     type?: string
@@ -19,9 +20,7 @@ export interface OWSContextLinks {
     profiles: string[]// Specification Reference (requirements class) identifying that this is an OWC Context document and its version
     via?: Link[]
    // [name: string]: Link 
-
 }
-
 
 export interface Operation {
     code: string

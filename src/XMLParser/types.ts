@@ -48,6 +48,11 @@ export interface WmsLayer {
     dimension?: TimeDimension | TempDimension | ElevationDimension
     children?: WmsLayer[]
     styles?: Style[]
+    minScaleDenominator?: number
+    maxScaleDenominator?: number
+    isQueryable?: boolean
+    isQpaque?: boolean
+    isCascaded?: boolean
 }
 
 export interface OperationUrl {

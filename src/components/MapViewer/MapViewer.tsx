@@ -21,7 +21,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import axios from 'axios'
 import MapSettingsEditor from './MapSettings'
 import { OwsContextActionButtons } from './OwsContextGuiActions/OwsContextActionButtons'
-
+import { ScaleControl } from 'react-leaflet' 
 const style = {
   position: 'relative',
   //  display: 'flex',
@@ -169,9 +169,11 @@ const MapViewerCore = (): ReactNode => {
             style={{
               flex: 1, height: '100%', width: '100%', position: 'relative'
             }}
+            
           >
             {...tiles.map(tile => tile.leafletTile)}
             {featureInfoMarker}
+            <ScaleControl position="topleft" />
           </MapContainer>
         </Box>
         <RightDrawer
