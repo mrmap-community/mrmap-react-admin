@@ -266,7 +266,7 @@ test('sortByFolder', () => {
 test('moveFeature lastChild', () => {
     const context = getOwsContext()
     const newContext = moveFeature(context, context.features[2], context.features[1])
-
+    // TODO: checking titles also 
     expect(newContext?.features[2].properties.folder).equals('/0/0/0')
     expect(newContext?.features[3].properties.folder, 'subnode of source tree is not up to date').equals('/0/0/0/0')
     expect(newContext?.features[4].properties.folder, 'sibling folders are not up to date').equals('/0/1')
@@ -276,6 +276,7 @@ test('moveFeature firstChild', () => {
     const context = getOwsContext()
     const newContext = moveFeature(context, context.features[2], context.features[0], Position.firstChild)
 
+    // TODO: checking titles also 
     expect(newContext?.features[1].properties.folder).equals('/0/0')
     expect(newContext?.features[2].properties.folder).equals('/0/0/0')
     expect(newContext?.features[3].properties.folder).equals('/0/1')

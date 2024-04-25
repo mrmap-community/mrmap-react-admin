@@ -364,8 +364,6 @@ export const insertSubtree = (context: OWSContext, source: OWSResource, target: 
         nodePaths[1] = index.toString() // set new sub tree root index
 
         node.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path
-        console.log(node.properties.folder, index)
-
     })
 
     if (position === Position.lastChild) {
