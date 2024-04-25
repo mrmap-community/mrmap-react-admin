@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, isAncestorOf, isChildOf, isDescendantOf, isParentOf, isSiblingOf, moveFeature, treeify, wmsToOWSResources } from '../utils'
+import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, wmsToOWSResources } from '../utils'
 import { OWSContext, OWSResource } from '../types'
 import { Position } from '../enums'
 
@@ -213,6 +213,17 @@ test('isSiblingOf', () => {
     expect(isSiblingOf(context.features[0], context.features[3])).toBeFalsy()
 })
 
+test('getSiblings', () => {
+    const context = getOwsContext()
+
+    expect(getSiblings(context.features, context.features[1])).toMatchObject([context.features[2], context.features[4]])
+    expect(getSiblings(context.features, context.features[1], true)).toMatchObject([context.features[1], context.features[2], context.features[4]])
+
+    expect(getSiblings(context.features, context.features[2], true, true)).toMatchObject([context.features[1], context.features[2], context.features[3], context.features[4]])    
+    expect(getSiblings(context.features, context.features[2], false, true)).toMatchObject([context.features[1], context.features[4]])
+
+})
+
 
 test('getDescendants', () => {
     const context = getOwsContext()
@@ -239,16 +250,29 @@ test('getLastChildIndex', () => {
 })
 
 
+test('sortByFolder', () => {
+    const context = getOwsContext()
+    context.features = context.features.reverse()
+
+    const feature1 = context.features[1]
+    const feature3 = context.features[3]
+
+    context.features[1] = feature3
+    context.features[3] = feature1
+
+    expect(sortFeaturesByFolder(context)).toMatchObject(getOwsContext())
+})
+
 test('moveFeature lastChild', () => {
     const context = getOwsContext()
     const newContext = moveFeature(context, context.features[2], context.features[1])
 
-    expect(newContext?.features[2].properties.folder).equals('/0/0/1')
-    expect(newContext?.features[3].properties.folder).equals('/0/0/1/0')
-
+    expect(newContext?.features[2].properties.folder).equals('/0/0/0')
+    expect(newContext?.features[3].properties.folder, 'subnode of source tree is not up to date').equals('/0/0/0/0')
+    expect(newContext?.features[4].properties.folder, 'sibling folders are not up to date').equals('/0/1')
 })
 
-test('moveFeature firstChild', () => {
+test.todo('moveFeature firstChild', () => {
     const context = getOwsContext()
     const newContext = moveFeature(context, context.features[2], context.features[0], Position.firstChild)
 

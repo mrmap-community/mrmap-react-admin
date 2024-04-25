@@ -1,0 +1,1 @@
+const VALID_PATH = new RegExp('(\/\d*)+')
