@@ -308,9 +308,9 @@ export const getLastChildIndex = (context: OWSContext, parent: OWSResource) => {
     return context.features.findLastIndex((child) => isChildOf(child, parent))
 }
 
-export const sortFeaturesByFolder = (context: OWSContext) => {
-    context.features.sort((a, b) =>  a.properties.folder?.localeCompare(b.properties.folder ?? '') ?? -1)
-    return context
+export const sortFeaturesByFolder = (features: OWSResource[]) => {
+    features.sort((a, b) =>  a.properties.folder?.localeCompare(b.properties.folder ?? '') ?? -1)
+    return features
 }
 
 export const getSiblings = (features: OWSResource[], source: OWSResource, include_self=false, withSubtrees=false) => {
@@ -328,7 +328,7 @@ export const getSiblings = (features: OWSResource[], source: OWSResource, includ
 }
 
 
-export const insertSubtree = (context: OWSContext, source: OWSResource, target: OWSResource,  position: Position = Position.lastChild) => {
+export const moveFeature = (features: OWSResource[], source: OWSResource, target: OWSResource,  position: Position = Position.lastChild) => {
     if (target.properties.folder === undefined ||
         source.properties.folder === undefined
     ) return
@@ -338,30 +338,37 @@ export const insertSubtree = (context: OWSContext, source: OWSResource, target: 
     if (folderPathToBeReplaced === undefined) return
     const regex = new RegExp(`^${folderPathToBeReplaced}+`)
 
-    let index = 0
+    let relativPosition = 0 
 
     if (position === Position.lastChild) {
         // if there are no childs, set foldername to -1 which will result in index 0
-        const lastChildFolderName = getLastChild(context.features, target)?.properties.folder?.replace(regex, '')[1] ?? '-1'
-        index = Number(lastChildFolderName) + 1
+        const lastChildFolderName = getLastChild(features, target)?.properties.folder?.replace(regex, '')[1] ?? '-1'
+        relativPosition = Number(lastChildFolderName) + 1
     } else if (position === Position.firstChild) {
-        index = 0
+        relativPosition = 0
+    } else if (position === Position.left) {
+        relativPosition = Number(target.properties.folder.split('/')[-1])
+    } else if (position === Position.right){
+        relativPosition = Number(target.properties.folder.split('/')[-1]) + 1
     }
 
     // first of all, get the objects before manipulating data. 
     // All filter functions will retun subsets with shallow copys
-    const currentSourceSubtree = getDescandants(context.features, source, true)
-    const currentSourceSiblings = getSiblings(context.features, source, false, false)
+    const currentSourceSubtree = getDescandants(features, source, true)
+    const currentSourceSiblings = getSiblings(features, source, false, false)
     const currentSourceParentFolderIndex = source.properties.folder?.split('/').length - 1
     const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
-    const futureSiblings = getDescandants(context.features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
+    const futureSiblings = getDescandants(features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
+    
+    const currentTargetSiblings = getSiblings(features, target, false, false)
+
 
     // move source subtree 
     currentSourceSubtree.forEach(node => {
         if (node.properties.folder === undefined || target.properties.folder === undefined) return
         node.properties.folder = node.properties.folder.replace(regex, '') // remove old parent
         const nodePaths = node.properties.folder.split('/')
-        nodePaths[1] = index.toString() // set new sub tree root index
+        nodePaths[1] = relativPosition.toString() // set new sub tree root folder
 
         node.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path
     })
@@ -369,7 +376,7 @@ export const insertSubtree = (context: OWSContext, source: OWSResource, target: 
     if (position === Position.lastChild) {
         // shift siblings to setup an ascending folder structure without spaces
         currentSourceSiblings.forEach((node, index) => {
-            getDescandants(context.features, node, true).forEach(n => {
+            getDescandants(features, node, true).forEach(n => {
                 if (n.properties.folder === undefined) return
 
                 const folders = n.properties.folder.split('/')
@@ -377,9 +384,7 @@ export const insertSubtree = (context: OWSContext, source: OWSResource, target: 
                 n.properties.folder = folders.join('/')
             })
         })
-    }
-
-    if (position === Position.firstChild){
+    } else if (position === Position.firstChild){
         // shift all siblings subtrees behind the first child
         futureSiblings.forEach((sibling, index) => {
             if (sibling.properties.folder === undefined || target.properties.folder === undefined) return
@@ -388,20 +393,19 @@ export const insertSubtree = (context: OWSContext, source: OWSResource, target: 
             nodePaths[1] = (index + 1).toString() // set new sub tree root index
             sibling.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path
         })
+    } else if (position === Position.left){
+        // TODO: shift all right sibling trees
+        const nodeIndexPosition = target.properties.folder.split('/').length
+        currentTargetSiblings.forEach((sibling, index) => {
+            if (sibling.properties.folder === undefined) return
+            const nodePaths = sibling.properties.folder?.split('/')
+            nodePaths[nodeIndexPosition] = (Number(nodePaths[nodeIndexPosition]) + 1).toString()
+            sibling.properties.folder = nodePaths.join('/')
+        })
+    } else if (position === Position.right){
+        // TODO: shift all right sibling trees
     }
 
-}
-
-
-export const moveFeature = (context: OWSContext, feature: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {
-    if (feature.properties.folder === undefined || target.properties.folder === undefined) return
-    insertSubtree(context, feature, target, position)
-    
-    
-    //console.log(JSON.stringify(context, 0, 4))
-
-    const sorted = sortFeaturesByFolder(context)
-    //console.log(JSON.stringify(sorted, 0, 4))
-    return sorted
-
+    sortFeaturesByFolder(features)
+    return features
 }
