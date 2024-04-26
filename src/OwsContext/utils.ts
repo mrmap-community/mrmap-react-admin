@@ -327,6 +327,21 @@ export const getSiblings = (features: OWSResource[], source: OWSResource, includ
     })
 }
 
+export const getRightSiblings = (features: OWSResource[], source:OWSResource, withSubtrees=false) => {
+    if (source.properties.folder === undefined) return []
+    const targetFolders = source.properties.folder?.split('/')
+    const targetIndex = targetFolders.slice(-1)[0]
+    
+    return getSiblings(features, source, false, withSubtrees).filter(feature => {
+        if (feature.properties.folder === undefined) return false
+        const folderNames = feature.properties.folder.split('/')
+        if (Number(folderNames[targetFolders.length]) <= Number(targetIndex) ) {
+            return false 
+        } else {
+            return true    
+        }
+    })
+}
 
 export const updateFolders = (
     tree: OWSResource[], 
@@ -352,7 +367,7 @@ export const updateFolders = (
         }
         
         // initial with one empty string to get a leading / after joining
-        const newNodeFolders = ['']
+        const newNodeFolders = [...newRootFolders]
 
         // iterate over all depths and set 
         for (let depth = 0; depth <= currentDepth; depth++) {
@@ -394,12 +409,18 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
     // All filter functions will retun subsets with shallow copys
     const currentSourceSubtree = getDescandants(features, source, true)
     const currentSourceSiblings = getSiblings(features, source, false, false)
+    const currentSourceSiblingtrees = getSiblings(features, source, false, true)
+
     const currentSourceParentFolderIndex = source.properties.folder?.split('/').length - 1
     const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
     const futureSiblings = getDescandants(features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
     
     const currentTargetSiblings = getSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
-    const currentTargetRightSiblings = getSiblings(features, target, false, true).filter(feature => !currentSourceSubtree.includes(feature))
+     
+    const currentSourceParentFolder = getParentFolder(source) ?? '/'
+    const targetFolders = target.properties.folder?.split('/')
+    const targetIndex = targetFolders.slice(-1)[0]
+    const currentTargetRightSiblings = getRightSiblings(features, target, true).filter(feature => !currentSourceSubtree.includes(feature))
 
     // move source subtree 
     if (position === Position.lastChild || position === Position.firstChild){
@@ -414,7 +435,7 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
         })
     } else if (position === Position.left){
         // move source subtrees to target position
-        updateFolders(currentSourceSubtree, target.properties.folder)
+        updateFolders(currentSourceSubtree, getParentFolder(target) ?? '')
         // move all siblings one position right
         updateFolders(currentTargetSiblings, getParentFolder(target) ?? '', 1)       
     } else if (position === Position.right){
@@ -423,8 +444,8 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
         
         const targetIndex = getParentFolder(target)?.split('/').slice(-1)[0] 
         const startIndex = targetIndex ? Number(targetIndex) + 1: 1
-        console.log(targetIndex, startIndex)
         updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', startIndex)
+        updateFolders(currentSourceSiblingtrees, currentSourceParentFolder, )
 
     }
 
