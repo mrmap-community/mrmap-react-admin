@@ -12,6 +12,7 @@ import { OWSContextDocument, getNextRootId, getOptimizedGetMapUrls, isDescendant
 import { parseWms } from '../../XMLParser/parseCapabilities'
 import { BBox } from 'geojson'
 import _ from 'lodash'
+import { Position } from '../../OwsContext/enums'
 
 export interface StoredWmsTree {
   id: Identifier
@@ -378,11 +379,6 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
 
 
     
-    const treeA = features.filter(feature => {
-      if (feature.properties.folder === undefined) return false
-
-      feature.properties.folder?.split('/')?.[1] === currentIndex
-    })
 
   },[])
 

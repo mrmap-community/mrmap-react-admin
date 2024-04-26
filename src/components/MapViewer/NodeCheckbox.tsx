@@ -4,7 +4,7 @@ import { Checkbox } from '@mui/material'
 
 import { useMapViewerContext } from './MapViewerContext'
 import { OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
-import { isAncestorOf, isDescendantOf } from '../../OwsContext/utils'
+import { isAncestorOf } from '../../OwsContext/utils'
 
 export interface TreeNodeCheckboxProps {
   node: TreeifiedOWSResource
