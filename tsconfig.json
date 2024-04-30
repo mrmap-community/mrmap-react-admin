@@ -21,13 +21,16 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*"
-  ],
+    "src/**/*",
+    "__tests__/**/*"
+, "src/OwsContext/tests/.spec.ts", "src/XMLParser/tests/.spec.js"  ],
   "exclude": [
     "node_modules",
     "build",
     "dist",
     "scripts",
-    "src/vite-env.d.ts"
+    "src/vite-env.d.ts",
+    "./vite.config.ts",
+    "__tests__"
   ]
 }

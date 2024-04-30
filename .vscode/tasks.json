@@ -13,6 +13,15 @@
             ]
         },
         {
+            "label": "run test",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "test"
+            ]
+        },
+        {
             "label": "run lint",
             "type": "shell",
             "command": "npm",
