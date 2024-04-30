@@ -13,6 +13,7 @@ import { parseWms } from '../../XMLParser/parseCapabilities'
 import { BBox } from 'geojson'
 import _ from 'lodash'
 import { Position } from '../../OwsContext/enums'
+import { moveFeature as moveFeatureUtil } from '../../OwsContext/utils'
 
 export interface StoredWmsTree {
   id: Identifier
@@ -69,6 +70,7 @@ export interface MapViewerContextType {
   trees: TreeifiedOWSResource[]
   activeFeatures: OWSResource[]
   setFeatureActive: (folder: string, active: boolean) => void
+  moveFeature: (source: OWSResource, target: OWSResource, position: Position) => void
 }
 
 export const context = createContext<MapViewerContextType | undefined>(undefined)
@@ -375,12 +377,13 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     !_.isEqual(display, newDisplay) && setDisplay(newDisplay)
   }, [display])
 
-  const moveFeature = useCallback((feature: OWSResource, target: OWSResource, position: Position = Position.lastChild)=>{
+  const moveFeature = useCallback((source: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {
+    const newFeatures = [...features]
+    console.log(newFeatures, source, target, position)
+    moveFeatureUtil(newFeatures, source, target, position)
+    setFeatures(newFeatures)
 
-
-    
-
-  },[])
+  },[features])
 
   useEffect(() => {
     // initial if map is there
@@ -442,7 +445,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
       initialFromOwsContext,
       trees,
       activeFeatures,
-      setFeatureActive
+      setFeatureActive,
+      moveFeature
     }
   }, [
     crsIntersection, 
@@ -458,7 +462,8 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
     initialFromOwsContext,
     trees,
     activeFeatures,
-    setFeatureActive
+    setFeatureActive,
+    moveFeature
   ])
 
   return (

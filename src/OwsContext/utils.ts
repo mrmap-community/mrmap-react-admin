@@ -476,3 +476,6 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
 }
 
 
+export const findNodeByFolder = (features: OWSResource[], folder: string) => {
+    return features.find(feature => feature.properties.folder === folder)
+}

@@ -1,4 +1,4 @@
-import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState, useEffect, useRef, createRef } from 'react'
 
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
@@ -10,21 +10,97 @@ import MenuItem from '@mui/material/MenuItem'
 import { useDrawerContext } from '../Drawer/DrawerContext'
 import { SecurityCreate } from '../SecurityEditor/Forms'
 import { collectChildren } from './utils'
-import Tooltip from '@mui/material/Tooltip'
 import { Tabs } from '../Tab/Tabs'
 import { useTabListContext } from '../Tab/TabListContext'
 import L from 'leaflet'
 import { type Map } from 'leaflet'
 import { TreeifiedOWSResource } from '../../OwsContext/types'
 import {v4 as uuidv4} from 'uuid'
-import Divider from '@mui/material/Divider'
-import Box from '@mui/material/Box';
-import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import AddResourceDialog from './OwsContextGuiActions/AddResourceDialog'
-import InitialFromOwsContextDialog from './OwsContextGuiActions/InitialFromOwsContextDialog'
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import Sortable from 'sortablejs'
+import { TreeItemProps } from '@mui/lab'
+import { findNodeByFolder } from '../../OwsContext/utils'
+import { Position } from '../../OwsContext/enums'
+
+
+export interface DragableTreeItemProps extends TreeItemProps{
+  node: TreeifiedOWSResource
+  sortable?: Sortable.Options
+}
+
+export const DragableTreeItem = ({
+  node,
+  sortable,
+  ...props
+}: DragableTreeItemProps): ReactNode => {
+  const ref = useRef()
+  const { features, moveFeature } = useMapViewerContext()
+
+  useEffect(()=>{
+    if (ref.current === null || ref.current === undefined) return
+
+    // component did mount
+    // initialize Sortables
+    const sort = Sortable.create(ref.current, {
+      group: {name: 'general',},
+      animation: 150,
+      fallbackOnBody: true,
+      swapThreshold: 0.25,
+      
+      onEnd: (event) => {
+        console.log(event)
+        // cancel the UI update so <framework> will take care of it
+        event.item.remove();
+        if (event.oldIndex !== undefined) {
+          event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+        }
+
+        if (event.newIndex === undefined) return
+
+        const parentFolder = event.to.dataset.owscontextFolder
+        const parentChildrenCount = event.to.children.length
+        const newIndex = event.newIndex
+        if (parentFolder === undefined || newIndex === undefined) return
+
+        const target = findNodeByFolder(features, parentFolder)
+        if (target === undefined) return
+  
+        if (newIndex == 0) {
+            moveFeature(node, target, Position.firstChild)
+
+        } else if (newIndex == parentChildrenCount - 1) {
+            moveFeature(node, target, Position.lastChild)
+        } else {
+            // somewhere between
+            const leftSibling = event.to.children[event.newIndex - 1] as HTMLElement
+            const targetFolder = leftSibling?.dataset.targetId
+            if (targetFolder === undefined) return
+
+            const target = findNodeByFolder(features, targetFolder)
+            if (target === undefined) return
+
+            moveFeature(node, target, Position.right)
+        }
+
+
+        
+
+      },
+      
+      ...sortable
+    })
+  },[])
+
+
+  return (
+    <TreeItem
+      ref={ref}
+      nodeId={node.properties.folder as string}
+      {...props}
+      data-owscontext-folder={node.properties.folder}
+    />
+  )
+
+}
 
 
 
@@ -174,19 +250,19 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
 
   const renderTree = useCallback((node?: TreeifiedOWSResource): ReactNode => {
     if (node !== undefined) {
-      return (
-        < TreeItem
-          key={node.properties.folder ?? uuidv4()}
-          nodeId={node.properties.folder ?? uuidv4()}
-          label={renderTreeItemLabel(node)}
-        >
-          {
-            Array.isArray(node.children)
-              ? node.children.map((node) => { return renderTree(node) })
-              : null
-          }
-        </TreeItem >
-      )
+      return (<DragableTreeItem
+                node={node}                    
+                key={uuidv4()}
+                label={renderTreeItemLabel(node)}
+              >
+                {
+                  Array.isArray(node.children)
+                    ? node.children.map((node) => { return renderTree(node) })
+                    : null
+                }
+              </DragableTreeItem >)
+
+
     }
     return <></>
   }, [renderTreeItemLabel])

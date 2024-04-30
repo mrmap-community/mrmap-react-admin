@@ -16,6 +16,7 @@
     "@react-hook/resize-observer": "^1.2.6",
     "@types/inflection": "^1.13.0",
     "@types/proj4": "^2.5.5",
+    "@types/sortablejs": "^1.15.8",
     "fast-xml-parser": "^4.3.6",
     "jsonpointer": "^5.0.1",
     "leaflet": "^1.9.4",
@@ -28,6 +29,7 @@
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
     "react-leaflet-draw": "^0.20.4",
+    "sortablejs": "^1.15.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
