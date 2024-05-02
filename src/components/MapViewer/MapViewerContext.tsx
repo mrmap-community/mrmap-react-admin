@@ -378,11 +378,14 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [display])
 
   const moveFeature = useCallback((source: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {
-    const newFeatures = [...features]
-    console.log(newFeatures, source, target, position)
-    moveFeatureUtil(newFeatures, source, target, position)
+    console.log(features, 'moveFeature', source, 'to', target, 'as', position )
+    const newFeatures = moveFeatureUtil([...features], source, target, position)
+    console.log('resulting features array: ', newFeatures)
     setFeatures(newFeatures)
+  }, [features, setFeatures])
 
+  useEffect(()=>{
+    console.log('updated features', features)
   },[features])
 
   useEffect(() => {

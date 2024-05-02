@@ -1,8 +1,10 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, wmsToOWSResources } from '../utils'
+import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, wmsToOWSResources } from '../utils'
 import { OWSContext } from '../types'
 import { Position } from '../enums'
+
+import {karteRpFeatures} from './data'
 
 
 const getOwsContext = (): OWSContext => {
@@ -186,9 +188,9 @@ test('getParentFolder', () => {
 test('getParent', () => {
     const context = getOwsContext()
 
-    expect(getParent(context, context.features[3])).equals(context.features[2])
+    expect(getParent(context.features, context.features[3])).equals(context.features[2])
 
-    expect(getParent(context, context.features[0])).toBeUndefined()
+    expect(getParent(context.features, context.features[0])).toBeUndefined()
 })
 
 test('isParentOf', () => {
@@ -301,13 +303,9 @@ test('moveFeature left', () => {
     expect(features?.[4].properties.title).equals('/0/2')
 })
 
-
-
-
 test('moveFeature right', () => {
     const context = getOwsContext()
     const features = moveFeature(context.features, context.features[2], context.features[0], Position.right)
-    
     
     expect(features?.[0].properties.folder).equals('/0')
     expect(features?.[0].properties.title).equals('/0')
@@ -323,4 +321,39 @@ test('moveFeature right', () => {
 
     expect(features?.[4].properties.folder).equals('/1/0')
     expect(features?.[4].properties.title).equals('/0/1/0')
+})
+
+
+test('moveFeature wald3 as left sibling of wald0', () => {
+
+    const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[7], Position.left)
+
+    expect(features?.[7].properties.title).equals('Wald 3')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
+
+    expect(features?.[8].properties.title).equals('Wald 0')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
+
+})
+
+test('moveFeature wald3 as right sibling of wald0', () => {
+
+    const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[7], Position.right)
+
+    expect(features?.[7].properties.title).equals('Wald 0')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
+
+    expect(features?.[8].properties.title).equals('Wald 3')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
+
+})
+
+test('isLeafNode', () => {
+    const context = getOwsContext()
+
+    expect(isLeafNode(context.features, context.features[0])).toBeFalsy()
+    expect(isLeafNode(context.features, context.features[1])).toBeTruthy()
+    expect(isLeafNode(context.features, context.features[2])).toBeFalsy()
+    expect(isLeafNode(context.features, context.features[3])).toBeTruthy()
+    expect(isLeafNode(context.features, context.features[4])).toBeTruthy()
 })

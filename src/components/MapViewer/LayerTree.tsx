@@ -1,4 +1,4 @@
-import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState, useEffect, useRef, createRef } from 'react'
+import { type ReactNode, type MouseEvent, type SyntheticEvent, useCallback, useMemo, useState, useEffect, useRef } from 'react'
 
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view'
 import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
@@ -18,86 +18,88 @@ import { TreeifiedOWSResource } from '../../OwsContext/types'
 import {v4 as uuidv4} from 'uuid'
 import Sortable from 'sortablejs'
 import { TreeItemProps } from '@mui/lab'
-import { findNodeByFolder } from '../../OwsContext/utils'
+import { findNodeByFolder, getParent, getParentFolder, isLeafNode } from '../../OwsContext/utils'
 import { Position } from '../../OwsContext/enums'
 
 
 export interface DragableTreeItemProps extends TreeItemProps{
   node: TreeifiedOWSResource
   sortable?: Sortable.Options
+  imaginary?: boolean
 }
 
 export const DragableTreeItem = ({
   node,
   sortable,
+  imaginary = false,
   ...props
 }: DragableTreeItemProps): ReactNode => {
   const ref = useRef()
   const { features, moveFeature } = useMapViewerContext()
 
-  useEffect(()=>{
+  const createSortable = useCallback(()=>{
     if (ref.current === null || ref.current === undefined) return
 
-    // component did mount
-    // initialize Sortables
-    const sort = Sortable.create(ref.current, {
+    Sortable.create(ref.current, {
       group: {name: 'general',},
       animation: 150,
       fallbackOnBody: true,
       swapThreshold: 0.25,
       
       onEnd: (event) => {
-        console.log(event)
+        const evt = {...event}
+
         // cancel the UI update so <framework> will take care of it
         event.item.remove();
         if (event.oldIndex !== undefined) {
           event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
         }
 
-        if (event.newIndex === undefined) return
+        const targetFolder = evt.to.dataset.owscontextFolder
+        if (targetFolder === undefined) return
+        const target = findNodeByFolder(features, targetFolder)
 
-        const parentFolder = event.to.dataset.owscontextFolder
-        const parentChildrenCount = event.to.children.length
-        const newIndex = event.newIndex
-        if (parentFolder === undefined || newIndex === undefined) return
+        if (target === undefined) {
+          // undefined signals new subtree move event
+          // move the node as child to the fictive parent
 
-        const target = findNodeByFolder(features, parentFolder)
-        if (target === undefined) return
-  
-        if (newIndex == 0) {
-            moveFeature(node, target, Position.firstChild)
-
-        } else if (newIndex == parentChildrenCount - 1) {
-            moveFeature(node, target, Position.lastChild)
+          const parentFolder = getParentFolder(targetFolder)
+          if (parentFolder === undefined) return
+          const parent = findNodeByFolder(features, parentFolder)
+          if (parent === undefined) return
+          moveFeature(node, parent, Position.firstChild)          
         } else {
-            // somewhere between
-            const leftSibling = event.to.children[event.newIndex - 1] as HTMLElement
-            const targetFolder = leftSibling?.dataset.targetId
-            if (targetFolder === undefined) return
-
-            const target = findNodeByFolder(features, targetFolder)
-            if (target === undefined) return
-
+          const newIndex = evt.newIndex
+          if (newIndex === 0) {
+            moveFeature(node, target, Position.left)
+          } else if (newIndex === 1) {
             moveFeature(node, target, Position.right)
+          }
         }
 
-
-        
-
       },
-      
       ...sortable
     })
-  },[])
 
+  }, [ref, moveFeature])
+
+  useEffect(()=>{
+    createSortable()
+  },[])
 
   return (
     <TreeItem
       ref={ref}
-      nodeId={node.properties.folder as string}
+      key={uuidv4()}
+      // nodeId={imaginary ? `${node.properties.folder}/0`: node.properties.folder as string}
+      nodeId={uuidv4()}
       {...props}
-      data-owscontext-folder={node.properties.folder}
-    />
+      data-owscontext-folder={imaginary ? `${node.properties.folder}/0`: node.properties.folder}
+    >
+      {/* imaginary child node to create new childs */}
+      {!imaginary && isLeafNode(features, node) ? <DragableTreeItem node={node} imaginary={true}></DragableTreeItem>: null}
+      {props.children}
+    </TreeItem>
   )
 
 }
