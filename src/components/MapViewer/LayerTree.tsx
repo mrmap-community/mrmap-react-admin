@@ -18,7 +18,7 @@ import { TreeifiedOWSResource } from '../../OwsContext/types'
 import {v4 as uuidv4} from 'uuid'
 import Sortable from 'sortablejs'
 import { TreeItemProps } from '@mui/lab'
-import { findNodeByFolder, getParent, getParentFolder, isLeafNode } from '../../OwsContext/utils'
+import { findNodeByFolder, getParentFolder, isLeafNode } from '../../OwsContext/utils'
 import { Position } from '../../OwsContext/enums'
 
 

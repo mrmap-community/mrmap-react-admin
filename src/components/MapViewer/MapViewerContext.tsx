@@ -378,15 +378,9 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   }, [display])
 
   const moveFeature = useCallback((source: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {
-    console.log(features, 'moveFeature', source, 'to', target, 'as', position )
     const newFeatures = moveFeatureUtil([...features], source, target, position)
-    console.log('resulting features array: ', newFeatures)
     setFeatures(newFeatures)
   }, [features, setFeatures])
-
-  useEffect(()=>{
-    console.log('updated features', features)
-  },[features])
 
   useEffect(() => {
     // initial if map is there

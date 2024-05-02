@@ -1,4 +1,4 @@
-import { isString } from "lodash";
+import { isString, last } from "lodash";
 import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { Position } from "./enums";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
@@ -306,8 +306,10 @@ export const getLastChild = (features: OWSResource[], parent: OWSResource) => {
     return features.findLast((child) => isChildOf(child, parent))
 }
 
-export const getLastChildIndex = (context: OWSContext, parent: OWSResource) => {
-    return context.features.findLastIndex((child) => isChildOf(child, parent))
+export const getLastChildIndex = (features: OWSResource[], parent: OWSResource) => {
+    const lastChild = getLastChild(features, parent)
+    if (lastChild === undefined) return -1
+    return getNodeIndex(lastChild)
 }
 
 export const sortFeaturesByFolder = (features: OWSResource[]) => {
@@ -329,19 +331,23 @@ export const getSiblings = (features: OWSResource[], source: OWSResource, includ
     })
 }
 
+export const getNodeIndex = (feature: OWSResource): number => {
+    return Number(feature.properties.folder?.split('/').slice(-1)[0])
+}
+
 export const getRightSiblings = (features: OWSResource[], source:OWSResource, include_self=false, withSubtrees=false) => {
     if (source.properties.folder === undefined) return []
-    const targetFolders = source.properties.folder?.split('/')
-    const targetIndex = targetFolders.slice(-1)[0]
+    const sourceFolders = source.properties.folder?.split('/')
+    const sourceIndexNumber = getNodeIndex(source)
 
-    return getSiblings(features, source, false, withSubtrees).filter(feature => {
+    return getSiblings(features, source, include_self, withSubtrees).filter(feature => {
         if (feature.properties.folder === undefined) return false
         const folderNames = feature.properties.folder.split('/')
-
-        if (Number(folderNames[targetFolders.length]) <= (include_self ? Number(targetIndex): Number(targetIndex) + 1)) {
-            return false 
+        const siblingIndex = folderNames[sourceFolders.length - 1]
+        if (include_self ? Number(siblingIndex) >= sourceIndexNumber: Number(siblingIndex) > sourceIndexNumber) {
+            return true
         } else {
-            return true    
+            return false    
         }
     })
 }
@@ -390,7 +396,8 @@ export const updateFolders = (
 
 export const moveFeature = (features: OWSResource[], source: OWSResource, target: OWSResource,  position: Position = Position.lastChild): OWSResource[] => {
     if (target.properties.folder === undefined ||
-        source.properties.folder === undefined
+        source.properties.folder === undefined ||
+        source === target
     ) return features
 
     
@@ -421,7 +428,9 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
     const currentTargetSiblings = getSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
      
     const currentSourceParentFolder = getParentFolder(source) ?? '/'
-    const currentTargetRightSiblings = getRightSiblings(features, target, false, true).filter(feature => !currentSourceSubtree.includes(feature))
+    const currentTargetRightSiblings = getRightSiblings(features, target, false, true).filter(feature => {
+        return !currentSourceSubtree.includes(feature)
+    })
 
     // move source subtree 
     if (position === Position.lastChild || position === Position.firstChild){
@@ -435,28 +444,29 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
             node.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path    
         })
     } else if (position === Position.left){
-        console.log('move', source, 'left', target)
         // move source subtrees to target position
         updateFolders(currentSourceSubtree, getParentFolder(target) ?? '')
-        console.log('updated currentSourceFolders', currentSourceSubtree.map(node => node.properties.folder))
         // move all siblings one position right
         updateFolders(currentTargetSiblings, getParentFolder(target) ?? '', 1)       
-        console.log('updated currentTargetFolders', currentSourceSubtree.map(node => node.properties.folder))
 
-    } else if (position === Position.right){
-        console.log('move', source, 'right', target)
+    } else if (position === Position.right){     
+        const targetIndex = getNodeIndex(target)
+        const newStartIndex = targetIndex ? targetIndex + 1: 1
 
-        updateFolders(currentTargetRightSiblings, getParentFolder(target) ?? '', 1)      
-        console.log('updated currentTargetRightSiblings',currentTargetRightSiblings, currentTargetRightSiblings.map(node => node.properties.folder))
+        if (currentTargetRightSiblings[0] && getNodeIndex(currentTargetRightSiblings[0]) - 1 === newStartIndex) return features // same position... nothing to do here
+        
+        // shift all right siblings of target one to the right (make some space for source tree to insert it)
+        const nextRightStartIndex = currentTargetRightSiblings[0] !== undefined ? getNodeIndex(currentTargetRightSiblings[0]) + 1: getLastChildIndex(features, target) + 1
+        if (nextRightStartIndex === undefined) return features
+        updateFolders(currentTargetRightSiblings, getParentFolder(target) ?? '', nextRightStartIndex)      
 
-        const targetIndex = getParentFolder(target)?.split('/').slice(-1)[0] 
-        const startIndex = targetIndex ? Number(targetIndex) + 1: 1
-        updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', startIndex)
-        console.log('updated currentSourceSubtree', currentSourceSubtree, currentSourceSubtree.map(node => node.properties.folder))
+        // shift source siblings one to the left (only needed if the source is removed as sibling)
+        if (!isSiblingOf(source, target)) {
+            updateFolders(currentSourceSiblingtrees, currentSourceParentFolder, )
+        }
 
-        updateFolders(currentSourceSiblingtrees, currentSourceParentFolder, )
-        console.log('updated currentSourceSiblingtrees', currentSourceSiblingtrees, currentSourceSiblingtrees.map(node => node.properties.folder))
-
+        // move source tree to new position
+        updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', newStartIndex)
     }
 
     if (position === Position.lastChild) {
