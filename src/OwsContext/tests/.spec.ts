@@ -5,6 +5,7 @@ import { OWSContext } from '../types'
 import { Position } from '../enums'
 
 import {karteRpFeatures as testdata} from './data'
+import { validateFolderStructure } from '../validator'
 
 
 const getKarteRpFeatures = () => {
@@ -65,6 +66,16 @@ const getOwsContext = (): OWSContext => {
 
                     updated: new Date().toISOString(),
                     folder: '/0/2'
+                }
+            },
+            // 5
+            {
+                type: 'Feature',
+                properties: {
+                    title: '/1',
+
+                    updated: new Date().toISOString(),
+                    folder: '/1'
                 }
             }
         ]
@@ -135,7 +146,7 @@ test('wmsToOWSContext', () => {
 test('treeify success', () => {
     const tree = treeify(getOwsContext().features)
 
-    expect(tree.length).equals(1)
+    expect(tree.length).equals(2)
     expect(tree[0].children.length).equals(3)
     expect(tree[0].children[0].children.length).equals(0)
     expect(tree[0].children[1].children.length).equals(1)
@@ -212,10 +223,12 @@ test('isSiblingOf', () => {
 
     expect(isSiblingOf(context.features[1], context.features[2])).toBeTruthy()
     expect(isSiblingOf(context.features[2], context.features[4])).toBeTruthy()
+    expect(isSiblingOf(context.features[0], context.features[5])).toBeTruthy() // tree 0 is sibling of tree 1
 
     expect(isSiblingOf(context.features[0], context.features[0])).toBeFalsy()
     expect(isSiblingOf(context.features[0], context.features[3])).toBeFalsy()
 })
+
 
 test('getSiblings', () => {
     const context = getOwsContext()
@@ -401,6 +414,28 @@ test('moveFeature wald3 as right sibling of wald2', () => {
 })
 
 
+test('moveFeature wald3 as left sibling of wald', () => {
+    const karteRpFeatures = getKarteRpFeatures()
+
+    // Wald 3 left of Wald
+    const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[6], Position.left)
+    expect(features?.[6].properties.title).equals('Wald 3')
+    expect(features?.[6].properties.folder).equals('/0/1')
+
+    expect(features?.[7].properties.title).equals('Wald')
+    expect(features?.[7].properties.folder).equals('/0/2')
+
+    expect(features?.[8].properties.title).equals('Wald 1')
+    expect(features?.[8].properties.folder).equals('/0/2/0')
+
+    expect(features?.[9].properties.title).equals('Wald 2')
+    expect(features?.[9].properties.folder).equals('/0/2/1')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/1/4')
+})
+
+
 test('isLeafNode', () => {
     const context = getOwsContext()
 
@@ -409,4 +444,12 @@ test('isLeafNode', () => {
     expect(isLeafNode(context.features, context.features[2])).toBeFalsy()
     expect(isLeafNode(context.features, context.features[3])).toBeTruthy()
     expect(isLeafNode(context.features, context.features[4])).toBeTruthy()
+})
+
+
+
+test('validateFolderStructure', () => {
+    const kartRp = getKarteRpFeatures()
+    
+    expect(validateFolderStructure(kartRp)).toBeTruthy()
 })

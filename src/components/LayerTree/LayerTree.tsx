@@ -48,9 +48,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         newExpanded.splice(index, 1)
       }
     }
-    console.log('huhu')
     if ((event.target as HTMLElement).closest('.MuiSvgIcon-root') != null) {
-      console.log('hoho')
       setExpanded(newExpanded)
     }
   }, [expanded])
@@ -91,9 +89,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
     return <></>
   }, [renderTreeItemLabel])
 
-  useEffect(()=>{
-    console.log('updated expanded', expanded)
-  },[expanded])
+
 
   const treeViews = useMemo(() => {
     return trees?.map(tree => {

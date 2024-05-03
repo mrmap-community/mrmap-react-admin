@@ -3,6 +3,7 @@ import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { Position } from "./enums";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
 import {v4 as uuidv4} from 'uuid';
+import { validateFolderStructure } from "./validator";
 
 export const OWSContextDocument = (
     id: string = uuidv4(),
@@ -139,7 +140,7 @@ export const getNextRootId = (features: OWSResource[]) => {
 export const treeify = (features: OWSResource[]): TreeifiedOWSResource[] => {
     const trees: TreeifiedOWSResource[] = []
 
-    features.forEach(feature => {
+    JSON.parse(JSON.stringify(features)).forEach((feature: OWSResource) => {
       // by default the order of the features array may be used to visualize the layer structure.
       // if there is a folder attribute setted; this should be used and overwrites the array order
       // feature.properties.folder && jsonpointer.set(trees, feature.properties.folder, feature)
@@ -283,9 +284,10 @@ export const isChildOf = (child: OWSResource, parent: OWSResource) => {
 export const isSiblingOf = (siblingA: OWSResource, siblingB: OWSResource) => {
     return siblingA.properties.folder !== undefined &&
     siblingB.properties.folder !== undefined &&
-    siblingA.properties.folder.split('/').length > 2 &&
-    siblingB.properties.folder.split('/').length > 2 &&
-    getParentFolder(siblingA)  === getParentFolder(siblingB)
+    siblingA.properties.folder.split('/').length >= 2 &&
+    siblingB.properties.folder.split('/').length >= 2 &&
+    getParentFolder(siblingA) === getParentFolder(siblingB) &&
+    siblingA !== siblingB
 }
 
 export const getDescandants = (features: OWSResource[], ancestor: OWSResource, includeSelf: boolean = false) => {
@@ -313,7 +315,18 @@ export const getLastChildIndex = (features: OWSResource[], parent: OWSResource) 
 }
 
 export const sortFeaturesByFolder = (features: OWSResource[]) => {
-    features.sort((a, b) =>  a.properties.folder?.localeCompare(b.properties.folder ?? '') ?? -1)
+    features.sort((a, b) => {
+        const pathA = a.properties.folder?.split('/').map(Number);
+        const pathB = b.properties.folder?.split('/').map(Number);
+        if (pathA === undefined || pathB === undefined) return -1
+
+        for (let i = 0; i < Math.min(pathA.length, pathB.length); i++) {
+            if (pathA[i] !== pathB[i]) {
+                return pathA[i] - pathB[i];
+            }
+        }
+        return pathA.length - pathB.length;
+    });
     return features
 }
 
@@ -329,6 +342,10 @@ export const getSiblings = (features: OWSResource[], source: OWSResource, includ
         }
         return node.properties.folder && new RegExp(regex).test(node.properties.folder) 
     })
+}
+
+export const getRootNodeIndex = (feature: OWSResource): number => {
+    return Number(feature.properties.folder?.split('/')[0])
 }
 
 export const getNodeIndex = (feature: OWSResource): number => {
@@ -361,27 +378,29 @@ export const updateFolders = (
     const newRootFolders = newRootPath.split('/')
     const oldRootFolders = tree[0].properties.folder.split('/')
 
-    const subtreeDepthIndexes: any = {'0': startIndex}
-    
+    const subtreeDepthIndexes: any = {'/0': startIndex}
+
     tree.forEach((node) => {
         if (node.properties.folder === undefined) return
+
+        const currentPath = getParentFolder(node) ?? node.properties.folder
 
         const nodeFolders = node.properties.folder.split('/')
         const currentDepth = nodeFolders.length - oldRootFolders.length
 
-
-        if (!subtreeDepthIndexes.hasOwnProperty(currentDepth.toString())){
+        if (!subtreeDepthIndexes.hasOwnProperty(currentPath)){
             // set starting index if not exist
-            subtreeDepthIndexes[currentDepth.toString()] = 0
+            subtreeDepthIndexes[currentPath] = 0
         }
         
         // initial with one empty string to get a leading / after joining
         const newNodeFolders = [...newRootFolders]
 
-        // iterate over all depths and set 
+        // iterate over all depths and set correct index
         for (let depth = 0; depth <= currentDepth; depth++) {
-            const anchestorIndex = subtreeDepthIndexes[depth.toString()] - 1 // reduce by 1 cause the cache stores incremented values
-            const index = depth === currentDepth ? subtreeDepthIndexes[depth.toString()]: anchestorIndex
+            const parentPath = currentPath.split('/').slice(0, currentDepth).join('/')
+            const anchestorIndex = subtreeDepthIndexes[parentPath] - 1 // reduce by 1 cause the cache stores incremented values
+            const index = depth === currentDepth ? subtreeDepthIndexes[currentPath]: anchestorIndex
             newNodeFolders.push(index.toString())
         }
 
@@ -389,7 +408,7 @@ export const updateFolders = (
         node.properties.folder = newNodeFolders.join('/')
 
         // increase index for next possible sibling
-        subtreeDepthIndexes[currentDepth]++ 
+        subtreeDepthIndexes[currentPath]++ 
     })
     
 }
@@ -400,7 +419,9 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
         source === target
     ) return features
 
-    
+    validateFolderStructure(features)
+
+
     const folderPathToBeReplaced = getParentFolder(source)
     if (folderPathToBeReplaced === undefined) return features
     const regex = new RegExp(`^${folderPathToBeReplaced}+`)
@@ -424,9 +445,7 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
     const currentSourceParentFolderIndex = source.properties.folder?.split('/').length - 1
     const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
     const futureSiblings = getDescandants(features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
-    
-    const currentTargetSiblings = getSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
-     
+    const currentTargetRightSiblingsIncludeSelf = getRightSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
     const currentSourceParentFolder = getParentFolder(source) ?? '/'
     const currentTargetRightSiblings = getRightSiblings(features, target, false, true).filter(feature => {
         return !currentSourceSubtree.includes(feature)
@@ -444,10 +463,20 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
             node.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path    
         })
     } else if (position === Position.left){
+        const targetIndex = getNodeIndex(target)
+        const newStartIndex = targetIndex || 0
+
+        // TODO: get left siblings instead of right
+        //if (currentTargetRightSiblings[0] && getNodeIndex(currentTargetRightSiblings[0]) - 1 === newStartIndex) return features // same position... nothing to do here
+
         // move source subtrees to target position
-        updateFolders(currentSourceSubtree, getParentFolder(target) ?? '')
-        // move all siblings one position right
-        updateFolders(currentTargetSiblings, getParentFolder(target) ?? '', 1)       
+        updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', newStartIndex)
+
+        // shift all right siblings of target one to the right (make some space for source tree to insert it)
+        const nextRightStartIndex = currentTargetRightSiblingsIncludeSelf[0] !== undefined ? getNodeIndex(currentTargetRightSiblingsIncludeSelf[0]) + 1: getLastChildIndex(features, target) + 1
+        if (nextRightStartIndex === undefined) return features
+        updateFolders(currentTargetRightSiblingsIncludeSelf, getParentFolder(target) ?? '', nextRightStartIndex)       
+
 
     } else if (position === Position.right){     
         const targetIndex = getNodeIndex(target)
@@ -492,6 +521,14 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
     } 
 
     sortFeaturesByFolder(features)
+    try {
+        validateFolderStructure(features)
+
+    } catch (error) {
+        console.log(features)
+        throw(error)
+    }
+
     return features
 }
 

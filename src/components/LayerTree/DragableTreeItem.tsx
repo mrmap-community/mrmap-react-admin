@@ -47,7 +47,13 @@ export interface DragableTreeItemProps extends TreeItemProps{
           const targetFolder = evt.to.dataset.owscontextFolder
           if (targetFolder === undefined) return
           const target = findNodeByFolder(features, targetFolder)
-  
+          
+          // get the correct source object (not a shallow coppy)
+          const sourceFolder = node.properties.folder
+          if (sourceFolder === undefined) return
+          const source = findNodeByFolder(features, sourceFolder)
+          if (source == undefined) return
+
           if (target === undefined) {
             // undefined signals new subtree move event
             // move the node as child to the fictive parent
@@ -56,13 +62,13 @@ export interface DragableTreeItemProps extends TreeItemProps{
             if (parentFolder === undefined) return
             const parent = findNodeByFolder(features, parentFolder)
             if (parent === undefined) return
-            moveFeature(node, parent, Position.firstChild)          
+            moveFeature(source, parent, Position.firstChild)          
           } else {
             const newIndex = evt.newIndex
             if (newIndex === 0) {
-              moveFeature(node, target, Position.left)
+              moveFeature(source, target, Position.left)
             } else if (newIndex === 1) {
-              moveFeature(node, target, Position.right)
+              moveFeature(source, target, Position.right)
             }
           }
   
