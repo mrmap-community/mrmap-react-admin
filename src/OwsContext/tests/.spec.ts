@@ -470,6 +470,55 @@ test('moveFeature wald3 as left sibling of wald', () => {
 })
 
 
+test('moveFeature sequence', () => {
+    const karteRpFeatures = getKarteRpFeatures()
+
+    // Wald 3 left of Wald
+    const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[6], Position.left)
+    
+    expect(features?.[6].properties.title).equals('Wald 3')
+    expect(features?.[6].properties.folder).equals('/0/1')
+
+    expect(features?.[7].properties.title).equals('Wald')
+    expect(features?.[7].properties.folder).equals('/0/2')
+
+    expect(features?.[8].properties.title).equals('Wald 0')
+    expect(features?.[8].properties.folder).equals('/0/2/0')
+
+    expect(features?.[9].properties.title).equals('Wald 1')
+    expect(features?.[9].properties.folder).equals('/0/2/1')
+
+    expect(features?.[10].properties.title).equals('Wald 2')
+    expect(features?.[10].properties.folder).equals('/0/2/2')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/2/3')
+
+    // Wald 2 left of Wald 3
+    moveFeature(features, features[10], features[6], Position.left)
+
+    expect(features?.[6].properties.title).equals('Wald 2')
+    expect(features?.[6].properties.folder).equals('/0/1')
+
+    expect(features?.[7].properties.title).equals('Wald 3')
+    expect(features?.[7].properties.folder).equals('/0/2')
+
+    expect(features?.[8].properties.title).equals('Wald')
+    expect(features?.[8].properties.folder).equals('/0/3')
+
+    expect(features?.[9].properties.title).equals('Wald 0')
+    expect(features?.[9].properties.folder).equals('/0/3/0')
+
+    expect(features?.[10].properties.title).equals('Wald 1')
+    expect(features?.[10].properties.folder).equals('/0/3/1')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/3/2')
+
+
+})
+
+
 test('isLeafNode', () => {
     const context = getOwsContext()
 
