@@ -423,6 +423,27 @@ test('moveFeature wald3 as right sibling of wald2', () => {
 })
 
 
+test('moveFeature wald3 as first child of wald2', () => {
+    const karteRpFeatures = getKarteRpFeatures()
+
+    // Wald 3 as first child of Wald 2
+    const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[9], Position.firstChild)
+    expect(features?.[7].properties.title).equals('Wald 0')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
+
+    expect(features?.[8].properties.title).equals('Wald 1')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
+
+    expect(features?.[9].properties.title).equals('Wald 2')
+    expect(features?.[9].properties.folder).equals('/0/1/2')
+
+    expect(features?.[10].properties.title).equals('Wald 3')
+    expect(features?.[10].properties.folder).equals('/0/1/2/0')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/1/3')
+})
+
 test('moveFeature wald3 as left sibling of wald', () => {
     const karteRpFeatures = getKarteRpFeatures()
 

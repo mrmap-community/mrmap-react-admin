@@ -101,6 +101,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
           onNodeExpansionToggle={handleToggle}
           defaultExpandedNodes={defaultExpandedNodes}
           expandedNodes={expanded}
+          onSelectedNodesChange={(event, nodeIds) => {console.log(event, nodeIds)}}
           slots={{
            
           }}

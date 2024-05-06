@@ -432,53 +432,25 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
 
     validateFolderStructure(features)
 
-
-    const folderPathToBeReplaced = getParentFolder(source)
-    if (folderPathToBeReplaced === undefined) return features
-    const regex = new RegExp(`^${folderPathToBeReplaced}+`)
-
-    let relativPosition = 0 
-
-    if (position === Position.lastChild) {
-        // if there are no childs, set foldername to -1 which will result in index 0
-        const lastChildFolderName = getLastChild(features, target)?.properties.folder?.replace(regex, '')[1] ?? '-1'
-        relativPosition = Number(lastChildFolderName) + 1
-    } else if (position === Position.firstChild) {
-        relativPosition = 0
-    } 
-
     // first of all, get the objects before manipulating data. 
     // All filter functions will retun subsets with shallow copys
     const currentSourceSubtree = getDescandants(features, source, true)
     const currentSourceSiblings = getSiblings(features, source, false, false)
     const currentSourceSiblingtrees = getSiblings(features, source, false, true)
 
-    const currentSourceParentFolderIndex = source.properties.folder?.split('/').length - 1
-    const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
-    const futureSiblings = getDescandants(features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
-    const currentTargetRightSiblingsIncludeSelf = getRightSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
     const currentSourceParentFolder = getParentFolder(source) ?? '/'
+    const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
+    
+    const futureSiblings = getDescandants(features, target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
+    
+    const currentTargetRightSiblingsIncludeSelf = getRightSiblings(features, target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
     const currentTargetRightSiblings = getRightSiblings(features, target, false, true).filter(feature => {
         return !currentSourceSubtree.includes(feature)
     })
 
-    // move source subtree 
-    if (position === Position.lastChild || position === Position.firstChild){
-        currentSourceSubtree.forEach(node => {
-            if (node.properties.folder === undefined || target.properties.folder === undefined) return
-    
-            node.properties.folder = node.properties.folder.replace(regex, '') // remove old parent
-            const nodePaths = node.properties.folder.split('/')
-            nodePaths[1] = relativPosition.toString() // set new sub tree root folder
-    
-            node.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path    
-        })
-    } else if (position === Position.left){
+    if (position === Position.left){
         const targetIndex = getNodeIndex(target)
         const newStartIndex = targetIndex || 0
-
-        // TODO: get left siblings instead of right
-        //if (currentTargetRightSiblings[0] && getNodeIndex(currentTargetRightSiblings[0]) - 1 === newStartIndex) return features // same position... nothing to do here
 
         // move source subtrees to target position
         updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', newStartIndex)
@@ -511,24 +483,23 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
 
     if (position === Position.lastChild) {
         // shift siblings to setup an ascending folder structure without spaces
-        currentSourceSiblings.forEach((node, index) => {
-            getDescandants(features, node, true).forEach(n => {
-                if (n.properties.folder === undefined) return
+        updateFolders(currentSourceSiblings, currentSourceParentFolder)
+        // move source subtree to target position
+        const lastChildFolderName = getLastChildIndex(features, target)
+        const relativPosition = Number(lastChildFolderName) + 1
+        updateFolders(currentSourceSubtree, target.properties.folder, relativPosition)
 
-                const folders = n.properties.folder.split('/')
-                folders[currentSourceParentFolderIndex] = index.toString()
-                n.properties.folder = folders.join('/')
-            })
-        })
     } else if (position === Position.firstChild){
+        // move source subtree to target position
+        updateFolders(currentSourceSubtree, target.properties.folder, 0)
         // shift all siblings subtrees behind the first child
-        futureSiblings.forEach((sibling, index) => {
-            if (sibling.properties.folder === undefined || target.properties.folder === undefined) return
-            sibling.properties.folder = sibling.properties.folder.replace(new RegExp(`^${target.properties.folder}`), '') // remove old parent
-            const nodePaths = sibling.properties.folder.split('/')
-            nodePaths[1] = (index + 1).toString() // set new sub tree root index
-            sibling.properties.folder = target.properties.folder + nodePaths.join('/') // set new parent folder path
-        })
+        updateFolders(futureSiblings, target.properties.folder, 1)
+        if (currentSourceParentFolder !== target.properties.folder){
+            // shift all current source siblings to generate gap free ascendant index structure
+            // only needed if current source parent is not the same 
+            updateFolders(currentSourceSiblings, currentSourceParentFolder, )
+        }
+
     } 
 
     sortFeaturesByFolder(features)
