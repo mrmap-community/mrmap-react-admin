@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useRef } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useMemo } from 'react'
 
 import { TreeItem } from '@mui/x-tree-view'
 import { useMapViewerContext } from '../MapViewer/MapViewerContext'
@@ -9,15 +9,21 @@ import Sortable from 'sortablejs'
 import { TreeItemProps } from '@mui/lab'
 import { findNodeByFolder, getParentFolder, isLeafNode } from '../../OwsContext/utils'
 import { Position } from '../../OwsContext/enums'
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 
+// TODO: typeof should be any other type
+function ImaginaryIcon(props: React.PropsWithoutRef<typeof KeyboardArrowRightIcon>) {
+  return <div />;
+}
 export interface DragableTreeItemProps extends TreeItemProps{
     node: TreeifiedOWSResource
     sortable?: Sortable.Options
     imaginary?: boolean
   }
   
-  export const DragableTreeItem = ({
+export const DragableTreeItem = ({
     node,
     sortable,
     imaginary = false,
@@ -82,15 +88,22 @@ export interface DragableTreeItemProps extends TreeItemProps{
       createSortable()
     },[])
   
+
+    const isLeaf = useMemo(() => isLeafNode(features, node),[features, node])
+
     return (
       <TreeItem
         ref={ref}
-        nodeId={node.properties.folder}
+        nodeId={imaginary ? uuidv4(): node.properties.folder}
+        slots={{
+          expandIcon: !isLeaf ? KeyboardArrowRightIcon: ImaginaryIcon,
+          collapseIcon: !isLeaf ? KeyboardArrowDownIcon: ImaginaryIcon
+        }}
         {...props}
         data-owscontext-folder={imaginary ? `${node.properties.folder}/0`: node.properties.folder}
       >
         {/* imaginary child node to create new childs */}
-        {!imaginary && isLeafNode(features, node) ? <DragableTreeItem node={node} imaginary={true}></DragableTreeItem>: null}
+        {!imaginary && isLeaf ? <DragableTreeItem node={node} imaginary={true}></DragableTreeItem>: null}
         {/* append all origin children too */}
         {props.children}
       </TreeItem>

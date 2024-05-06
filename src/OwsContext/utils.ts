@@ -1,4 +1,4 @@
-import { isString, last } from "lodash";
+import { isString } from "lodash";
 import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { Position } from "./enums";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
@@ -174,7 +174,6 @@ export const treeify = (features: OWSResource[]): TreeifiedOWSResource[] => {
 
     return trees
 }
-
 
 export const treeToList = (node: TreeifiedOWSResource) => {
     const flatNodes = [node]
@@ -369,6 +368,10 @@ export const getRightSiblings = (features: OWSResource[], source:OWSResource, in
     })
 }
 
+export const getLeafNodes = (features: OWSResource[]) => {
+    return features.filter(feature => isLeafNode(features, feature))
+}
+
 export const updateFolders = (
     tree: OWSResource[], 
     newRootPath: string = '',
@@ -539,7 +542,6 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
 
     return features
 }
-
 
 export const findNodeByFolder = (features: OWSResource[], folder: string) => {
     return features.find(feature => feature.properties.folder === folder)

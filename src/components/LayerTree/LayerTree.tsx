@@ -7,8 +7,8 @@ import TreeNodeCheckbox from '../MapViewer/NodeCheckbox'
 import { type Map } from 'leaflet'
 import { TreeifiedOWSResource } from '../../OwsContext/types'
 import { DragableTreeItem } from './DragableTreeItem'
-
-
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { getLeafNodes } from '../../OwsContext/utils'
 
 export interface LayerTreeProps {
   map?: Map
@@ -30,14 +30,18 @@ const darkStyle = {
   ...style,
 }
 
-
 const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
-  const { trees } = useMapViewerContext()
+  const { trees, features } = useMapViewerContext()
   const [expanded, setExpanded] = useState<string[]>([])
+
+  const defaultExpandedNodes = useMemo(()=> {
+    return getLeafNodes(features).map(feature => feature.properties.folder?? '')
+  },[features])
+
 
   const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
 
-    const newExpanded = [...expanded]
+    const newExpanded = [...expanded, ...defaultExpandedNodes]
     if (isExpanded) {
       if (!newExpanded.includes(nodeId)) {
         newExpanded.push(nodeId)
@@ -89,6 +93,9 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
     return <></>
   }, [renderTreeItemLabel])
 
+  
+
+  console.log(defaultExpandedNodes)
 
 
   const treeViews = useMemo(() => {
@@ -97,8 +104,11 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         <SimpleTreeView
           key={tree.id}
           onNodeExpansionToggle={handleToggle}
+          defaultExpandedNodes={defaultExpandedNodes}
           expandedNodes={expanded}
-          multiSelect
+          slots={{
+           
+          }}
         >
           
           {renderTree(tree)}

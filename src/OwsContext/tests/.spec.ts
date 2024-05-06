@@ -428,7 +428,6 @@ test('moveFeature wald3 as left sibling of wald', () => {
 
     // Wald 3 left of Wald
     const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[6], Position.left)
-    console.log(features)
     
     expect(features?.[6].properties.title).equals('Wald 3')
     expect(features?.[6].properties.folder).equals('/0/1')
