@@ -1,12 +1,21 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, wmsToOWSResources } from '../utils'
-import { OWSContext } from '../types'
+import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, updateFolders, wmsToOWSResources } from '../utils'
+import { OWSContext, OWSResource } from '../types'
 import { Position } from '../enums'
 
 import {karteRpFeatures as testdata} from './data'
 import { validateFolderStructure } from '../validator'
 
+const getOwsResource = (title:string, folder: string): OWSResource => {
+    return {
+        type: 'Feature', 
+        properties: {
+            title: title,
+            updated: '',
+            folder: folder}
+    }
+}
 
 const getKarteRpFeatures = () => {
     return JSON.parse(JSON.stringify(testdata))
@@ -419,20 +428,25 @@ test('moveFeature wald3 as left sibling of wald', () => {
 
     // Wald 3 left of Wald
     const features = moveFeature(karteRpFeatures, karteRpFeatures[10], karteRpFeatures[6], Position.left)
+    console.log(features)
+    
     expect(features?.[6].properties.title).equals('Wald 3')
     expect(features?.[6].properties.folder).equals('/0/1')
 
     expect(features?.[7].properties.title).equals('Wald')
     expect(features?.[7].properties.folder).equals('/0/2')
 
-    expect(features?.[8].properties.title).equals('Wald 1')
+    expect(features?.[8].properties.title).equals('Wald 0')
     expect(features?.[8].properties.folder).equals('/0/2/0')
 
-    expect(features?.[9].properties.title).equals('Wald 2')
+    expect(features?.[9].properties.title).equals('Wald 1')
     expect(features?.[9].properties.folder).equals('/0/2/1')
 
+    expect(features?.[10].properties.title).equals('Wald 2')
+    expect(features?.[10].properties.folder).equals('/0/2/2')
+
     expect(features?.[11].properties.title).equals('Wald 4')
-    expect(features?.[11].properties.folder).equals('/0/1/4')
+    expect(features?.[11].properties.folder).equals('/0/2/3')
 })
 
 
@@ -453,3 +467,91 @@ test('validateFolderStructure', () => {
     
     expect(validateFolderStructure(kartRp)).toBeTruthy()
 })
+
+
+test('updateFoders without start index', () => {
+    const resources: OWSResource[] = [
+        getOwsResource('/1', '/1'),
+        getOwsResource('/1/2', '/1/2'),
+        getOwsResource('/1/2/0', '/1/2/0'),
+        getOwsResource('/1/2/3', '/1/2/3'),
+    ]
+
+    const expected: OWSResource[] = [
+        getOwsResource('/1', '/0/0/0'),
+        getOwsResource('/1/2', '/0/0/0/0'),
+        getOwsResource('/1/2/0', '/0/0/0/0/0'),
+        getOwsResource('/1/2/3', '/0/0/0/0/1'),
+
+    ]
+
+    updateFolders(resources, '/0/0', )
+
+    expect(resources).toMatchObject(expected)
+})
+
+
+test('updateFoders with start index', () => {
+    const resources: OWSResource[] = [
+        getOwsResource('/1', '/1'),
+        getOwsResource('/1/2', '/1/2'),
+        getOwsResource('/1/2/0', '/1/2/0'),
+        getOwsResource('/1/2/3', '/1/2/3'),
+    ]
+
+    const expected: OWSResource[] = [
+        getOwsResource('/1', '/0/0/2'),
+        getOwsResource('/1/2', '/0/0/2/0'),
+        getOwsResource('/1/2/0', '/0/0/2/0/0'),
+        getOwsResource('/1/2/3', '/0/0/2/0/1'),
+    ]
+
+    updateFolders(resources, '/0/0', 2)
+
+    expect(resources).toMatchObject(expected)
+})
+
+test('updateFoders without new path without start index', () => {
+    const resources: OWSResource[] = [
+        getOwsResource('/1', '/1'),
+        getOwsResource('/1/2', '/1/2'),
+        getOwsResource('/1/2/0', '/1/2/0'),
+        getOwsResource('/1/2/3', '/1/2/3'),
+
+    ]
+
+    const expected: OWSResource[] = [
+        getOwsResource('/1', '/0'),
+        getOwsResource('/1/2', '/0/0'),
+        getOwsResource('/1/2/0', '/0/0/0'),
+        getOwsResource('/1/2/3', '/0/0/1'),
+
+    ]
+
+    updateFolders(resources, '', )
+
+    expect(resources).toMatchObject(expected)
+})
+
+test('updateFoders with new path without start index', () => {
+    const resources: OWSResource[] = [
+        getOwsResource('/1', '/1'),
+        getOwsResource('/1/2', '/1/2'),
+        getOwsResource('/1/2/0', '/1/2/0'),
+        getOwsResource('/1/2/3', '/1/2/3'),
+        getOwsResource('/1/3', '/1/4'),
+    ]
+
+    const expected: OWSResource[] = [
+        getOwsResource('/1', '/2/4/0'),
+        getOwsResource('/1/2', '/2/4/0/0'),
+        getOwsResource('/1/2/0', '/2/4/0/0/0'),
+        getOwsResource('/1/2/3', '/2/4/0/0/1'),
+        getOwsResource('/1/3', '/2/4/0/1'),
+    ]
+
+    updateFolders(resources, '/2/4', )
+
+    expect(resources).toMatchObject(expected)
+})
+

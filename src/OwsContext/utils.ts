@@ -371,44 +371,52 @@ export const getRightSiblings = (features: OWSResource[], source:OWSResource, in
 
 export const updateFolders = (
     tree: OWSResource[], 
-    newRootPath: string,
+    newRootPath: string = '',
     startIndex: number = 0) => {
     if (tree[0]?.properties.folder === undefined) return
 
     const newRootFolders = newRootPath.split('/')
     const oldRootFolders = tree[0].properties.folder.split('/')
 
-    const subtreeDepthIndexes: any = {'/0': startIndex}
+    const subtreeDepthIndexes: any = {'0': startIndex }
+    
+    let lastDepth = 0
 
     tree.forEach((node) => {
         if (node.properties.folder === undefined) return
 
-        const currentPath = getParentFolder(node) ?? node.properties.folder
-
         const nodeFolders = node.properties.folder.split('/')
         const currentDepth = nodeFolders.length - oldRootFolders.length
 
-        if (!subtreeDepthIndexes.hasOwnProperty(currentPath)){
+        if (lastDepth > currentDepth){
+            // we climb up the tree. In that case the lastDepth index need to be reseted
+            subtreeDepthIndexes[lastDepth.toString()] = 0
+        }
+
+        if (!subtreeDepthIndexes.hasOwnProperty(currentDepth.toString())){
             // set starting index if not exist
-            subtreeDepthIndexes[currentPath] = 0
+            subtreeDepthIndexes[currentDepth.toString()] = 0
         }
         
         // initial with one empty string to get a leading / after joining
         const newNodeFolders = [...newRootFolders]
 
+        // iterate over all depths and set 
         // iterate over all depths and set correct index
         for (let depth = 0; depth <= currentDepth; depth++) {
-            const parentPath = currentPath.split('/').slice(0, currentDepth).join('/')
-            const anchestorIndex = subtreeDepthIndexes[parentPath] - 1 // reduce by 1 cause the cache stores incremented values
-            const index = depth === currentDepth ? subtreeDepthIndexes[currentPath]: anchestorIndex
+            
+            let index
+            if (currentDepth === depth){
+                index = subtreeDepthIndexes[depth.toString()]; 
+            } else {
+                index = subtreeDepthIndexes[depth.toString()] - 1; // reduce by 1 cause the cache stores incremented values
+            }
             newNodeFolders.push(index.toString())
+           
         }
-
-        // // append folder for this node
+        subtreeDepthIndexes[currentDepth.toString()] ++
+        lastDepth = currentDepth
         node.properties.folder = newNodeFolders.join('/')
-
-        // increase index for next possible sibling
-        subtreeDepthIndexes[currentPath]++ 
     })
     
 }
