@@ -93,11 +93,6 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
     return <></>
   }, [renderTreeItemLabel])
 
-  
-
-  console.log(defaultExpandedNodes)
-
-
   const treeViews = useMemo(() => {
     return trees?.map(tree => {
       return (
