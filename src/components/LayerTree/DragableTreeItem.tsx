@@ -82,7 +82,7 @@ export const DragableTreeItem = ({
         ...sortable
       })
   
-    }, [ref, moveFeature])
+    }, [features, ref, moveFeature])
   
     useEffect(()=>{
       createSortable()

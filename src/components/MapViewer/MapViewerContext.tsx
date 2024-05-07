@@ -204,7 +204,11 @@ const sizeToDisplay = (size: Point): CreatorDisplay => {
   }
 }
 
-export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
+export interface MapViewerBaseProps extends PropsWithChildren {
+  initialFeatures?: OWSResource[] 
+}
+
+export const MapViewerBase = ({ initialFeatures = [], children }: MapViewerBaseProps): ReactNode => {
   /** map specific states */
   const [map, setMap] = useState<Map>()
 
@@ -215,7 +219,7 @@ export const MapViewerBase = ({ children }: PropsWithChildren): ReactNode => {
   // area of interest in crs 4326
   const [bbox, setBbox] = useState<BBox>(map?.getBounds() ? boundsToBbox(map.getBounds()) : [-180, -90, 180, 90])
   const [display, setDisplay] = useState<CreatorDisplay>(map?.getSize() ? sizeToDisplay(map.getSize()): {})
-  const [features, setFeatures] = useState<OWSResource[]>([])
+  const [features, setFeatures] = useState<OWSResource[]>(initialFeatures)
   
   const owsContext = useMemo(()=>{
     const doc = OWSContextDocument()
