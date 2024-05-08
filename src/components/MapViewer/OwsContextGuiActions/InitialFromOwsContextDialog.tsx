@@ -6,7 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { ReactNode } from 'react';
-import { useMapViewerContext } from '../MapViewerContext';
+import { useOwsContextBase } from '../../../react-ows-lib/ContextProvider/OwsContextBase';
 
 
 export interface InitialFromOwsContextDialogProps {
@@ -16,7 +16,7 @@ export interface InitialFromOwsContextDialogProps {
 
 
 const InitialFromOwsContextDialog = ({open, setOpen}: InitialFromOwsContextDialogProps): ReactNode => {
-  const { initialFromOwsContext } = useMapViewerContext() 
+  const { initialFromOwsContext } = useOwsContextBase() 
 
   return (
       <Dialog

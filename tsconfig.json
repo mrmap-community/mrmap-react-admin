@@ -22,8 +22,10 @@
   },
   "include": [
     "src/**/*",
-    "__tests__/**/*"
-, "src/OwsContext/tests/.spec.ts", "src/XMLParser/tests/.spec.js"  ],
+    "__tests__/**/*",
+    "src/ows-lib/OwsContext/tests/.spec.ts",
+    "src/ows-lib/XMLParser/tests/.spec.js"
+  ],
   "exclude": [
     "node_modules",
     "build",

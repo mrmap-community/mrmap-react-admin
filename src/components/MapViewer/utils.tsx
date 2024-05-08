@@ -1,5 +1,5 @@
 import { Identifier, type RaRecord } from 'react-admin'
-import { WMSTree, type TreeNode } from './MapViewerContext'
+import { WMSTree, type TreeNode } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import { LatLng, LatLngBounds } from 'leaflet'
 import type { Polygon } from 'geojson'
 

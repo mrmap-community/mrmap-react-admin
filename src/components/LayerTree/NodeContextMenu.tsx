@@ -1,7 +1,7 @@
 
 import { type ReactNode, type MouseEvent, useCallback, useState } from 'react'
 
-import { type TreeNode, useMapViewerContext } from '../MapViewer/MapViewerContext'
+import { type TreeNode, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
@@ -26,7 +26,7 @@ interface NodeContextMenuProps {
       mouseY: number
     } | null>(null)
   
-    const { setEditor } = useMapViewerContext()
+    const { setEditor } = useOwsContextBase()
     const { bottomDrawer, setBottomDrawer } = useDrawerContext()
     const { tabList, setTabList } = useTabListContext()
     //const { removeWmsTree, moveTreeUp, moveTreeDown } = useMapViewerContext()

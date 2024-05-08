@@ -1,14 +1,14 @@
 import { type ReactNode, useCallback, useEffect, useRef, useMemo } from 'react'
 
 import { TreeItem } from '@mui/x-tree-view'
-import { useMapViewerContext } from '../MapViewer/MapViewerContext'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
-import { TreeifiedOWSResource } from '../../OwsContext/types'
+import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
 import {v4 as uuidv4} from 'uuid'
 import Sortable from 'sortablejs'
 import { TreeItemProps } from '@mui/lab'
-import { findNodeByFolder, getParentFolder, isLeafNode } from '../../OwsContext/utils'
-import { Position } from '../../OwsContext/enums'
+import { findNodeByFolder, getParentFolder, isLeafNode } from '../../ows-lib/OwsContext/utils'
+import { Position } from '../../ows-lib/OwsContext/enums'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
@@ -30,7 +30,7 @@ export const DragableTreeItem = ({
     ...props
   }: DragableTreeItemProps): ReactNode => {
     const ref = useRef(null)
-    const { features, moveFeature } = useMapViewerContext()
+    const { features, moveFeature } = useOwsContextBase()
   
     const createSortable = useCallback(()=>{
       if (ref.current === null || ref.current === undefined) return

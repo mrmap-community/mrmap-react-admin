@@ -6,7 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { ReactNode } from 'react';
-import { useMapViewerContext } from '../MapViewerContext';
+import { useOwsContextBase } from '../../../react-ows-lib/ContextProvider/OwsContextBase';
 
 
 export interface AddResourceDialogProps {
@@ -16,7 +16,7 @@ export interface AddResourceDialogProps {
 
 
 const AddResourceDialog = ({open, setOpen}: AddResourceDialogProps): ReactNode => {
-  const { addWMSByUrl } = useMapViewerContext() 
+  const { addWMSByUrl } = useOwsContextBase() 
 
   return (
       <Dialog

@@ -8,7 +8,7 @@ import { type LatLng, type Map, type Point, CRS } from 'leaflet'
 import BottomDrawer from '../Drawer/BottomDrawer'
 import RightDrawer from '../Drawer/RightDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
-import { MapViewerBase, useMapViewerContext } from './MapViewerContext'
+import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import LayerTree from '../LayerTree/LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
@@ -38,8 +38,8 @@ const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
   const mapRef = useRef(map)
-  const { setMap: setMapContext } = useMapViewerContext()
-  const { tiles } = useMapViewerContext()
+  const { setMap: setMapContext } = useOwsContextBase()
+  const { tiles } = useOwsContextBase()
   const tilesRef = useRef(tiles)
 
   const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
@@ -217,10 +217,10 @@ const MapViewerCore = (): ReactNode => {
 
 const MapViewer = ({ children }: PropsWithChildren): ReactNode => {
   return (
-    <MapViewerBase>
+    <OwsContextBase>
       <MapViewerCore />
       {children}
-    </MapViewerBase>
+    </OwsContextBase>
 
   )
 }

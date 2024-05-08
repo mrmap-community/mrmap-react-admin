@@ -2,16 +2,16 @@ import { type ChangeEvent, type ReactNode, useCallback, useMemo, MouseEvent } fr
 
 import { Checkbox } from '@mui/material'
 
-import { useMapViewerContext } from './MapViewerContext'
-import { OWSResource, TreeifiedOWSResource } from '../../OwsContext/types'
-import { isAncestorOf } from '../../OwsContext/utils'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
+import { OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
+import { isAncestorOf } from '../../ows-lib/OwsContext/utils'
 
 export interface TreeNodeCheckboxProps {
   node: TreeifiedOWSResource
 }
 
 const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
-  const { features, setFeatureActive } = useMapViewerContext()
+  const { features, setFeatureActive } = useOwsContextBase()
 
   const handleChange = useCallback((event: ChangeEvent | MouseEvent, checked?: boolean) => {
     event.stopPropagation()

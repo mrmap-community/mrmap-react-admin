@@ -1,7 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
-import { useMapViewerContext } from './MapViewerContext'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import { FormGroup } from '@mui/material'
 import { boundsToGeoJSON, featuresToCollection, latLngToGeoJSON, polygonToFeature } from './utils'
 import type { Polygon } from 'geojson'
@@ -17,7 +17,7 @@ const DisplayPosition = ({
   crsBbox
 }: DisplayPositionProps): ReactNode => {
 
-  const { map } = useMapViewerContext()
+  const { map } = useOwsContextBase()
 
   const [position, setPosition] = useState(() => map?.getCenter())
   const [bounds, setBounds] = useState(() => map?.getBounds())
@@ -76,7 +76,7 @@ const DisplayPosition = ({
 
 
 const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
-  const { crsIntersection, selectedCrs, setSelectedCrs } = useMapViewerContext()
+  const { crsIntersection, selectedCrs, setSelectedCrs } = useOwsContextBase()
 
   const [crs, setCrs] = useState<string>(selectedCrs?.stringRepresentation ?? 'EPSG:4326')
 
