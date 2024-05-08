@@ -4,13 +4,12 @@ import { SimpleTreeView } from '@mui/x-tree-view'
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import TreeNodeCheckbox from '../MapViewer/NodeCheckbox'
 
-import { type Map } from 'leaflet'
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
 import { DragableTreeItem } from './DragableTreeItem'
 import { getLeafNodes } from '../../ows-lib/OwsContext/utils'
 
 export interface LayerTreeProps {
-  map?: Map
+  initialExpanded?: string[]
 }
 
 const style = {
@@ -29,14 +28,16 @@ const darkStyle = {
   ...style,
 }
 
-const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
+const LayerTree = ({ 
+  initialExpanded = [] 
+}: LayerTreeProps): ReactNode => {
   const { trees, features } = useOwsContextBase()
-  const [expanded, setExpanded] = useState<string[]>([])
 
   const defaultExpandedNodes = useMemo(()=> {
     return getLeafNodes(features).map(feature => feature.properties.folder?? '')
   },[features])
 
+  const [expanded, setExpanded] = useState<string[]>([...initialExpanded, ...defaultExpandedNodes])
 
   const handleToggle = useCallback((event: SyntheticEvent, nodeId: string, isExpanded: boolean): void => {
 
@@ -71,7 +72,7 @@ const LayerTree = ({ map }: LayerTreeProps): ReactNode => {
         {/* <ContextMenu node={node} map={map}/> */}
       </>
     )
-  }, [map])
+  }, [])
 
   const renderTree = useCallback((node?: TreeifiedOWSResource): ReactNode => {
     if (node !== undefined) {

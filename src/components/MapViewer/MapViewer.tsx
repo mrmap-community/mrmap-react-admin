@@ -38,9 +38,9 @@ const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
   const mapRef = useRef(map)
-  const { setMap: setMapContext } = useOwsContextBase()
-  const { tiles } = useOwsContextBase()
-  const tilesRef = useRef(tiles)
+  //const { setMap: setMapContext } = useOwsContextBase()
+  //const { tiles } = useOwsContextBase()
+  //const tilesRef = useRef(tiles)
 
   const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
   const [featureInfos, setFeatureInfos] = useState<any[]>([])
@@ -90,58 +90,58 @@ const MapViewerCore = (): ReactNode => {
 
   useResizeObserver(map?.getContainer() ?? null, (entry) => { setSize(entry.contentRect) })
 
-  useEffect(() => {
-    if (map !== undefined && map !== null && map !== mapRef.current) {
-      // map has changed, so we need to pass it through the context
-      mapRef.current = map
-      setMapContext(map)
-      setSize(map.getContainer().getBoundingClientRect())
-    }
+  // useEffect(() => {
+  //   if (map !== undefined && map !== null && map !== mapRef.current) {
+  //     // map has changed, so we need to pass it through the context
+  //     mapRef.current = map
+  //     //setMapContext(map)
+  //     setSize(map.getContainer().getBoundingClientRect())
+  //   }
 
-    if (map !== undefined && map !== null && tiles !== undefined && tiles !== tilesRef.current) {
-      //
-      // map.on('click dragstart zoom', () => {
-      //   setFeatureInfos([])
-      // })
-      map.removeEventListener('contextmenu')
-      map.on('contextmenu', (event) => {
-        const pointRightClick: Point = event.containerPoint
-        setFeatureInfoMarkerPosition(event.latlng)
+  //   if (map !== undefined && map !== null && tiles !== undefined && tiles !== tilesRef.current) {
+  //     //
+  //     // map.on('click dragstart zoom', () => {
+  //     //   setFeatureInfos([])
+  //     // })
+  //     map.removeEventListener('contextmenu')
+  //     map.on('contextmenu', (event) => {
+  //       const pointRightClick: Point = event.containerPoint
+  //       setFeatureInfoMarkerPosition(event.latlng)
 
-        const requests = tiles.map(tile => {
-          const getFeatureinfoUrl = tile.getFeatureinfoUrl
-          if (getFeatureinfoUrl?.searchParams.get('VERSION') === '1.3.0') {
-            getFeatureinfoUrl?.searchParams.set('i', Math.round(pointRightClick.x).toString())
-            getFeatureinfoUrl?.searchParams.set('j', Math.round(pointRightClick.y).toString())
-          } else {
-            getFeatureinfoUrl?.searchParams.set('x', Math.round(pointRightClick.x).toString())
-            getFeatureinfoUrl?.searchParams.set('y', Math.round(pointRightClick.y).toString())
-          }
+  //       const requests = tiles.map(tile => {
+  //         const getFeatureinfoUrl = tile.getFeatureinfoUrl
+  //         if (getFeatureinfoUrl?.searchParams.get('VERSION') === '1.3.0') {
+  //           getFeatureinfoUrl?.searchParams.set('i', Math.round(pointRightClick.x).toString())
+  //           getFeatureinfoUrl?.searchParams.set('j', Math.round(pointRightClick.y).toString())
+  //         } else {
+  //           getFeatureinfoUrl?.searchParams.set('x', Math.round(pointRightClick.x).toString())
+  //           getFeatureinfoUrl?.searchParams.set('y', Math.round(pointRightClick.y).toString())
+  //         }
 
-          getFeatureinfoUrl?.searchParams.set('INFO_FORMAT', 'text/html')
+  //         getFeatureinfoUrl?.searchParams.set('INFO_FORMAT', 'text/html')
 
-          if (getFeatureinfoUrl !== undefined) {
-            return getFeatureinfoUrl?.href
-          }
-          return ''
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        }).filter(url => url !== '').map((url) => axios.get(url))
+  //         if (getFeatureinfoUrl !== undefined) {
+  //           return getFeatureinfoUrl?.href
+  //         }
+  //         return ''
+  //       // eslint-disable-next-line @typescript-eslint/promise-function-async
+  //       }).filter(url => url !== '').map((url) => axios.get(url))
 
-        const _featureInfos: any[] = []
+  //       const _featureInfos: any[] = []
 
-        axios.all(requests).then(
-          (responses) => {
-            responses.forEach((response) => {
-              if (response.data !== undefined) {
-                _featureInfos.push(response.data)
-              }
-            })
-            setFeatureInfos(_featureInfos)
-          }
-        ).catch(reason => { console.log(reason) })
-      })
-    }
-  }, [map, setMapContext, tiles])
+  //       axios.all(requests).then(
+  //         (responses) => {
+  //           responses.forEach((response) => {
+  //             if (response.data !== undefined) {
+  //               _featureInfos.push(response.data)
+  //             }
+  //           })
+  //           setFeatureInfos(_featureInfos)
+  //         }
+  //       ).catch(reason => { console.log(reason) })
+  //     })
+  //   }
+  // }, [map, setMapContext, tiles])
 
   useEffect(() => {
     // on every size change, we need to tell the map context to invalidate the old size values.
@@ -171,7 +171,7 @@ const MapViewerCore = (): ReactNode => {
             }}
             
           >
-            {...tiles.map(tile => tile.leafletTile)}
+            {/* {...tiles.map(tile => tile.leafletTile)} */}
             {featureInfoMarker}
             <ScaleControl position="topleft" />
           </MapContainer>
@@ -181,7 +181,7 @@ const MapViewerCore = (): ReactNode => {
           callback={() => map?.invalidateSize()}
         >
           <OwsContextActionButtons />
-          <LayerTree map={map}/>
+          <LayerTree/>
         </RightDrawer>
         <BottomDrawer
           aboveComponentId={containerId}

@@ -1,7 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useMemo } from 'react'
 
 import { TreeItem } from '@mui/x-tree-view'
-import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
 import {v4 as uuidv4} from 'uuid'
@@ -11,6 +10,8 @@ import { findNodeByFolder, getParentFolder, isLeafNode } from '../../ows-lib/Ows
 import { Position } from '../../ows-lib/OwsContext/enums'
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 
 // TODO: typeof should be any other type
