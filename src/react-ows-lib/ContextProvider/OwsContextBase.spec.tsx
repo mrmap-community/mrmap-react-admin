@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
 import {karteRpFeatures as testdata} from '../../ows-lib/OwsContext/tests/data'
@@ -25,7 +25,7 @@ export const MapViewerBaseWrapper = ({ children }: { children: ReactNode }) => {
 
 const TestingComponent = () => {
     const { features, moveFeature } = useOwsContextBase();
-    
+
     return (
       <>
         {features.map(feature => 
@@ -51,9 +51,11 @@ describe('OwsContextBase', () => {
 
    fireEvent.click(screen.getByTestId('move-left'));
    const firstMoveResult = screen.getAllByTestId('row')
+   expect(within(firstMoveResult[6]).queryByText('Wald')).toBeInTheDocument();
    expect(within(firstMoveResult[7]).queryByText('Wald 0')).toBeInTheDocument();
    expect(within(firstMoveResult[8]).queryByText('Wald 3')).toBeInTheDocument();
    expect(within(firstMoveResult[9]).queryByText('Wald 1')).toBeInTheDocument();
+   expect(within(firstMoveResult[10]).queryByText('Wald 2')).toBeInTheDocument();
 
 
    fireEvent.click(screen.getByTestId('move-firstChild'));

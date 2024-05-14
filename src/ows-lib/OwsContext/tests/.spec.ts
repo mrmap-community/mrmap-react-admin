@@ -314,11 +314,20 @@ test('moveFeature firstChild', () => {
     const context = getOwsContext()
     const features = moveFeature(context.features, context.features[2], context.features[0], Position.firstChild)
 
-    // TODO: checking titles also 
     expect(features?.[1].properties.folder).equals('/0/0')
+    expect(features?.[1].properties.title).equals('/0/1')
+
     expect(features?.[2].properties.folder).equals('/0/0/0')
+    expect(features?.[2].properties.title).equals('/0/1/0')
+
     expect(features?.[3].properties.folder).equals('/0/1')
+    expect(features?.[3].properties.title).equals('/0/0')
+
     expect(features?.[4].properties.folder).equals('/0/2')
+    expect(features?.[4].properties.title).equals('/0/2')
+
+    expect(features?.[5].properties.folder).equals('/1')
+    expect(features?.[5].properties.title).equals('/1')
 })
 
 

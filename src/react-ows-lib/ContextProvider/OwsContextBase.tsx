@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useState, type PropsWithChildren, useCallback, useMemo } from 'react'
+import { createContext, type ReactNode, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
 
 
 import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
@@ -179,6 +179,7 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   //     setSelectedCrs(defaultCrs)
   //   }
   // }, [crsIntersection, selectedCrs])
+
 
   const value = useMemo<OwsContextBaseType>(() => {
     return {

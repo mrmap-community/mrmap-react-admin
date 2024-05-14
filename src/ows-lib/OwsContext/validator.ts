@@ -6,7 +6,6 @@ const VALID_PATH = new RegExp('(\/\d*)+')
 export const validateFolderStructure = (features: OWSResource[]): boolean => {
     let previousFeature: OWSResource
     let lastTreeId
-    //console.log(JSON.stringify(features))
 
     features.forEach((feature, index)=>{
         if (feature === undefined) throw new Error(`feature with index ${index} was undefined`)
@@ -28,7 +27,7 @@ export const validateFolderStructure = (features: OWSResource[]): boolean => {
         }
         
         if (isSiblingOf(feature, previousFeature)){
-            if (getNodeIndex(previousFeature) + 1 !== getNodeIndex(feature)) throw new Error(`index of following siblings must be increase strict by 1. ${index}; ${folder}, ${previousFeature.properties.folder}`)
+            if (getNodeIndex(previousFeature) + 1 !== getNodeIndex(feature)) throw new Error(`index of following siblings must be increase strict by 1. Index: ${index}; Folder: ${folder}, prevFolder: ${previousFeature.properties.folder}`)
             previousFeature = feature
             return
         }

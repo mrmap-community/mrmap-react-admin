@@ -113,7 +113,6 @@ export const featuresToCollection = (features: string[]) => {
 
 export const polygonToFeature = (geojson: Polygon, name: string) => {
   if (geojson == undefined){
-    console.log(geojson)
     return
   }
   return `

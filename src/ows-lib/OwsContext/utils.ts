@@ -460,7 +460,6 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
         if (nextRightStartIndex === undefined) return features
         updateFolders(currentTargetRightSiblingsIncludeSelf, getParentFolder(target) ?? '', nextRightStartIndex)       
 
-
     } else if (position === Position.right){     
         const targetIndex = getNodeIndex(target)
         const newStartIndex = targetIndex ? targetIndex + 1: 1
@@ -479,9 +478,8 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
 
         // move source tree to new position
         updateFolders(currentSourceSubtree, getParentFolder(target) ?? '', newStartIndex)
-    }
 
-    if (position === Position.lastChild) {
+    } else if (position === Position.lastChild) {
         // shift siblings to setup an ascending folder structure without spaces
         updateFolders(currentSourceSiblings, currentSourceParentFolder)
         // move source subtree to target position
@@ -490,27 +488,23 @@ export const moveFeature = (features: OWSResource[], source: OWSResource, target
         updateFolders(currentSourceSubtree, target.properties.folder, relativPosition)
 
     } else if (position === Position.firstChild){
-        // move source subtree to target position
-        updateFolders(currentSourceSubtree, target.properties.folder, 0)
-        // shift all siblings subtrees behind the first child
-        updateFolders(futureSiblings, target.properties.folder, 1)
+
         if (currentSourceParentFolder !== target.properties.folder){
             // shift all current source siblings to generate gap free ascendant index structure
             // only needed if current source parent is not the same 
             updateFolders(currentSourceSiblings, currentSourceParentFolder, )
         }
 
+        // move source subtree to target position
+        updateFolders(currentSourceSubtree, target.properties.folder, 0)
+        // shift all siblings subtrees behind the first child
+        updateFolders(futureSiblings, target.properties.folder, 1)
+
+        
     } 
 
     sortFeaturesByFolder(features)
-    try {
-        validateFolderStructure(features)
-
-    } catch (error) {
-        console.log(features)
-        throw(error)
-    }
-
+    validateFolderStructure(features)
     return features
 }
 
