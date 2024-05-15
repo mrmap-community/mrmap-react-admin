@@ -7,14 +7,19 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Debug vitest",
             "skipFiles": [
-                "<node_internals>/**"
+                "<node_internals>/**",
             ],
-            //"program": "${workspaceFolder}/src/XMLParser/__tests__/.test.js",
-            "outFiles": [
-                "${workspaceFolder}/mrmap-react-admin/**"
-            ],
+            "program": "${workspaceRoot}/node_modules/vitest/vitest.mjs",
+            //"args": ["run", "${relativeFile}"],
+            "smartStep": true,
+            "console": "integratedTerminal",
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**",
+                "node_modules/sortablejs/**/*.js",
+            ]
         }
     ]
 }
