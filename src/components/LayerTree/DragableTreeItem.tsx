@@ -57,6 +57,7 @@ export const DragableTreeItem = ({
           
           // get the correct source object (not a shallow coppy)
           const sourceFolder = node.properties.folder
+
           if (sourceFolder === undefined) return
           const source = findNodeByFolder(features, sourceFolder)
           if (source == undefined) return
