@@ -523,14 +523,17 @@ export const isLeafNode = (features: OWSResource[], feature: OWSResource) => {
 }
 
 export const removeFeature = (features: OWSResource[], target: OWSResource) => {
-    console.log(target)
     const targetSubtree = getDescandants(features, target, true)
     const start = features.indexOf(targetSubtree[0])
     const stop = features.indexOf(targetSubtree[targetSubtree.length - 1])
-    console.log(start, stop)
+    
     features.splice(start, stop-start + 1)
     
     updateFolders(features)
 
     return features
+}
+
+export const insertFeature = (features: OWSResource[], target: OWSResource, newFeature: OWSResource, position: Position = Position.lastChild) => {
+
 }

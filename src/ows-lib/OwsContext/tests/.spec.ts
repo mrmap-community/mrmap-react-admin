@@ -649,3 +649,9 @@ test('remove feature', () => {
     expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
 
 })
+
+
+test('insert feature', () => {
+    const karteRpFeatures = getKarteRpFeatures()
+
+})
