@@ -4,6 +4,7 @@ import { Position } from "./enums";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
 import {v4 as uuidv4} from 'uuid';
 import { validateFolderStructure } from "./validator";
+import _ from "lodash";
 
 export const OWSContextDocument = (
     id: string = uuidv4(),
@@ -253,10 +254,14 @@ export const getParent = (features: OWSResource[], child: OWSResource) => {
 }
 
 export const isDescendantOf = (descendant: OWSResource, ancestor: OWSResource) => {
+
+    const ancestorFolders = ancestor.properties.folder?.split('/')
+    const descendantFolders = descendant.properties.folder?.split('/')
+
     return ancestor.properties.folder !== undefined && 
     descendant.properties.folder !== undefined  &&
     descendant.properties.folder.split('/').length > ancestor.properties.folder.split('/').length &&
-    descendant.properties.folder.startsWith(ancestor.properties.folder)
+    ancestorFolders?.every((folder, index) => descendantFolders?.[index] === folder) 
 }
 
 export const isAncestorOf = (ancestor: OWSResource, descendant: OWSResource) => {
@@ -515,4 +520,17 @@ export const findNodeByFolder = (features: OWSResource[], folder: string) => {
 export const isLeafNode = (features: OWSResource[], feature: OWSResource) => {
     const anyChild = features.find(node => node.properties.folder!==feature.properties.folder && node.properties.folder?.startsWith(feature.properties.folder ?? ''))
     return anyChild === undefined
+}
+
+export const removeFeature = (features: OWSResource[], target: OWSResource) => {
+    console.log(target)
+    const targetSubtree = getDescandants(features, target, true)
+    const start = features.indexOf(targetSubtree[0])
+    const stop = features.indexOf(targetSubtree[targetSubtree.length - 1])
+    console.log(start, stop)
+    features.splice(start, stop-start + 1)
+    
+    updateFolders(features)
+
+    return features
 }

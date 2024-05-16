@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
-import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, sortFeaturesByFolder, treeify, updateFolders, wmsToOWSResources } from '../utils'
+import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, removeFeature, sortFeaturesByFolder, treeify, updateFolders, wmsToOWSResources } from '../utils'
 import { OWSContext, OWSResource } from '../types'
 import { Position } from '../enums'
 
@@ -633,3 +633,19 @@ test('updateFoders with new path without start index', () => {
     expect(resources).toMatchObject(expected)
 })
 
+
+test('remove feature', () => {
+    const karteRpFeatures = getKarteRpFeatures()
+    // remove wald
+    removeFeature(karteRpFeatures, karteRpFeatures[6])
+
+    expect(karteRpFeatures[5].properties.title).equals('Land 3')
+    expect(karteRpFeatures[5].properties.folder).equals('/0/0/3')
+
+    expect(karteRpFeatures[6].properties.title).equals('Sonderkultur')
+    expect(karteRpFeatures[6].properties.folder).equals('/0/1')
+
+    expect(karteRpFeatures[7].properties.title).equals('Sonderkultur 0')
+    expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
+
+})
