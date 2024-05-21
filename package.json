@@ -47,7 +47,7 @@
     "@typescript-eslint/parser": "^7.10.0",
     "@vitejs/plugin-react": "^4.0.1",
     "@vitest/coverage-istanbul": "^1.6.0",
-    "eslint": "^9.3.0",
+    "eslint": "^8.57.0",
     "eslint-plugin-perfectionist": "^2.10.0",
     "eslint-plugin-react": "^7.34.1",
     "globals": "^15.3.0",
