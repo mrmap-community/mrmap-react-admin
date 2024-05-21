@@ -1,9 +1,9 @@
-import { type ChangeEvent, type ReactNode, useCallback, useMemo, MouseEvent } from 'react'
+import { MouseEvent, useCallback, useMemo, type ChangeEvent, type ReactNode } from 'react'
 
 import { Checkbox } from '@mui/material'
 
-import { OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { isAncestorOf } from '../../ows-lib/OwsContext/utils'
+import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
+import { getDescandants } from '../../ows-lib/OwsContext/utils'
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export interface TreeNodeCheckboxProps {
@@ -19,10 +19,9 @@ const TreeNodeCheckbox = ({ node }: TreeNodeCheckboxProps): ReactNode => {
   }, [node, setFeatureActive])
 
   const isIndeterminate = useMemo(() => {
-    const hasActiveDescendants = features.filter(
-      feature => feature.properties.active).find((
-        activeFeature: OWSResource) => isAncestorOf(activeFeature, node))
-    return Boolean(hasActiveDescendants && !node.properties.active)
+    const descgendants = getDescandants(features, node)
+
+    return !node.properties.active && descgendants.length > 0 && descgendants.find(feature => feature.properties.active === true) !== undefined
   }, [features, node])
 
   return (

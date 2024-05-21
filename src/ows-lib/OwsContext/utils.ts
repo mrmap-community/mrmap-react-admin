@@ -1,6 +1,5 @@
 import { isString } from "lodash";
-import _ from "lodash";
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { Position } from "./enums";
@@ -272,6 +271,10 @@ export const isAncestorOf = (ancestor: OWSResource, descendant: OWSResource) => 
     ancestor.properties.folder !== undefined &&
     ancestor.properties.folder.length !== descendant.properties.folder.length &&
     ancestorFolders?.every((folder, index) => descendantFolders?.[index] === folder) 
+}
+
+export const getAncestors = (features: OWSResource[], descendant: OWSResource) => {
+    return features.filter(feature => isAncestorOf(feature, descendant))
 }
 
 export const isParentOf = (parent: OWSResource, child: OWSResource) => {

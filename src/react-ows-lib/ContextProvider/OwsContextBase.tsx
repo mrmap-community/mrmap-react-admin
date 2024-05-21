@@ -5,7 +5,7 @@ import _ from 'lodash'
 
 import { Position } from '../../ows-lib/OwsContext/enums'
 import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { OWSContextDocument, getNextRootId, getOptimizedGetMapUrls, isDescendantOf, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
+import { OWSContextDocument, findNodeByFolder, getAncestors, getDescandants, getNextRootId, getOptimizedGetMapUrls, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
 import { parseWms } from '../../ows-lib/XMLParser/parseCapabilities'
 
 export interface OwsContextBaseType {
@@ -93,19 +93,15 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   }, [])
 
   const setFeatureActive = useCallback((folder: string, active: boolean)=>{
-    const feature = features.find(feature => feature.properties.folder === folder)
-
+    const feature = findNodeByFolder(features, folder)
     if (feature !== undefined){
       feature.properties.active = active
       // activate all descendants
-      features.forEach(possibleDescendant => {
-        if (isDescendantOf(feature, possibleDescendant)){
-          possibleDescendant.properties.active = active
-        } 
-      })
+      getDescandants(features, feature, true).forEach(descendant => descendant.properties.active = active)
+
+      // deactivate parent to prevent from parend layer using for getmap calls etc.
       if (active === false) {
-        const parent = features.find(parent => parent.properties.folder === folder.split('/').slice(0,-1).join('/'))
-        if (parent !== undefined) parent.properties.active = false
+        getAncestors(features, feature).forEach(ancestor => ancestor.properties.active = active)
       }
       setFeatures([...features])
     }
