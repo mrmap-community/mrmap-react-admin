@@ -1,7 +1,6 @@
-import { type ReactNode, useId, type PropsWithChildren, useMemo, useState, useEffect, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
-import { MapContainer, Popup, Marker } from 'react-leaflet'
-import { ScaleControl } from 'react-leaflet'
+import { MapContainer, Marker, Popup, ScaleControl } from 'react-leaflet'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Box } from '@mui/material'
@@ -9,11 +8,10 @@ import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import useResizeObserver from '@react-hook/resize-observer'
-import axios from 'axios'
-import { type LatLng, type Map, type Point, CRS } from 'leaflet'
+import { CRS, type LatLng, type Map } from 'leaflet'
 
 import ListGuesser from '../../jsonapi/components/ListGuesser'
-import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
+import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import BottomDrawer from '../Drawer/BottomDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import RightDrawer from '../Drawer/RightDrawer'
@@ -21,7 +19,7 @@ import LayerTree from '../LayerTree/LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import MapSettingsEditor from './MapSettings'
-import { OwsContextActionButtons } from './OwsContextGuiActions/OwsContextActionButtons' 
+import { OwsContextActionButtons } from './OwsContextGuiActions/OwsContextActionButtons'
 const style = {
   position: 'relative',
   //  display: 'flex',

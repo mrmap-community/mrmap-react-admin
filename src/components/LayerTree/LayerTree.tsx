@@ -1,4 +1,4 @@
-import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react'
 
 import { SimpleTreeView } from '@mui/x-tree-view'
 
@@ -98,9 +98,9 @@ const LayerTree = ({
       return (
         <SimpleTreeView
           key={tree.id}
-          onNodeExpansionToggle={handleToggle}
-          defaultExpandedNodes={defaultExpandedNodes}
-          expandedNodes={expanded}
+          onItemExpansionToggle={handleToggle}
+          defaultExpandedItems={defaultExpandedNodes}
+          expandedItems={expanded}
         >
           {renderTree(tree)}
         </SimpleTreeView>

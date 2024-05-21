@@ -1,7 +1,8 @@
-import { type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, HttpError, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult, type DeleteResult } from 'react-admin'
+import { HttpError, type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type DeleteResult, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult } from 'react-admin'
 
+import { AxiosHeaders } from 'axios'
 import jsonpointer from 'jsonpointer'
-import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray, AxiosRequestConfig } from 'openapi-client-axios'
+import { AxiosRequestConfig, type AxiosError, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
 
 import { type Token } from '../components/MrMapFrontend'
 import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
