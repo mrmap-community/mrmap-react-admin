@@ -1,13 +1,15 @@
-import Tooltip from '@mui/material/Tooltip'
-import Divider from '@mui/material/Divider'
-import Box from '@mui/material/Box';
-import Fab from '@mui/material/Fab';
+import { useState } from 'react';
+
 import AddIcon from '@mui/icons-material/Add';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import EditIcon from '@mui/icons-material/Edit';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider'
+import Fab from '@mui/material/Fab';
+import Tooltip from '@mui/material/Tooltip'
+
 import AddResourceDialog from './AddResourceDialog'
 import InitialFromOwsContextDialog from './InitialFromOwsContextDialog'
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import { useState } from 'react';
 
 
 export const OwsContextActionButtons = () => {

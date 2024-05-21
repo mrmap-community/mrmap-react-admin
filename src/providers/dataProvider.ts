@@ -3,10 +3,10 @@ import { type CreateParams, type DataProvider, type DeleteManyParams, type Delet
 import jsonpointer from 'jsonpointer'
 import { type AxiosError, AxiosHeaders, type OpenAPIClient, type ParamsArray, AxiosRequestConfig } from 'openapi-client-axios'
 
+import { type Token } from '../components/MrMapFrontend'
 import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 import { getParsedAuthToken } from './authProvider'
-import { type Token } from '../components/MrMapFrontend'
 
 export interface RelatedResource {
   resource: string

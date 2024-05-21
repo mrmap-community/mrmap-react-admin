@@ -1,9 +1,11 @@
+import {ReactNode} from 'react'
+
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import LayerTree from './LayerTree';
-import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
+
 import {karteRpFeatures as testdata} from '../../ows-lib/OwsContext/tests/data'
-import {ReactNode} from 'react'
+import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
+import LayerTree from './LayerTree';
 
 
 const getKarteRpFeatures = () => {

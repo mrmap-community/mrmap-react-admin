@@ -1,9 +1,10 @@
+import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson'
+
 import { type ReactNode, useCallback, useEffect } from 'react'
 import { FeatureGroup, GeoJSON } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 
 import { useLeafletContext } from '@react-leaflet/core'
-import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson'
 import L from 'leaflet'
 
 export interface GeoEditorProps {

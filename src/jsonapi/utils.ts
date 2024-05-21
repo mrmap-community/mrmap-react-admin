@@ -1,5 +1,6 @@
-import { type ReactElement } from 'react'
 import type { RaRecord } from 'react-admin'
+
+import { type ReactElement } from 'react'
 
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
@@ -39,7 +40,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type:
         }
       }
       // TODO: delete attributes.relationName does not work (no-dynamic-delete)
-      delete attributes[relationName] // eslint-disable-line 
+      delete attributes[relationName]  
     }
   }
 

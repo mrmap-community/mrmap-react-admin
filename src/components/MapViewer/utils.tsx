@@ -1,7 +1,10 @@
-import { Identifier, type RaRecord } from 'react-admin'
-import { WMSTree, type TreeNode } from '../../react-ows-lib/ContextProvider/OwsContextBase'
-import { LatLng, LatLngBounds } from 'leaflet'
 import type { Polygon } from 'geojson'
+
+import { Identifier, type RaRecord } from 'react-admin'
+
+import { LatLng, LatLngBounds } from 'leaflet'
+
+import { WMSTree, type TreeNode } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export const deflatTree = (node: TreeNode): TreeNode[] => {
   const nodes = [node]

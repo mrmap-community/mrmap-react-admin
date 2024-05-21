@@ -2,9 +2,9 @@ import { type ChangeEvent, type ReactNode, useCallback, useMemo, MouseEvent } fr
 
 import { Checkbox } from '@mui/material'
 
-import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import { OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
 import { isAncestorOf } from '../../ows-lib/OwsContext/utils'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export interface TreeNodeCheckboxProps {
   node: TreeifiedOWSResource

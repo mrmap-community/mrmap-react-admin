@@ -1,8 +1,9 @@
-import { TextInput, useCreateContext, SimpleForm, CreateBase, useInput, type TextInputProps } from 'react-admin'
 import { useEffect, type ReactNode, useState } from 'react'
-import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
+import { TextInput, useCreateContext, SimpleForm, CreateBase, useInput, type TextInputProps } from 'react-admin'
+
 import SchemaAutocompleteArrayInput from '../../jsonapi/components/SchemaAutocompleteArrayInput'
 import SchemaAutocompleteInput from '../../jsonapi/components/SchemaAutocompleteInput'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export const GeoJSONInput = ({
   source,

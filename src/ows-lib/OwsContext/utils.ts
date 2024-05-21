@@ -1,10 +1,11 @@
 import { isString } from "lodash";
+import _ from "lodash";
+import {v4 as uuidv4} from 'uuid';
+
 import { WmsCapabilitites, WmsLayer } from "../XMLParser/types";
 import { Position } from "./enums";
 import { OWSContext, OWSResource, StyleSet, TreeifiedOWSResource } from "./types";
-import {v4 as uuidv4} from 'uuid';
 import { validateFolderStructure } from "./validator";
-import _ from "lodash";
 
 export const OWSContextDocument = (
     id: string = uuidv4(),

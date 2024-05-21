@@ -1,14 +1,15 @@
+import type { GeoJSON as GeoJSONType } from 'geojson'
+
 import { type ReactNode, useEffect, useState } from 'react'
 import { TextInput, type TextInputProps, useInput } from 'react-admin'
 import { MapContainer, TileLayer } from 'react-leaflet'
 
 import { Box, Modal, Typography } from '@mui/material'
-import type { GeoJSON as GeoJSONType } from 'geojson'
 
 import FeatureGroupEditor from './FeatureGroupEditor'
 
 const style = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',

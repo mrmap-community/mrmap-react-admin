@@ -1,5 +1,6 @@
-import { Drawer, type DrawerProps } from '@mui/material'
 import { useCallback, type ReactNode, type MouseEvent, useState } from 'react'
+
+import { Drawer, type DrawerProps } from '@mui/material'
 
 const ResizeableDrawer = ({ children, ...rest }: DrawerProps): ReactNode => {
   const [isResizing, setIsResizing] = useState<boolean>(false)

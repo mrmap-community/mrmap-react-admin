@@ -1,19 +1,19 @@
 import { type ReactNode, type SyntheticEvent, useCallback, useMemo, useState } from 'react'
 
 import { SimpleTreeView } from '@mui/x-tree-view'
-import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
-import TreeNodeCheckbox from '../MapViewer/NodeCheckbox'
 
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { DragableTreeItem } from './DragableTreeItem'
 import { getLeafNodes } from '../../ows-lib/OwsContext/utils'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
+import TreeNodeCheckbox from '../MapViewer/NodeCheckbox'
+import { DragableTreeItem } from './DragableTreeItem'
 
 export interface LayerTreeProps {
   initialExpanded?: string[]
 }
 
 const style = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',

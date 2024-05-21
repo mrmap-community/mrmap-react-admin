@@ -1,13 +1,12 @@
-import { createContext, type ReactNode, useContext, useState, type PropsWithChildren, useCallback, useMemo, useEffect } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
 
-
-import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { OWSContextDocument, getNextRootId, getOptimizedGetMapUrls, isDescendantOf, treeify, wmsToOWSResources, moveFeature as moveFeatureUtil } from '../../ows-lib/OwsContext/utils'
-import { parseWms } from '../../ows-lib/XMLParser/parseCapabilities'
 import { BBox, Point } from 'geojson'
 import _ from 'lodash'
-import { Position } from '../../ows-lib/OwsContext/enums'
 
+import { Position } from '../../ows-lib/OwsContext/enums'
+import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
+import { OWSContextDocument, getNextRootId, getOptimizedGetMapUrls, isDescendantOf, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
+import { parseWms } from '../../ows-lib/XMLParser/parseCapabilities'
 
 export interface OwsContextBaseType {
   // TODO: crs handling
@@ -16,7 +15,6 @@ export interface OwsContextBaseType {
   //setSelectedCrs: (crs: MrMapCRS) => void
   owsContext: OWSContext
   features: OWSResource[]
-
   addWMSByUrl: (url: string) => void
   initialFromOwsContext: (url: string) => void
   trees: TreeifiedOWSResource[]
@@ -81,7 +79,6 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   }, [features])
 
   const initialFromOwsContext = useCallback((url: string)=>{
-    // move
     const request = new Request(url, {
       method: 'GET',
     })
@@ -183,9 +180,7 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
 
   const value = useMemo<OwsContextBaseType>(() => {
     return {
-      //crsIntersection,
-      //selectedCrs,
-      //setSelectedCrs,
+
       owsContext,
       features,
       addWMSByUrl,
@@ -196,8 +191,7 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
       moveFeature
     }
   }, [
-    //crsIntersection, 
-    //selectedCrs, 
+
     owsContext,
     features,
     addWMSByUrl,

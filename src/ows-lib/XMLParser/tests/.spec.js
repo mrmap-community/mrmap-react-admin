@@ -1,8 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import { expect, test } from 'vitest'
-import { getDocument } from '../utils'
+
 import { parseWms } from '../parseCapabilities'
+import { getDocument } from '../utils'
 
 const xmlString = fs.readFileSync(path.resolve(__dirname,'./capabilitites_130.xml'), 'utf-8')
 

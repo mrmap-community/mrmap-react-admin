@@ -1,11 +1,11 @@
 import { expect, test } from 'vitest'
-import { WmsCapabilitites } from '../../XMLParser/types'
-import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, insertFeature, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, removeFeature, sortFeaturesByFolder, treeify, updateFolders, wmsToOWSResources } from '../utils'
-import { OWSContext, OWSResource } from '../types'
-import { Position } from '../enums'
 
-import {karteRpFeatures as testdata} from './data'
+import { WmsCapabilitites } from '../../XMLParser/types'
+import { Position } from '../enums'
+import { OWSContext, OWSResource } from '../types'
+import { getDescandants, getFirstChildIndex, getLastChildIndex, getParent, getParentFolder, getRightSiblings, getSiblings, insertFeature, isAncestorOf, isChildOf, isDescendantOf, isLeafNode, isParentOf, isSiblingOf, moveFeature, removeFeature, sortFeaturesByFolder, treeify, updateFolders, wmsToOWSResources } from '../utils'
 import { validateFolderStructure } from '../validator'
+import {karteRpFeatures as testdata} from './data'
 
 const getOwsResource = (title:string, folder: string): OWSResource => {
     return {

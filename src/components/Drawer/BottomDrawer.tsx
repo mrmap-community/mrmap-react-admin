@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { ExpandLess, ExpandMore } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
+
 import { type DrawerState, useDrawerContext } from './DrawerContext'
 
 export interface BottomDrawerProps extends DrawerProps {
