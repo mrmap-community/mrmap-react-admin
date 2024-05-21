@@ -14,6 +14,7 @@ import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContex
 
 
 // TODO: typeof should be any other type
+// to avoid icons for imaginary tree items
 function ImaginaryIcon(props: React.PropsWithoutRef<typeof KeyboardArrowRightIcon>) {
   return <div />;
 }

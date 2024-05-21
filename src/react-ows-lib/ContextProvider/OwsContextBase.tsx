@@ -5,7 +5,7 @@ import _ from 'lodash'
 
 import { Position } from '../../ows-lib/OwsContext/enums'
 import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { OWSContextDocument, findNodeByFolder, getAncestors, getDescandants, getNextRootId, getOptimizedGetMapUrls, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
+import { OWSContextDocument, activateFeature, getNextRootId, getOptimizedGetMapUrls, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
 import { parseWms } from '../../ows-lib/XMLParser/parseCapabilities'
 
 export interface OwsContextBaseType {
@@ -19,7 +19,7 @@ export interface OwsContextBaseType {
   initialFromOwsContext: (url: string) => void
   trees: TreeifiedOWSResource[]
   activeFeatures: OWSResource[]
-  setFeatureActive: (folder: string, active: boolean) => void
+  setFeatureActive: (feature: OWSResource, active: boolean) => void
   moveFeature: (source: OWSResource, target: OWSResource, position: Position) => void
 }
 
@@ -92,19 +92,8 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   )
   }, [])
 
-  const setFeatureActive = useCallback((folder: string, active: boolean)=>{
-    const feature = findNodeByFolder(features, folder)
-    if (feature !== undefined){
-      feature.properties.active = active
-      // activate all descendants
-      getDescandants(features, feature, true).forEach(descendant => descendant.properties.active = active)
-
-      // deactivate parent to prevent from parend layer using for getmap calls etc.
-      if (active === false) {
-        getAncestors(features, feature).forEach(ancestor => ancestor.properties.active = active)
-      }
-      setFeatures([...features])
-    }
+  const setFeatureActive = useCallback((feature: OWSResource, active: boolean)=>{
+    setFeatures([...activateFeature(features, feature, active)])
   }, [features])
 
   const moveFeature = useCallback((source: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {

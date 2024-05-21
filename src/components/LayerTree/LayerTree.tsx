@@ -5,8 +5,8 @@ import { SimpleTreeView } from '@mui/x-tree-view'
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
 import { getLeafNodes } from '../../ows-lib/OwsContext/utils'
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
-import TreeNodeCheckbox from '../MapViewer/NodeCheckbox'
 import { DragableTreeItem } from './DragableTreeItem'
+import TreeNodeCheckbox from './NodeCheckbox'
 
 export interface LayerTreeProps {
   initialExpanded?: string[]

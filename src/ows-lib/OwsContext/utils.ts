@@ -607,3 +607,27 @@ export const insertFeature = (features: OWSResource[], target: OWSResource, newF
 
     //validateFolderStructure(features)
 }
+
+export const activateFeature = (features: OWSResource[], target: OWSResource, active: boolean = true) => {
+    target.properties.active = active
+    // activate/deactivate all descendants
+    getDescandants(features, target, true).forEach(descendant => descendant.properties.active = active)
+
+    // set parent also active if all siblings of target are active
+    if (active === true && getSiblings(features, target).every(feature => feature.properties.active === true)){
+        const parent = getParent(features, target)
+        if (parent !== undefined) {
+            parent.properties.active = active
+        }
+    }
+    // deactivate parent to prevent from parend layer using for getmap calls etc.
+    else if (active === false) {
+        getAncestors(features, target).forEach(ancestor => ancestor.properties.active = active)
+    }
+    return features
+}
+
+export const checkIndeterminateActive = (features: OWSResource[], target: OWSResource) => {
+    const descendants = getDescandants(features, target)
+    return !target.properties.active && descendants.length > 0 && descendants.find(feature => feature.properties.active === true) !== undefined
+}
