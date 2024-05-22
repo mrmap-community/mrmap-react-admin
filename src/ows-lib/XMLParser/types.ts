@@ -77,3 +77,11 @@ export interface WmsCapabilitites extends Capabilites {
         getFeatureInfo?: OperationUrl // this shall be optional operation
     }
 }
+
+export interface WfsCapabilitites extends Capabilites {
+    // TODO: featuretypes
+    operationUrls: {
+        getCapabilities: OperationUrl
+        // TODO: other operation urls
+    }
+}

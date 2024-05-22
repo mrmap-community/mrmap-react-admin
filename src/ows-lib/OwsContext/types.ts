@@ -1,5 +1,4 @@
-import { Feature, FeatureCollection, Geometry, BBox } from 'geojson'
-
+import { BBox, Feature, FeatureCollection, Geometry } from 'geojson'
 
 export interface Link {
     href: string
