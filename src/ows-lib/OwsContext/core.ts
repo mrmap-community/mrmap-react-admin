@@ -3,7 +3,7 @@ import { BBox, Geometry } from 'geojson';
 import { parseWms } from '../XMLParser/parseCapabilities';
 import { Position } from './enums';
 import { OWSContext as IOWSContext, OWSResource as IOWSResource, OWSContextProperties, OWSResourceProperties } from './types';
-import { checkFamilyPath, updateFolders, wmsToOWSResources } from './utils';
+import { getFeatureFolderIndex, isDescendant, updateFolders, wmsToOWSResources } from './utils';
 
 
 const VALID_PATH = new RegExp('(\/\d*)+')
@@ -15,10 +15,8 @@ export class OWSResource implements IOWSResource {
   type: 'Feature';
   id?: string | number;
   bbox?: BBox;
-  owsContext: OWSContext;
 
   constructor(
-    owsContext: OWSContext,
     properties: OWSResourceProperties,
     id: string | number = Date.now().toString(),
     bbox: BBox | undefined = undefined,
@@ -27,40 +25,10 @@ export class OWSResource implements IOWSResource {
     this.id = id
     this.bbox = bbox
     this.type = 'Feature'
-    this.owsContext = owsContext
   }
 
-  activateFeature(active: boolean = true){
-    this.properties.active = active
-    // activate/deactivate all descendants
-    this.getDescandants(true).forEach(descendant => descendant.properties.active = active)
-
-    // set parent also active if all siblings of target are active
-    if (active === true && this.getSiblings().every(feature => feature.properties.active === true)){
-        const parent = this.getParent()
-        if (parent !== undefined) {
-            parent.properties.active = active
-        }
-    }
-    // deactivate parent to prevent from parend layer using for getmap calls etc.
-    else if (active === false) {
-        this.getAncestors().forEach(ancestor => ancestor.properties.active = active)
-    }
-    return this.owsContext.features
-  }
-  
-  isActiveStateIndeterminate = () => {
-    const descendants = this.getDescandants()
-    return !this.properties.active && descendants.length > 0 && descendants.find(feature => feature.properties.active === true) !== undefined
-  }
-
-  isLeafNode(){
-    const anyChild = this.owsContext.features.find(node => node.properties.folder!==this.properties.folder && checkFamilyPath(this, node))
-    return anyChild === undefined
-  }
-
-  getNodeFolderIndex(){
-    return Number(this.properties.folder?.split('/').slice(-1)[0])
+  getFolderIndex(){
+    return getFeatureFolderIndex(this)
   }
 
   getParentFolder = () => {
@@ -75,31 +43,12 @@ export class OWSResource implements IOWSResource {
       this.properties.folder?.split('/').length === child.properties.folder?.split('/').length - 1
   }
 
-  getParent(){
-    if (this.properties.folder === undefined) return
-    const parentFolderName = this.getParentFolder()
-    if (parentFolderName === undefined || parentFolderName === '/') return
-    return this.owsContext.features.find(feature => feature.properties.folder === parentFolderName)
-  }
-
   isDescendantOf(ancestor: OWSResource){
-    return checkFamilyPath(ancestor, this)
+    return isDescendant(ancestor, this)
   }
-
-  getDescandants(includeSelf: boolean = false){
-    const descendants = this.owsContext.features.filter(feature => this.isAncestorOf(feature))
-    if (includeSelf) return [this, ...descendants]
-    return descendants
-}
 
   isAncestorOf(descendant: OWSResource){
-      return checkFamilyPath(this, descendant)
-  }
-
-  getAncestors(include_self: boolean = false){
-      const ancestors = this.owsContext.features.filter(feature => this.isDescendantOf(feature))
-      if (include_self) return [...ancestors, this]
-      return ancestors
+      return isDescendant(this, descendant)
   }
 
   isChildOf(parent: OWSResource){
@@ -107,26 +56,6 @@ export class OWSResource implements IOWSResource {
       this.properties.folder !== undefined &&
       this.isDescendantOf(parent) && 
       this.properties.folder?.split('/').length === parent.properties.folder?.split('/').length + 1
-  }
-
-  getFirstChild(){
-    return this.getDescandants().find((descendant) => descendant.isChildOf(this))
-  }
-
-  getFirstChildIndex(){
-      const firstChild = this.getFirstChild()
-      if (firstChild === undefined) return -1
-      return this.owsContext.features.indexOf(firstChild)
-  }
-
-  getLastChild(){
-      return this.getDescandants().findLast((descendant) => descendant.isChildOf(this))
-  }
-
-  getLastChildIndex(){
-      const lastChild = this.getLastChild()
-      if (lastChild === undefined) return -1
-      return this.owsContext.features.indexOf(lastChild)
   }
 
   isSiblingOf(sibling: OWSResource){
@@ -137,132 +66,6 @@ export class OWSResource implements IOWSResource {
       this.getParentFolder() === sibling.getParentFolder() &&
       this !== sibling
   }
-
-  getSiblings(include_self=false, withSubtrees=false){
-      const parentFolder = this.getParentFolder()?.replace('/', '\\/') ?? ''
-      const regex = withSubtrees ? `^${parentFolder}(\\/\\d+)+$`: `^${parentFolder}(\\/\\d+){1}$`
-
-      return this.owsContext.features.filter(node => {
-          if (!include_self) {
-              if (this.isAncestorOf(node)) return false
-          }
-          return node.properties.folder && new RegExp(regex).test(node.properties.folder) 
-      })
-  }
-
-  getRightSiblings(include_self=false, withSubtrees=false){
-    if (this.properties.folder === undefined) return []
-    const sourceIndexNumber = this.getNodeFolderIndex()
-    const sourceNodeIndexPosition = this.properties.folder.split('/').length - 1
-
-    return this.getSiblings(include_self, withSubtrees).filter(feature => {
-        if (feature.properties.folder === undefined) return false
-
-        const featureFolders = feature.properties.folder.split('/')
-        const featureIndexNumber = Number(featureFolders[sourceNodeIndexPosition])
-
-        return include_self ? 
-            featureIndexNumber >= sourceIndexNumber:  
-            featureIndexNumber > sourceIndexNumber
-    })
-  }
-
-  remove(){
-    const targetSubtree = this.getDescandants(true)
-    const start = this.owsContext.features.indexOf(targetSubtree[0])
-    const stop = this.owsContext.features.indexOf(targetSubtree[targetSubtree.length - 1])
-    
-    this.owsContext.features.splice(start, stop-start + 1)
-    
-    updateFolders(this.owsContext.features)
-
-    return this.owsContext.features
-  }
-
-  moveFeature(target: OWSResource,  position: Position = Position.lastChild): OWSResource[] {
-    if (target.properties.folder === undefined ||
-        this.properties.folder === undefined ||
-        this === target
-    ) return this.owsContext.features
-
-    this.owsContext.validateFolderStructure()
-
-    // first of all, get the objects before manipulating data. 
-    // All filter functions will retun subsets with shallow copys
-    const currentSourceSubtree = this.getDescandants(true)
-    const currentSourceSiblings = this.getSiblings(false, false)
-    const currentSourceSiblingtrees = this.getSiblings(false, true)
-
-    const currentSourceParentFolder = this.getParentFolder() ?? '/'
-    const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder=>folder!== undefined)
-    
-    const futureSiblings = target.getDescandants(false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
-    
-    const currentTargetRightSiblingsIncludeSelf = target.getRightSiblings(true, true).filter(feature => !currentSourceSubtree.includes(feature))
-    const currentTargetRightSiblings = target.getRightSiblings(false, true).filter(feature => {
-        return !currentSourceSubtree.includes(feature)
-    })
-
-    if (position === Position.left){
-        const targetIndex = target.getNodeFolderIndex()
-        const newStartIndex = targetIndex || 0
-
-        // move source subtrees to target position
-        updateFolders(currentSourceSubtree, target.getParentFolder() ?? '', newStartIndex)
-
-        // shift all right siblings of target one to the right (make some space for source tree to insert it)
-        const nextRightStartIndex = currentTargetRightSiblingsIncludeSelf[0] !== undefined ? currentTargetRightSiblingsIncludeSelf[0].getNodeFolderIndex() + 1: target.getLastChildIndex() + 1
-        if (nextRightStartIndex === undefined) return this.owsContext.features
-        updateFolders(currentTargetRightSiblingsIncludeSelf, target.getParentFolder() ?? '', nextRightStartIndex)       
-
-    } else if (position === Position.right){     
-        const targetIndex = target.getNodeFolderIndex()
-        const newStartIndex = targetIndex ? targetIndex + 1: 1
-
-        if (currentTargetRightSiblings[0] && currentTargetRightSiblings[0].getNodeFolderIndex() - 1 === newStartIndex) return this.owsContext.features // same position... nothing to do here
-        
-        // shift all right siblings of target one to the right (make some space for source tree to insert it)
-        const nextRightStartIndex = currentTargetRightSiblings[0] !== undefined ? currentTargetRightSiblings[0].getNodeFolderIndex() + 1: target.getLastChildIndex() + 1
-        if (nextRightStartIndex === undefined) return this.owsContext.features
-        updateFolders(currentTargetRightSiblings, target.getParentFolder() ?? '', nextRightStartIndex)      
-
-        // shift source siblings one to the left (only needed if the source is removed as sibling)
-        if (!this.isSiblingOf(target)) {
-            updateFolders(currentSourceSiblingtrees, currentSourceParentFolder, )
-        }
-
-        // move source tree to new position
-        updateFolders(currentSourceSubtree, target.getParentFolder() ?? '', newStartIndex)
-
-    } else if (position === Position.lastChild) {
-        // shift siblings to setup an ascending folder structure without spaces
-        updateFolders(currentSourceSiblings, currentSourceParentFolder)
-        // move source subtree to target position
-        const lastChildFolderName = target.getLastChildIndex()
-        const relativPosition = Number(lastChildFolderName) + 1
-        updateFolders(currentSourceSubtree, target.properties.folder, relativPosition)
-
-    } else if (position === Position.firstChild){
-
-        if (currentSourceParentFolder !== target.properties.folder){
-            // shift all current source siblings to generate gap free ascendant index structure
-            // only needed if current source parent is not the same 
-            updateFolders(currentSourceSiblings, currentSourceParentFolder, )
-        }
-
-        // move source subtree to target position
-        updateFolders(currentSourceSubtree, target.properties.folder, 0)
-        // shift all siblings subtrees behind the first child
-        updateFolders(futureSiblings, target.properties.folder, 1)
-    
-    } 
-
-    this.owsContext.sortFeaturesByFolder()
-    this.owsContext.validateFolderStructure()
-    return this.owsContext.features
-  }
-
-
 }
 
 
@@ -293,7 +96,7 @@ export class OWSContext implements IOWSContext{
 
   appendWms(capabilitites: string): IOWSContext {
     const parsedWms = parseWms(capabilitites)
-    const additionalFeatures = wmsToOWSResources(parsedWms, this.getNextRootId()).map(resource => new OWSResource(this, resource.properties))
+    const additionalFeatures = wmsToOWSResources(parsedWms, this.getNextRootId()).map(resource => new OWSResource(resource.properties))
     this.features.push(...additionalFeatures)
     return this
   }
@@ -317,16 +120,100 @@ export class OWSContext implements IOWSContext{
     return nextRootId
   }
 
+  moveFeature(source: OWSResource, target: OWSResource,  position: Position = Position.lastChild): OWSResource[] {
+    if (target.properties.folder === undefined ||
+        source.properties.folder === undefined ||
+        source === target
+    ) return this.features
+
+    this.validateFolderStructure()
+
+    // first of all, get the objects before manipulating data. 
+    // All filter functions will retun subsets with shallow copys
+    const currentSourceSubtree = this.getDescandantsOf(source, true)
+    const currentSourceSiblings = this.getSiblingsOf(source, false, false)
+    const currentSourceSiblingtrees = this.getSiblingsOf(source, false, true)
+
+    const currentSourceParentFolder = source.getParentFolder() ?? '/'
+    const currentSourceFolders = currentSourceSubtree.map(node => node.properties.folder).filter(folder => folder!== undefined)
+    
+    const futureSiblings = this.getDescandantsOf(target, false).filter(descendant => !currentSourceFolders.includes(descendant.properties.folder))
+    
+    const currentTargetRightSiblingsIncludeSelf = this.getRightSiblingsOf(target, true, true).filter(feature => !currentSourceSubtree.includes(feature))
+    const currentTargetRightSiblings = this.getRightSiblingsOf(target, false, true).filter(feature => {
+        return !currentSourceSubtree.includes(feature)
+    })
+
+    if (position === Position.left){
+        const targetIndex = target.getFolderIndex()
+        const newStartIndex = targetIndex || 0
+
+        // move source subtrees to target position
+        updateFolders(currentSourceSubtree, target.getParentFolder() ?? '', newStartIndex)
+
+        // shift all right siblings of target one to the right (make some space for source tree to insert it)
+        const nextRightStartIndex = currentTargetRightSiblingsIncludeSelf[0] !== undefined ? currentTargetRightSiblingsIncludeSelf[0].getFolderIndex() + 1: this.getLastChildFoderIndex(target) + 1
+        if (nextRightStartIndex === undefined) return this.features
+        updateFolders(currentTargetRightSiblingsIncludeSelf, target.getParentFolder() ?? '', nextRightStartIndex)       
+
+    } else if (position === Position.right){     
+        const targetIndex = target.getFolderIndex()
+        const newStartIndex = targetIndex ? targetIndex + 1: 1
+
+        if (currentTargetRightSiblings[0] && currentTargetRightSiblings[0].getFolderIndex() - 1 === newStartIndex) return this.features // same position... nothing to do here
+        
+        // shift all right siblings of target one to the right (make some space for source tree to insert it)
+        const nextRightStartIndex = currentTargetRightSiblings[0] !== undefined ? currentTargetRightSiblings[0].getFolderIndex() + 1: this.getLastChildFoderIndex(target) + 1
+        if (nextRightStartIndex === undefined) return this.features
+        updateFolders(currentTargetRightSiblings, target.getParentFolder() ?? '', nextRightStartIndex)      
+
+        // shift source siblings one to the left (only needed if the source is removed as sibling)
+        if (!source.isSiblingOf(target)) {
+            updateFolders(currentSourceSiblingtrees, currentSourceParentFolder, )
+        }
+
+        // move source tree to new position
+        updateFolders(currentSourceSubtree, target.getParentFolder() ?? '', newStartIndex)
+
+    } else if (position === Position.lastChild) {
+        // shift siblings to setup an ascending folder structure without spaces
+        updateFolders(currentSourceSiblings, currentSourceParentFolder)
+        // move source subtree to target position
+        const lastChildFolderName = this.getLastChildFoderIndex(target)
+        const relativPosition = Number(lastChildFolderName) + 1
+        updateFolders(currentSourceSubtree, target.properties.folder, relativPosition)
+
+    } else if (position === Position.firstChild){
+
+        if (currentSourceParentFolder !== target.properties.folder){
+            // shift all current source siblings to generate gap free ascendant index structure
+            // only needed if current source parent is not the same 
+            updateFolders(currentSourceSiblings, currentSourceParentFolder, )
+        }
+
+        // move source subtree to target position
+        updateFolders(currentSourceSubtree, target.properties.folder, 0)
+        // shift all siblings subtrees behind the first child
+        updateFolders(futureSiblings, target.properties.folder, 1)
+    
+    } 
+
+    this.sortFeaturesByFolder()
+    this.validateFolderStructure()
+    return this.features
+  }
+
+
   insertFeature(target: OWSResource, newResource: IOWSResource, position: Position = Position.lastChild){
 
-    const resource = new OWSResource(this, newResource.properties, newResource.id, newResource.bbox)
+    const resource = new OWSResource(newResource.properties, newResource.id, newResource.bbox)
 
     if (position === Position.left) {
         resource.properties.folder = target.properties.folder
         const targetIndex = this.features.indexOf(target)
 
-        const rightSubtrees = target.getRightSiblings(true, true)
-        const currentTargetNodeFolderIndex = target.getNodeFolderIndex()
+        const rightSubtrees = this.getRightSiblingsOf(target, true, true)
+        const currentTargetNodeFolderIndex = target.getFolderIndex()
         const currentParentFolder = target.getParentFolder()
         
         updateFolders(rightSubtrees, currentParentFolder, currentTargetNodeFolderIndex + 1)
@@ -337,12 +224,12 @@ export class OWSContext implements IOWSContext{
 
     } else if (position === Position.right) {
 
-        const lastChild = target.getLastChild()
+        const lastChild = this.getLastChildOf(target)
         if (lastChild === undefined) return
         const lastChildIndex = this.features.indexOf(lastChild)
-        const rightSubtrees = target.getRightSiblings(false, true)
+        const rightSubtrees = this.getRightSiblingsOf(target, false, true)
         const currentParentFolder = target.getParentFolder()
-        const currentTargetNodeFolderIndex = target.getNodeFolderIndex()
+        const currentTargetNodeFolderIndex = target.getFolderIndex()
 
         // setup as right sibling
         resource.properties.folder = `${target.getParentFolder()}/${currentTargetNodeFolderIndex + 1}`
@@ -355,7 +242,7 @@ export class OWSContext implements IOWSContext{
 
     } else if (position === Position.firstChild) {
         const targetIndex = this.features.indexOf(target)
-        const targetDescendants = target.getDescandants()
+        const targetDescendants = this.getDescandantsOf(target)
         const targetFolder = target.properties.folder
 
         resource.properties.folder = targetDescendants[0].properties.folder
@@ -366,11 +253,11 @@ export class OWSContext implements IOWSContext{
         updateFolders(targetDescendants, targetFolder, 1)
         
     } else if (position === Position.lastChild) {
-        const currentLastChild = target.getLastChild()
+        const currentLastChild = this.getLastChildOf(target)
         if (currentLastChild === undefined) return
 
         const currentLastChildIndex = this.features.indexOf(currentLastChild)
-        const currentLastChildNodeFolderIndex = currentLastChild.getNodeFolderIndex()
+        const currentLastChildNodeFolderIndex = currentLastChild.getFolderIndex()
 
         resource.properties.folder = `${currentLastChild.getParentFolder()}/${currentLastChildNodeFolderIndex + 1}`
 
@@ -398,17 +285,27 @@ export class OWSContext implements IOWSContext{
     return this.features
   }
 
+  getIndeterminateStateOf(target: OWSResource){
+    const descendants = this.getDescandantsOf(target)
+    return !this.properties.active && descendants.length > 0 && descendants.find(feature => feature.properties.active === true) !== undefined
+  }
+
+  isLeafNode(target: OWSResource){
+    const anyChild = this.features.find(node => node.properties.folder!==this.properties.folder && isDescendant(target, node))
+    return anyChild === undefined
+  }
+
   getLeafNodes(){
-    return this.features.filter(feature => feature.isLeafNode())
+    return this.features.filter(feature => this.isLeafNode(feature))
   }
 
   validateFolderStructure(): boolean {
     let previousFeature: OWSResource
 
-    this.features.forEach((feature, index)=>{
+    this.features.forEach((feature, index) => {
         if (feature === undefined) throw new Error(`feature with index ${index} was undefined`)
         const folder = feature.properties.folder
-        if (folder === undefined) throw new Error(`feature ${index} has an undefined folder`)
+        if (folder === undefined || folder === '') throw new Error(`feature ${index} has an undefined folder`)
         if (!VALID_PATH.test(folder)) throw new Error(`folder of feature ${index} value does not match the regex: ${folder}`)
         
         if (index === 0) {
@@ -418,13 +315,13 @@ export class OWSContext implements IOWSContext{
         }
         
         if (feature.isChildOf(previousFeature)) {
-            if (feature.getNodeFolderIndex() !== 0) throw new Error(`first child must always start with index 0. It was ${feature.getNodeFolderIndex()}; Path: ${folder}, previous ${previousFeature.properties.folder}; loop idx: ${index}`)
+            if (feature.getFolderIndex() !== 0) throw new Error(`first child must always start with index 0. It was ${feature.getFolderIndex()}; Path: ${folder}, previous ${previousFeature.properties.folder}; loop idx: ${index}`)
             previousFeature = feature
             return
         }
         
         if (feature.isSiblingOf(previousFeature)){
-            if (previousFeature.getNodeFolderIndex() + 1 !== feature.getNodeFolderIndex()) throw new Error(`index of following siblings must be increase strict by 1. Index: ${index}; Folder: ${folder}, prevFolder: ${previousFeature.properties.folder}`)
+            if (previousFeature.getFolderIndex() + 1 !== feature.getFolderIndex()) throw new Error(`index of following siblings must be increase strict by 1. Index: ${index}; Folder: ${folder}, prevFolder: ${previousFeature.properties.folder}`)
             previousFeature = feature
             return
         }
@@ -452,7 +349,109 @@ export class OWSContext implements IOWSContext{
     })
 
     return true
-}
+  }
+
+  getParentOf(target: OWSResource){
+    if (target.properties.folder === undefined) return
+    const parentFolderName = target.getParentFolder()
+    if (parentFolderName === undefined || parentFolderName === '/') return
+    return this.features.find(feature => feature.properties.folder === parentFolderName)
+  }
+
+  getAncestorsOf(target: OWSResource, include_self: boolean = false){
+    const ancestors = this.features.filter(feature => target.isDescendantOf(feature))
+    if (include_self) return [...ancestors, this]
+    return ancestors
+  }
+
+  getDescandantsOf(target: OWSResource, includeSelf: boolean = false){
+    const descendants = this.features.filter(feature => target.isAncestorOf(feature))
+    if (includeSelf) return [target, ...descendants]
+    return descendants
+  }
+
+  getSiblingsOf(target: OWSResource, include_self=false, withSubtrees=false){
+    const parentFolder = target.getParentFolder()?.replace('/', '\\/') ?? ''
+    const regex = withSubtrees ? `^${parentFolder}(\\/\\d+)+$`: `^${parentFolder}(\\/\\d+){1}$`
+
+    return this.features.filter(node => {
+        if (!include_self) {
+          if (node.isDescendantOf(target)) return false
+        }
+        return node.properties.folder && new RegExp(regex).test(node.properties.folder) 
+    })
+  }
+
+  getRightSiblingsOf(target: OWSResource, include_self=false, withSubtrees=false){
+    if (target.properties.folder === undefined) return []
+    const targetIndexNumber = target.getFolderIndex()
+    const targetNodeIndexPosition = target.properties.folder.split('/').length - 1
+
+    return this.getSiblingsOf(target, include_self, withSubtrees).filter(feature => {
+        if (feature.properties.folder === undefined) return false
+
+        const featureFolders = feature.properties.folder.split('/')
+        const featureIndexNumber = Number(featureFolders[targetNodeIndexPosition])
+
+        return include_self ? 
+            featureIndexNumber >= targetIndexNumber:  
+            featureIndexNumber > targetIndexNumber
+    })
+  }
+
+
+  getFirstChildOf(target:OWSResource){
+    return this.getDescandantsOf(target).find((descendant) => descendant.isChildOf(target))
+  }
+
+  getFirstChildFolderIndex(target: OWSResource){
+      const firstChild = this.getFirstChildOf(target)
+      if (firstChild === undefined) return 0
+      return getFeatureFolderIndex(firstChild)
+  }
+
+  getLastChildOf(target: OWSResource){
+      return this.getDescandantsOf(target).findLast((descendant) => descendant.isChildOf(target))
+  }
+
+  getLastChildFoderIndex(target: OWSResource){
+      const lastChild = this.getLastChildOf(target)
+      if (lastChild === undefined) return 0
+      return getFeatureFolderIndex(lastChild)
+  }
+
+  removeFeature(target: OWSResource){
+    const targetSubtree = this.getDescandantsOf(target, true)
+    const start = this.features.indexOf(targetSubtree[0])
+    const stop = this.features.indexOf(targetSubtree[targetSubtree.length - 1])
+    
+    this.features.splice(start, stop-start + 1)
+    
+    updateFolders(this.features)
+
+    return this.features
+  }
+
+  activateFeature(target: OWSResource, active: boolean = true){
+    target.properties.active = active
+    // activate/deactivate all descendants
+    this.getDescandantsOf(target, true).forEach(descendant => descendant.properties.active = active)
+
+    // set parent also active if all siblings of target are active
+    if (active === true && this.getSiblingsOf(target).every(feature => feature.properties.active === true)){
+        const parent = this.getParentOf(target)
+        if (parent !== undefined) {
+            parent.properties.active = active
+        }
+    }
+    // deactivate parent to prevent from parend layer using for getmap calls etc.
+    else if (active === false) {
+        this.getAncestorsOf(target).forEach(ancestor => ancestor.properties.active = active)
+    }
+    return this.features
+  }
+
+
 
 }
 

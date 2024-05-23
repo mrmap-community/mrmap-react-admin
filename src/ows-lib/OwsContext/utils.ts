@@ -224,14 +224,11 @@ export const getOptimizedGetMapUrls = (trees: TreeifiedOWSResource[]) => {
     return getMapUrls
 }
 
-
-
-export const checkFamilyPath = (ancestor: IOWSResource, descendant: IOWSResource) => {
-    const ancestorFolders = ancestor.properties.folder?.split('/')
-    const descendantFolders = descendant.properties.folder?.split('/')
-    return ancestorFolders?.every((folder, index) => descendantFolders?.[index] === folder) ?? false
+export const isDescendant = (ancestor: IOWSResource, descendant: IOWSResource) => {
+    const ancestorFolders = ancestor.properties.folder?.split('/') ?? []
+    const descendantFolders = descendant.properties.folder?.split('/') ?? []
+    return ancestorFolders.length < descendantFolders.length && ancestorFolders?.every((folder, index) => descendantFolders?.[index] === folder)
 }
-
 
 export const updateFolders = (
     tree: IOWSResource[], 
@@ -283,3 +280,8 @@ export const updateFolders = (
     })
     
 }
+
+export const getFeatureFolderIndex = (feature: IOWSResource) => {
+    return Number(feature.properties.folder?.split('/').slice(-1)[0])
+}
+
