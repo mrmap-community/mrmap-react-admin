@@ -20,11 +20,16 @@ export class OWSResource implements IOWSResource {
     properties: OWSResourceProperties,
     id: string | number = Date.now().toString(),
     bbox: BBox | undefined = undefined,
+    geometry: Geometry | undefined = undefined
   ) {
     this.properties = properties
     this.id = id
     this.bbox = bbox
     this.type = 'Feature'
+  }
+
+  static fromPlainObject(resource: IOWSResource){
+    return new OWSResource(resource.properties, resource.id, resource.bbox, resource.geometry)
   }
 
   getFolderIndex(){
@@ -376,7 +381,7 @@ export class OWSContext implements IOWSContext{
 
     return this.features.filter(node => {
         if (!include_self) {
-          if (node.isDescendantOf(target)) return false
+          if (node === target || node.isDescendantOf(target)) return false
         }
         return node.properties.folder && new RegExp(regex).test(node.properties.folder) 
     })
@@ -404,19 +409,25 @@ export class OWSContext implements IOWSContext{
     return this.getDescandantsOf(target).find((descendant) => descendant.isChildOf(target))
   }
 
-  getFirstChildFolderIndex(target: OWSResource){
-      const firstChild = this.getFirstChildOf(target)
-      if (firstChild === undefined) return 0
-      return getFeatureFolderIndex(firstChild)
+  getFirstChildIndexOf(target: OWSResource){
+    const firstChild = this.getFirstChildOf(target)
+    if (firstChild === undefined) return -1
+    return this.features.indexOf(firstChild)
   }
 
   getLastChildOf(target: OWSResource){
       return this.getDescandantsOf(target).findLast((descendant) => descendant.isChildOf(target))
   }
 
+  getLastChildIndexOf(target: OWSResource){
+    const lastChild = this.getLastChildOf(target)
+    if (lastChild === undefined) return -1
+    return this.features.indexOf(lastChild)
+  }
+
   getLastChildFoderIndex(target: OWSResource){
       const lastChild = this.getLastChildOf(target)
-      if (lastChild === undefined) return 0
+      if (lastChild === undefined) return -1
       return getFeatureFolderIndex(lastChild)
   }
 
@@ -450,8 +461,6 @@ export class OWSContext implements IOWSContext{
     }
     return this.features
   }
-
-
 
 }
 

@@ -3,7 +3,7 @@ import { expect, test } from 'vitest'
 import { WmsCapabilitites } from '../../XMLParser/types'
 import { OWSContext, OWSResource } from '../core'
 import { Position } from '../enums'
-//import { OWSResource } from '../types'
+import { OWSResource as IOWSResource } from '../types'
 import { treeify, updateFolders, wmsToOWSResources } from '../utils'
 import { karteRpFeatures as testdata } from './data'
 
@@ -14,8 +14,11 @@ const getOwsResource = (title:string, folder: string): OWSResource => {
         folder: folder})
 }
 
-const getKarteRpFeatures = () => {
-    return JSON.parse(JSON.stringify(testdata))
+const getKarteRp = () => {
+    const owsContext = new OWSContext()
+    const features = testdata.map(resource => OWSResource.fromPlainObject(resource))
+    owsContext.features = features
+    return owsContext
 }
 
 const getOwsContext = (): OWSContext => {
@@ -203,17 +206,17 @@ test('getRightSiblings of /0/0', () => {
     expect(context.getRightSiblingsOf(features[1], true, true)).toMatchObject([features[1], features[2], features[3], features[4]])
 })
 
-// test('getRightSiblings of wald 0', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
-//     expect(karteRpFeatures[7].getRightSiblings(false, true)).toMatchObject([karteRpFeatures[8],karteRpFeatures[9],karteRpFeatures[10],karteRpFeatures[11]])
-//     expect(karteRpFeatures[7].getRightSiblings(true, true)).toMatchObject([karteRpFeatures[7],karteRpFeatures[8],karteRpFeatures[9],karteRpFeatures[10],karteRpFeatures[11]])
-// })
+test('getRightSiblings of wald 0', () => {
+    const karteRpFeatures = getKarteRp()
+    expect(karteRpFeatures.getRightSiblingsOf(karteRpFeatures.features[7], false, true)).toMatchObject([karteRpFeatures.features[8],karteRpFeatures.features[9],karteRpFeatures.features[10],karteRpFeatures.features[11]])
+    expect(karteRpFeatures.getRightSiblingsOf(karteRpFeatures.features[7], true, true)).toMatchObject([karteRpFeatures.features[7],karteRpFeatures.features[8],karteRpFeatures.features[9],karteRpFeatures.features[10],karteRpFeatures.features[11]])
+})
 
-// test('getRightSiblings of wald 2', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
-//     expect(karteRpFeatures[9].getRightSiblings(false, true)).toMatchObject([karteRpFeatures[10],karteRpFeatures[11]])
-//     expect(karteRpFeatures[9].getRightSiblings(true, true)).toMatchObject([karteRpFeatures[9],karteRpFeatures[10],karteRpFeatures[11]])
-// })
+test('getRightSiblings of wald 2', () => {
+    const karteRpFeatures = getKarteRp()
+    expect(karteRpFeatures.getRightSiblingsOf(karteRpFeatures.features[9], false, true)).toMatchObject([karteRpFeatures.features[10],karteRpFeatures.features[11]])
+    expect(karteRpFeatures.getRightSiblingsOf(karteRpFeatures.features[9], true, true)).toMatchObject([karteRpFeatures.features[9],karteRpFeatures.features[10],karteRpFeatures.features[11]])
+})
 
 test('getDescendants', () => {
     const context = getOwsContext()
@@ -224,14 +227,14 @@ test('getDescendants', () => {
     expect(context.getDescandantsOf(context.features[3], true)).toMatchObject([context.features[3]])
 })
 
-test('getFirstChildIndex', () => {
+test('getFirstChildIndexOf', () => {
     const context = getOwsContext()
 
-    expect(context.getFirstChildFolderIndex(context.features[0])).equals(1)
-    expect(context.getFirstChildFolderIndex(context.features[2])).equals(3)
+    expect(context.getFirstChildIndexOf(context.features[0])).equals(1)
+    expect(context.getFirstChildIndexOf(context.features[2])).equals(3)
 })
 
-test('getLastChildIndex', () => {
+test('getLastChildFoderIndex', () => {
     const context = getOwsContext()
 
     expect(context.getLastChildFoderIndex(context.features[0])).equals(2)
@@ -325,160 +328,158 @@ test('moveFeature right', () => {
 })
 
 
-// test('moveFeature wald3 as left sibling of wald0', () => {
+test('moveFeature wald3 as left sibling of wald0', () => {
 
-//     const karteRpFeatures = getKarteRpFeatures()
+    const karteRpFeatures = getKarteRp()
 
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[7], Position.left)
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[7], Position.left)
 
-//     expect(features?.[7].properties.title).equals('Wald 3')
-//     expect(features?.[7].properties.folder).equals('/0/1/0')
+    expect(features?.[7].properties.title).equals('Wald 3')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
 
-//     expect(features?.[8].properties.title).equals('Wald 0')
-//     expect(features?.[8].properties.folder).equals('/0/1/1')
+    expect(features?.[8].properties.title).equals('Wald 0')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
 
-// })
+})
 
-// test('moveFeature wald3 as right sibling of wald0', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+test('moveFeature wald3 as right sibling of wald0', () => {
+    const karteRpFeatures = getKarteRp()
 
-//     // Wald 3 right of Wald 0
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[7], Position.right)
-//     expect(features?.[7].properties.title).equals('Wald 0')
-//     expect(features?.[7].properties.folder).equals('/0/1/0')
+    // Wald 3 right of Wald 0
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[7], Position.right)
+    expect(features?.[7].properties.title).equals('Wald 0')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
 
-//     expect(features?.[8].properties.title).equals('Wald 3')
-//     expect(features?.[8].properties.folder).equals('/0/1/1')
+    expect(features?.[8].properties.title).equals('Wald 3')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
 
-//     expect(features?.[9].properties.title).equals('Wald 1')
-//     expect(features?.[9].properties.folder).equals('/0/1/2')
+    expect(features?.[9].properties.title).equals('Wald 1')
+    expect(features?.[9].properties.folder).equals('/0/1/2')
 
-//     expect(features?.[10].properties.title).equals('Wald 2')
-//     expect(features?.[10].properties.folder).equals('/0/1/3')
+    expect(features?.[10].properties.title).equals('Wald 2')
+    expect(features?.[10].properties.folder).equals('/0/1/3')
 
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/1/4')
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/1/4')
 
-// })
-
-
-// test('moveFeature wald3 as right sibling of wald2', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
-
-//     // Wald 3 right of Wald 2
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[9], Position.right)
-//     expect(features?.[7].properties.title).equals('Wald 0')
-//     expect(features?.[7].properties.folder).equals('/0/1/0')
-
-//     expect(features?.[8].properties.title).equals('Wald 1')
-//     expect(features?.[8].properties.folder).equals('/0/1/1')
-
-//     expect(features?.[9].properties.title).equals('Wald 2')
-//     expect(features?.[9].properties.folder).equals('/0/1/2')
-
-//     expect(features?.[10].properties.title).equals('Wald 3')
-//     expect(features?.[10].properties.folder).equals('/0/1/3')
-
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/1/4')
-// })
+})
 
 
-// test('moveFeature wald3 as first child of wald2', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+test('moveFeature wald3 as right sibling of wald2', () => {
+    const karteRpFeatures = getKarteRp()
 
-//     // Wald 3 as first child of Wald 2
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[9], Position.firstChild)
+    // Wald 3 right of Wald 2
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[9], Position.right)
+    expect(features?.[7].properties.title).equals('Wald 0')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
 
-//     expect(features?.[7].properties.title).equals('Wald 0')
-//     expect(features?.[7].properties.folder).equals('/0/1/0')
+    expect(features?.[8].properties.title).equals('Wald 1')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
 
-//     expect(features?.[8].properties.title).equals('Wald 1')
-//     expect(features?.[8].properties.folder).equals('/0/1/1')
+    expect(features?.[9].properties.title).equals('Wald 2')
+    expect(features?.[9].properties.folder).equals('/0/1/2')
 
-//     expect(features?.[9].properties.title).equals('Wald 2')
-//     expect(features?.[9].properties.folder).equals('/0/1/2')
+    expect(features?.[10].properties.title).equals('Wald 3')
+    expect(features?.[10].properties.folder).equals('/0/1/3')
 
-//     expect(features?.[10].properties.title).equals('Wald 3')
-//     expect(features?.[10].properties.folder).equals('/0/1/2/0')
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/1/4')
+})
 
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/1/3')
-// })
 
-// test('moveFeature wald3 as left sibling of wald', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+test('moveFeature wald3 as first child of wald2', () => {
+    const karteRpFeatures = getKarteRp()
 
-//     // Wald 3 left of Wald
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[6], Position.left)
+    // Wald 3 as first child of Wald 2
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[9], Position.firstChild)
+
+    expect(features?.[7].properties.title).equals('Wald 0')
+    expect(features?.[7].properties.folder).equals('/0/1/0')
+
+    expect(features?.[8].properties.title).equals('Wald 1')
+    expect(features?.[8].properties.folder).equals('/0/1/1')
+
+    expect(features?.[9].properties.title).equals('Wald 2')
+    expect(features?.[9].properties.folder).equals('/0/1/2')
+
+    expect(features?.[10].properties.title).equals('Wald 3')
+    expect(features?.[10].properties.folder).equals('/0/1/2/0')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/1/3')
+})
+
+test('moveFeature wald3 as left sibling of wald', () => {
+    const karteRpFeatures = getKarteRp()
+
+    // Wald 3 left of Wald
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[6], Position.left)
+   
+    expect(features?.[6].properties.title).equals('Wald 3')
+    expect(features?.[6].properties.folder).equals('/0/1')
+
+    expect(features?.[7].properties.title).equals('Wald')
+    expect(features?.[7].properties.folder).equals('/0/2')
+
+    expect(features?.[8].properties.title).equals('Wald 0')
+    expect(features?.[8].properties.folder).equals('/0/2/0')
+
+    expect(features?.[9].properties.title).equals('Wald 1')
+    expect(features?.[9].properties.folder).equals('/0/2/1')
+
+    expect(features?.[10].properties.title).equals('Wald 2')
+    expect(features?.[10].properties.folder).equals('/0/2/2')
+
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/2/3')
+})
+
+
+test('moveFeature sequence', () => {
+    const karteRpFeatures = getKarteRp()
+
+    // Wald 3 left of Wald
+    const features = karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[6], Position.left)
     
-//     expect(features?.[6].properties.title).equals('Wald 3')
-//     expect(features?.[6].properties.folder).equals('/0/1')
+    expect(features?.[6].properties.title).equals('Wald 3')
+    expect(features?.[6].properties.folder).equals('/0/1')
 
-//     expect(features?.[7].properties.title).equals('Wald')
-//     expect(features?.[7].properties.folder).equals('/0/2')
+    expect(features?.[7].properties.title).equals('Wald')
+    expect(features?.[7].properties.folder).equals('/0/2')
 
-//     expect(features?.[8].properties.title).equals('Wald 0')
-//     expect(features?.[8].properties.folder).equals('/0/2/0')
+    expect(features?.[8].properties.title).equals('Wald 0')
+    expect(features?.[8].properties.folder).equals('/0/2/0')
 
-//     expect(features?.[9].properties.title).equals('Wald 1')
-//     expect(features?.[9].properties.folder).equals('/0/2/1')
+    expect(features?.[9].properties.title).equals('Wald 1')
+    expect(features?.[9].properties.folder).equals('/0/2/1')
 
-//     expect(features?.[10].properties.title).equals('Wald 2')
-//     expect(features?.[10].properties.folder).equals('/0/2/2')
+    expect(features?.[10].properties.title).equals('Wald 2')
+    expect(features?.[10].properties.folder).equals('/0/2/2')
 
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/2/3')
-// })
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/2/3')
 
+    // Wald 2 left of Wald 3
+    karteRpFeatures.moveFeature(karteRpFeatures.features[10], karteRpFeatures.features[6], Position.left)
 
-// test('moveFeature sequence', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+    expect(features?.[6].properties.title).equals('Wald 2')
+    expect(features?.[6].properties.folder).equals('/0/1')
 
-//     // Wald 3 left of Wald
-//     const features = karteRpFeatures[10].moveFeature(karteRpFeatures[6], Position.left)
-    
-//     expect(features?.[6].properties.title).equals('Wald 3')
-//     expect(features?.[6].properties.folder).equals('/0/1')
+    expect(features?.[7].properties.title).equals('Wald 3')
+    expect(features?.[7].properties.folder).equals('/0/2')
 
-//     expect(features?.[7].properties.title).equals('Wald')
-//     expect(features?.[7].properties.folder).equals('/0/2')
+    expect(features?.[8].properties.title).equals('Wald')
+    expect(features?.[8].properties.folder).equals('/0/3')
 
-//     expect(features?.[8].properties.title).equals('Wald 0')
-//     expect(features?.[8].properties.folder).equals('/0/2/0')
+    expect(features?.[9].properties.title).equals('Wald 0')
+    expect(features?.[9].properties.folder).equals('/0/3/0')
 
-//     expect(features?.[9].properties.title).equals('Wald 1')
-//     expect(features?.[9].properties.folder).equals('/0/2/1')
+    expect(features?.[10].properties.title).equals('Wald 1')
+    expect(features?.[10].properties.folder).equals('/0/3/1')
 
-//     expect(features?.[10].properties.title).equals('Wald 2')
-//     expect(features?.[10].properties.folder).equals('/0/2/2')
-
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/2/3')
-
-//     // Wald 2 left of Wald 3
-//     features[10].moveFeature(features[6], Position.left)
-
-//     expect(features?.[6].properties.title).equals('Wald 2')
-//     expect(features?.[6].properties.folder).equals('/0/1')
-
-//     expect(features?.[7].properties.title).equals('Wald 3')
-//     expect(features?.[7].properties.folder).equals('/0/2')
-
-//     expect(features?.[8].properties.title).equals('Wald')
-//     expect(features?.[8].properties.folder).equals('/0/3')
-
-//     expect(features?.[9].properties.title).equals('Wald 0')
-//     expect(features?.[9].properties.folder).equals('/0/3/0')
-
-//     expect(features?.[10].properties.title).equals('Wald 1')
-//     expect(features?.[10].properties.folder).equals('/0/3/1')
-
-//     expect(features?.[11].properties.title).equals('Wald 4')
-//     expect(features?.[11].properties.folder).equals('/0/3/2')
-
-
-// })
+    expect(features?.[11].properties.title).equals('Wald 4')
+    expect(features?.[11].properties.folder).equals('/0/3/2')
+})
 
 
 test('isLeafNode', () => {
@@ -491,11 +492,11 @@ test('isLeafNode', () => {
     expect(context.isLeafNode(context.features[4])).toBeTruthy()
 })
 
-// test('validateFolderStructure', () => {
-//     const kartRp = getKarteRpFeatures()
+test('validateFolderStructure', () => {
+   const kartRp = getKarteRp()
     
-//     expect(kartRp.validateFolderStructure()).toBeTruthy()
-// })
+   expect(kartRp.validateFolderStructure()).toBeTruthy()
+})
 
 
 test('updateFoders without start index', () => {
@@ -516,7 +517,8 @@ test('updateFoders without start index', () => {
 
     updateFolders(resources, '/0/0', )
 
-    expect(resources).toMatchObject(expected)
+    expect(JSON.stringify(resources)).toEqual(JSON.stringify(expected))
+
 })
 
 
@@ -537,10 +539,11 @@ test('updateFoders with start index', () => {
 
     updateFolders(resources, '/0/0', 2)
 
-    expect(resources).toMatchObject(expected)
+    expect(JSON.stringify(resources)).toEqual(JSON.stringify(expected))
+
 })
 
-test('updateFoders without new path without start index', () => {
+test('updateFolders without new folderpath without start index', () => {
     const resources: OWSResource[] = [
         getOwsResource('/1', '/1'),
         getOwsResource('/1/2', '/1/2'),
@@ -558,11 +561,12 @@ test('updateFoders without new path without start index', () => {
 
     updateFolders(resources, '', )
 
-    expect(resources).toMatchObject(expected)
+    expect(JSON.stringify(resources)).toEqual(JSON.stringify(expected))
+
 })
 
 test('updateFoders with new path without start index', () => {
-    const resources: OWSResource[] = [
+    const resources = [
         getOwsResource('/1', '/1'),
         getOwsResource('/1/2', '/1/2'),
         getOwsResource('/1/2/0', '/1/2/0'),
@@ -570,7 +574,7 @@ test('updateFoders with new path without start index', () => {
         getOwsResource('/1/3', '/1/4'),
     ]
 
-    const expected: OWSResource[] = [
+    const expected = [
         getOwsResource('/1', '/2/4/0'),
         getOwsResource('/1/2', '/2/4/0/0'),
         getOwsResource('/1/2/0', '/2/4/0/0/0'),
@@ -580,163 +584,160 @@ test('updateFoders with new path without start index', () => {
 
     updateFolders(resources, '/2/4', )
 
-    expect(resources).toMatchObject(expected)
+    expect(JSON.stringify(resources)).toEqual(JSON.stringify(expected))
 })
 
 
-// test('remove feature', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
-//     // remove wald
-//     karteRpFeatures[6].remove()
+test('remove feature', () => {
+    const karteRpFeatures = getKarteRp()
+    // remove wald
+    karteRpFeatures.removeFeature(karteRpFeatures.features[6])
 
-//     expect(karteRpFeatures[5].properties.title).equals('Land 3')
-//     expect(karteRpFeatures[5].properties.folder).equals('/0/0/3')
+    expect(karteRpFeatures.features[5].properties.title).equals('Land 3')
+    expect(karteRpFeatures.features[5].properties.folder).equals('/0/0/3')
 
-//     expect(karteRpFeatures[6].properties.title).equals('Sonderkultur')
-//     expect(karteRpFeatures[6].properties.folder).equals('/0/1')
+    expect(karteRpFeatures.features[6].properties.title).equals('Sonderkultur')
+    expect(karteRpFeatures.features[6].properties.folder).equals('/0/1')
 
-//     expect(karteRpFeatures[7].properties.title).equals('Sonderkultur 0')
-//     expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
+    expect(karteRpFeatures.features[7].properties.title).equals('Sonderkultur 0')
+    expect(karteRpFeatures.features[7].properties.folder).equals('/0/1/0')
 
-// })
+})
 
 
-// test('insert feature as first child of Wald', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+test('insert feature as first child of Wald', () => {
+    const karteRpFeatures = getKarteRp()
 
-//     const newFeature: IOWSResource = 
-//     {
-//         type: 'Feature',
-//         properties: {
-//             title: 'new node',
-//             updated: new Date().toString()
-//         }
+    const newFeature: IOWSResource = 
+    {
+        type: 'Feature',
+        properties: {
+            title: 'new node',
+            updated: new Date().toString()
+        }
 
-//     }
-//     karteRpFeatures.insertFeature(karteRpFeatures[6], newFeature, Position.firstChild)
+    }
+    karteRpFeatures.insertFeature(karteRpFeatures.features[6], newFeature, Position.firstChild)
 
-//     expect(karteRpFeatures[6].properties.title).equals('Wald')
-//     expect(karteRpFeatures[6].properties.folder).equals('/0/1')
+    expect(karteRpFeatures.features[6].properties.title).equals('Wald')
+    expect(karteRpFeatures.features[6].properties.folder).equals('/0/1')
 
-//     expect(karteRpFeatures[7].properties.title).equals('new node')
-//     expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
+    expect(karteRpFeatures.features[7].properties.title).equals('new node')
+    expect(karteRpFeatures.features[7].properties.folder).equals('/0/1/0')
 
-//     expect(karteRpFeatures[8].properties.title).equals('Wald 0')
-//     expect(karteRpFeatures[8].properties.folder).equals('/0/1/1')
-// })
+    expect(karteRpFeatures.features[8].properties.title).equals('Wald 0')
+    expect(karteRpFeatures.features[8].properties.folder).equals('/0/1/1')
+})
 
-// test('insert feature as last child of Wald', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+test('insert feature as last child of Wald', () => {
+    const karteRpFeatures = getKarteRp()
 
-//     const newFeature: IOWSResource = 
-//     {
-//         type: 'Feature',
-//         properties: {
-//             title: 'new node',
-//             updated: new Date().toString()
-//         }
-
-//     }
+    const newFeature: IOWSResource = 
+    {
+        type: 'Feature',
+        properties: {
+            title: 'new node',
+            updated: new Date().toString()
+        }
+    }
     
-//     karteRpFeatures.insertFeature(karteRpFeatures[6], newFeature, Position.lastChild)
+   karteRpFeatures.insertFeature(karteRpFeatures.features[6], newFeature, Position.lastChild)
 
-//     expect(karteRpFeatures[6].properties.title).equals('Wald')
-//     expect(karteRpFeatures[6].properties.folder).equals('/0/1')
+   expect(karteRpFeatures.features[6].properties.title).equals('Wald')
+   expect(karteRpFeatures.features[6].properties.folder).equals('/0/1')
 
-//     expect(karteRpFeatures[7].properties.title).equals('Wald 0')
-//     expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
+   expect(karteRpFeatures.features[7].properties.title).equals('Wald 0')
+   expect(karteRpFeatures.features[7].properties.folder).equals('/0/1/0')
 
-//     expect(karteRpFeatures[8].properties.title).equals('Wald 1')
-//     expect(karteRpFeatures[8].properties.folder).equals('/0/1/1')
+   expect(karteRpFeatures.features[8].properties.title).equals('Wald 1')
+   expect(karteRpFeatures.features[8].properties.folder).equals('/0/1/1')
 
-//     expect(karteRpFeatures[9].properties.title).equals('Wald 2')
-//     expect(karteRpFeatures[9].properties.folder).equals('/0/1/2')
+   expect(karteRpFeatures.features[9].properties.title).equals('Wald 2')
+   expect(karteRpFeatures.features[9].properties.folder).equals('/0/1/2')
 
-//     expect(karteRpFeatures[10].properties.title).equals('Wald 3')
-//     expect(karteRpFeatures[10].properties.folder).equals('/0/1/3')
+   expect(karteRpFeatures.features[10].properties.title).equals('Wald 3')
+   expect(karteRpFeatures.features[10].properties.folder).equals('/0/1/3')
 
-//     expect(karteRpFeatures[11].properties.title).equals('Wald 4')
-//     expect(karteRpFeatures[11].properties.folder).equals('/0/1/4')
+   expect(karteRpFeatures.features[11].properties.title).equals('Wald 4')
+   expect(karteRpFeatures.features[11].properties.folder).equals('/0/1/4')
 
-//     expect(karteRpFeatures[12].properties.title).equals('new node')
-//     expect(karteRpFeatures[12].properties.folder).equals('/0/1/5')
-// })
+   expect(karteRpFeatures.features[12].properties.title).equals('new node')
+   expect(karteRpFeatures.features[12].properties.folder).equals('/0/1/5')
+})
+
+test('insert feature left of Wald', () => {
+   const karteRpFeatures = getKarteRp()
+
+   const newFeature: IOWSResource = 
+   {
+       type: 'Feature',
+       properties: {
+           title: 'new node',
+           updated: new Date().toString()
+       }
+
+   }
+   karteRpFeatures.insertFeature(karteRpFeatures.features[6], newFeature, Position.left)
+
+   expect(karteRpFeatures.features[6].properties.title).equals('new node')
+   expect(karteRpFeatures.features[6].properties.folder).equals('/0/1')
+
+   expect(karteRpFeatures.features[7].properties.title).equals('Wald')
+   expect(karteRpFeatures.features[7].properties.folder).equals('/0/2')
+
+   expect(karteRpFeatures.features[8].properties.title).equals('Wald 0')
+   expect(karteRpFeatures.features[8].properties.folder).equals('/0/2/0')
+
+   expect(karteRpFeatures.features[9].properties.title).equals('Wald 1')
+   expect(karteRpFeatures.features[9].properties.folder).equals('/0/2/1')
+
+   expect(karteRpFeatures.features[10].properties.title).equals('Wald 2')
+   expect(karteRpFeatures.features[10].properties.folder).equals('/0/2/2')
+
+   expect(karteRpFeatures.features[11].properties.title).equals('Wald 3')
+   expect(karteRpFeatures.features[11].properties.folder).equals('/0/2/3')
+
+   expect(karteRpFeatures.features[12].properties.title).equals('Wald 4')
+   expect(karteRpFeatures.features[12].properties.folder).equals('/0/2/4')
 
 
-// test('insert feature left of Wald', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
+})
 
-//     const newFeature: IOWSResource = 
-//     {
-//         type: 'Feature',
-//         properties: {
-//             title: 'new node',
-//             updated: new Date().toString()
-//         }
+test('insert feature right of Wald', () => {
+   const karteRpFeatures = getKarteRp()
 
-//     }
-//     karteRpFeatures.insertFeature(karteRpFeatures[6], newFeature, Position.left)
+   const newFeature: IOWSResource = 
+   {
+       type: 'Feature',
+       properties: {
+           title: 'new node',
+           updated: new Date().toString()
+       }
 
-//     expect(karteRpFeatures[6].properties.title).equals('new node')
-//     expect(karteRpFeatures[6].properties.folder).equals('/0/1')
+   }
+   karteRpFeatures.insertFeature(karteRpFeatures.features[6], newFeature, Position.right)
 
-//     expect(karteRpFeatures[7].properties.title).equals('Wald')
-//     expect(karteRpFeatures[7].properties.folder).equals('/0/2')
+   expect(karteRpFeatures.features[6].properties.title).equals('Wald')
+   expect(karteRpFeatures.features[6].properties.folder).equals('/0/1')
 
-//     expect(karteRpFeatures[8].properties.title).equals('Wald 0')
-//     expect(karteRpFeatures[8].properties.folder).equals('/0/2/0')
+   expect(karteRpFeatures.features[7].properties.title).equals('Wald 0')
+   expect(karteRpFeatures.features[7].properties.folder).equals('/0/1/0')
 
-//     expect(karteRpFeatures[9].properties.title).equals('Wald 1')
-//     expect(karteRpFeatures[9].properties.folder).equals('/0/2/1')
+   expect(karteRpFeatures.features[8].properties.title).equals('Wald 1')
+   expect(karteRpFeatures.features[8].properties.folder).equals('/0/1/1')
 
-//     expect(karteRpFeatures[10].properties.title).equals('Wald 2')
-//     expect(karteRpFeatures[10].properties.folder).equals('/0/2/2')
+   expect(karteRpFeatures.features[9].properties.title).equals('Wald 2')
+   expect(karteRpFeatures.features[9].properties.folder).equals('/0/1/2')
 
-//     expect(karteRpFeatures[11].properties.title).equals('Wald 3')
-//     expect(karteRpFeatures[11].properties.folder).equals('/0/2/3')
+   expect(karteRpFeatures.features[10].properties.title).equals('Wald 3')
+   expect(karteRpFeatures.features[10].properties.folder).equals('/0/1/3')
 
-//     expect(karteRpFeatures[12].properties.title).equals('Wald 4')
-//     expect(karteRpFeatures[12].properties.folder).equals('/0/2/4')
+   expect(karteRpFeatures.features[11].properties.title).equals('Wald 4')
+   expect(karteRpFeatures.features[11].properties.folder).equals('/0/1/4')
 
+   expect(karteRpFeatures.features[12].properties.title).equals('new node')
+   expect(karteRpFeatures.features[12].properties.folder).equals('/0/2')
 
-// })
-
-// test('insert feature right of Wald', () => {
-//     const karteRpFeatures = getKarteRpFeatures()
-
-//     const newFeature: IOWSResource = 
-//     {
-//         type: 'Feature',
-//         properties: {
-//             title: 'new node',
-//             updated: new Date().toString()
-//         }
-
-//     }
-//     karteRpFeatures.insertFeature(karteRpFeatures[6], newFeature, Position.right)
-
-//     expect(karteRpFeatures[6].properties.title).equals('Wald')
-//     expect(karteRpFeatures[6].properties.folder).equals('/0/1')
-
-//     expect(karteRpFeatures[7].properties.title).equals('Wald 0')
-//     expect(karteRpFeatures[7].properties.folder).equals('/0/1/0')
-
-//     expect(karteRpFeatures[8].properties.title).equals('Wald 1')
-//     expect(karteRpFeatures[8].properties.folder).equals('/0/1/1')
-
-//     expect(karteRpFeatures[9].properties.title).equals('Wald 2')
-//     expect(karteRpFeatures[9].properties.folder).equals('/0/1/2')
-
-//     expect(karteRpFeatures[10].properties.title).equals('Wald 3')
-//     expect(karteRpFeatures[10].properties.folder).equals('/0/1/3')
-
-//     expect(karteRpFeatures[11].properties.title).equals('Wald 4')
-//     expect(karteRpFeatures[11].properties.folder).equals('/0/1/4')
-
-//     expect(karteRpFeatures[12].properties.title).equals('new node')
-//     expect(karteRpFeatures[12].properties.folder).equals('/0/2')
-
-//     expect(karteRpFeatures[13].properties.title).equals('Sonderkultur')
-//     expect(karteRpFeatures[13].properties.folder).equals('/0/3')
-
-// })
+   expect(karteRpFeatures.features[13].properties.title).equals('Sonderkultur')
+   expect(karteRpFeatures.features[13].properties.folder).equals('/0/3')
+})

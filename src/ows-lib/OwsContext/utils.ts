@@ -285,3 +285,4 @@ export const getFeatureFolderIndex = (feature: IOWSResource) => {
     return Number(feature.properties.folder?.split('/').slice(-1)[0])
 }
 
+
