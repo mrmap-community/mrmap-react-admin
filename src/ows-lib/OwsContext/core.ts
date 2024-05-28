@@ -22,10 +22,11 @@ export class OWSResource implements IOWSResource {
     bbox: BBox | undefined = undefined,
     geometry: Geometry | undefined = undefined
   ) {
-    this.properties = properties
+    this.properties = JSON.parse(JSON.stringify(properties))
     this.id = id
-    this.bbox = bbox
+    this.bbox = bbox ? JSON.parse(JSON.stringify(bbox)): undefined
     this.type = 'Feature'
+    this.geometry = geometry ? JSON.parse(JSON.stringify(geometry)): undefined
   }
 
   static fromPlainObject(resource: IOWSResource){
@@ -250,7 +251,7 @@ export class OWSContext implements IOWSContext{
         const targetDescendants = this.getDescandantsOf(target)
         const targetFolder = target.properties.folder
 
-        resource.properties.folder = targetDescendants[0].properties.folder
+        resource.properties.folder = `${targetFolder}/0`
         // insert after target
         this.features.splice(targetIndex+1, 0, resource)
 
@@ -269,10 +270,9 @@ export class OWSContext implements IOWSContext{
         // insert after currentLastChild
         this.features.splice(currentLastChildIndex+1, 0, resource)
     }
-
+    this.sortFeaturesByFolder()
     this.validateFolderStructure()
   }
-
 
   sortFeaturesByFolder(){
     this.features.sort((a, b) => {
