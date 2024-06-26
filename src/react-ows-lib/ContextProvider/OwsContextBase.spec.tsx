@@ -1,10 +1,10 @@
-import {ReactNode} from 'react'
+import { ReactNode } from 'react';
 
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 import { Position } from '../../ows-lib/OwsContext/enums';
-import {karteRpFeatures as testdata} from '../../ows-lib/OwsContext/tests/data'
+import { karteRpFeatures as testdata } from '../../ows-lib/OwsContext/tests/data';
 import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
 
 
@@ -23,11 +23,11 @@ export const MapViewerBaseWrapper = ({ children }: { children: ReactNode }) => {
 
 
 const TestingComponent = () => {
-    const { features, moveFeature } = useOwsContextBase();
+    const { owsContext, moveFeature } = useOwsContextBase();
 
     return (
       <>
-        {features.map(feature => 
+        {owsContext.features.map(feature => 
             <div 
                 key={feature.properties.folder}
                 data-testid='row'
@@ -36,8 +36,8 @@ const TestingComponent = () => {
             </div>
         )}
       
-        <button data-testid={'move-left'} onClick={() => moveFeature(features[10], features[8], Position.left)}>move left</button>
-        <button data-testid={'move-firstChild'} onClick={() => moveFeature(features[10], features[0], Position.firstChild)}>move first child</button>
+        <button data-testid={'move-left'} onClick={() => moveFeature(owsContext.features[10], owsContext.features[8], Position.left)}>move left</button>
+        <button data-testid={'move-firstChild'} onClick={() => moveFeature(owsContext.features[10], owsContext.features[0], Position.firstChild)}>move first child</button>
 
       </>
     );

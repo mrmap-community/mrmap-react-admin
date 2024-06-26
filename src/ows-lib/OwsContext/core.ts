@@ -76,7 +76,6 @@ export class OWSResource implements IOWSResource {
 
 
 export class OWSContext implements IOWSContext{
-
   id: string;
   properties: OWSContextProperties;
   bbox?: BBox;
@@ -86,18 +85,19 @@ export class OWSContext implements IOWSContext{
 
   constructor(
     id: string = Date.now().toString(),
-    language: string = 'en',
-    title: string = 'mrmap ows context',
-    features: OWSResource[] = []
-  ) {
-    this.id = id;
-    this.type = "FeatureCollection",
-    this.properties = {
-      lang: language,
-      title: title,
+    features: OWSResource[] = [],
+    bbox: BBox = [-180, -90, 180, 90],
+    properties: OWSContextProperties = {
+      lang: 'en',
+      title: 'mrmap ows context',
       updated: new Date().toISOString()
     },
-    this.features = features
+  ) {
+    this.id = id;
+    this.type = "FeatureCollection",      
+    this.features = features,
+    this.bbox = bbox,
+    this.properties = properties
   }
 
   appendWms(capabilitites: string): IOWSContext {

@@ -1,12 +1,12 @@
 import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
 
-import { BBox, Point } from 'geojson'
+import { Point } from 'geojson'
 import _ from 'lodash'
 
+import { OWSContext, OWSResource } from '../../ows-lib/OwsContext/core'
 import { Position } from '../../ows-lib/OwsContext/enums'
-import { CreatorDisplay, OWSContext, OWSResource, TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { OWSContextDocument, activateFeature, getNextRootId, getOptimizedGetMapUrls, moveFeature as moveFeatureUtil, treeify, wmsToOWSResources } from '../../ows-lib/OwsContext/utils'
-import { parseWms } from '../../ows-lib/XMLParser/parseCapabilities'
+import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
+import { getOptimizedGetMapUrls, treeify } from '../../ows-lib/OwsContext/utils'
 
 export interface OwsContextBaseType {
   // TODO: crs handling
@@ -14,7 +14,6 @@ export interface OwsContextBaseType {
   //selectedCrs: MrMapCRS
   //setSelectedCrs: (crs: MrMapCRS) => void
   owsContext: OWSContext
-  features: OWSResource[]
   addWMSByUrl: (url: string) => void
   initialFromOwsContext: (url: string) => void
   trees: TreeifiedOWSResource[]
@@ -29,36 +28,37 @@ export interface OwsContextBaseProps extends PropsWithChildren {
   initialFeatures?: OWSResource[] 
 }
 
+const copyOWSContext = (owsContext: OWSContext)=>{
+  return new OWSContext(
+    owsContext.id,
+    owsContext.features,
+    owsContext.bbox,
+    owsContext.properties
+  )
+}
+
 export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBaseProps): ReactNode => {
 
   // area of interest in crs 4326
-  const [bbox, setBbox] = useState<BBox>([-180, -90, 180, 90])
-  const [display, setDisplay] = useState<CreatorDisplay>({})
-  const [features, setFeatures] = useState<OWSResource[]>(initialFeatures)
-  
-  const owsContext = useMemo(()=>{
-    const doc = OWSContextDocument()
-    
-    return {
-      ...doc,
-      ...(bbox && {bbox: bbox}),
-      ...(features && {features: bbox}),
-      ...(display && {properties: {...doc.properties, display: display}})
-    }
-  }, [bbox, features])
-
+  const [owsContext, setOwsContext] = useState<OWSContext>(new OWSContext(undefined, initialFeatures, undefined, {
+    lang: 'en',
+    title: 'mrmap ows context',
+    updated: new Date().toISOString(),
+    display: {}
+  }, ))
   
   const trees = useMemo(() => {
-    return treeify(features)
-  }, [features])
+    return treeify(owsContext.features)
+  }, [owsContext.features])
 
   const atomicGetMapUrls = useMemo(()=>{
     return getOptimizedGetMapUrls(trees)
   }, [trees])
 
   const activeFeatures = useMemo(()=>{
-    return features.filter(feature => feature.properties.active === true)
-  }, [features])
+
+    return owsContext.features.filter(feature => feature.properties.active === true)
+  }, [owsContext.features])
 
  
   const addWMSByUrl = useCallback((url: string)=>{
@@ -66,17 +66,12 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
       method: 'GET',
     })
     fetch(request).then(response => response.text()).then(xmlString => {
-      
-      const nextRootId = getNextRootId(features)
-      
-      const parsedWms = parseWms(xmlString)
-      const additionalFeatures = wmsToOWSResources(parsedWms, nextRootId)
-
-      setFeatures([...features, ...additionalFeatures])
-
+      const newContext = copyOWSContext(owsContext)
+      newContext.appendWms(xmlString)
+      setOwsContext(newContext)
     }      
   )
-  }, [features])
+  }, [owsContext])
 
   const initialFromOwsContext = useCallback((url: string)=>{
     const request = new Request(url, {
@@ -85,33 +80,35 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
     fetch(request).then(response => response.json()).then((json: any) => {
       // todo: check type before setting features.
       // todo: set also other variables
-      setFeatures(json.features)
-      json.bbox && setBbox(json.bbox)
+      const newOwsContext = new OWSContext(undefined, json.features, json.bbox ?? undefined)
+      setOwsContext(newOwsContext)
       // TODO: initial map with current display if exists  map?.fitBounds()
     }      
   )
   }, [])
 
-  const setFeatureActive = useCallback((feature: OWSResource, active: boolean)=>{
-    setFeatures([...activateFeature(features, feature, active)])
-  }, [features])
+  const setFeatureActive = useCallback((feature: OWSResource, active: boolean) => {
+    const newContext = copyOWSContext(owsContext)
+    newContext.activateFeature(feature, active)
+    setOwsContext(newContext)
+  }, [owsContext])
 
   const moveFeature = useCallback((source: OWSResource, target: OWSResource, position: Position = Position.lastChild) => {
-    const newFeatures = moveFeatureUtil([...features], source, target, position)
-    setFeatures(newFeatures)
-  }, [features, setFeatures])
+    const newContext = copyOWSContext(owsContext)
+    newContext.moveFeature(source, target, position)
+    setOwsContext(newContext)
+  }, [owsContext])
 
-  const updateBbox = useCallback((newBbox: BBox) => {
-    !_.isEqual(bbox, newBbox) && setBbox(newBbox)
-  },[bbox])
 
   const updateDisplay = useCallback((size: Point) => {
     const newDisplay = {
       pixelWidth: size.coordinates[0],
       pixelHeight: size.coordinates[1]
     }
-    !_.isEqual(display, newDisplay) && setDisplay(newDisplay)
-  }, [display])
+    const newContext = copyOWSContext(owsContext)
+    newContext.properties.display = newDisplay
+    !_.isEqual(owsContext.properties.display, newDisplay) && setOwsContext(newContext)
+  }, [owsContext])
 
    // /** crs handling*/
   // const [selectedCrs, setSelectedCrs] = useState()
@@ -163,11 +160,10 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   // }, [crsIntersection, selectedCrs])
 
 
+
   const value = useMemo<OwsContextBaseType>(() => {
     return {
-
       owsContext,
-      features,
       addWMSByUrl,
       initialFromOwsContext,
       trees,
@@ -176,9 +172,7 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
       moveFeature
     }
   }, [
-
     owsContext,
-    features,
     addWMSByUrl,
     initialFromOwsContext,
     trees,
