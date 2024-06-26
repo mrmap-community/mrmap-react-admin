@@ -89,7 +89,7 @@ owsContextTest('treeify success', ({karteRp}) => {
 })
 
 owsContextTest('treeify wrong feature order', ({karteRp}) => {
-    karteRp.features.splice(2, 1)   
+    karteRp.features = karteRp.features.splice(2, 1)   
     
     expect(() => treeify(karteRp.features)).toThrowError('parsingerror... the context is not well ordered.')
 })
@@ -148,12 +148,70 @@ owsContextTest('isSiblingOf', ({karteRp}) => {
     expect(karteRp.features[0].isSiblingOf(karteRp.features[3])).toBeFalsy()
 })
 
-owsContextTest('getSiblingsOf', ({karteRp}) => {
-    expect(karteRp.getSiblingsOf(karteRp.features[1])).toMatchObject([karteRp.features[2], karteRp.features[4]])
-    expect(karteRp.getSiblingsOf(karteRp.features[1],true)).toMatchObject([karteRp.features[1], karteRp.features[2], karteRp.features[4]])
+owsContextTest('getSiblingsOf', ({reducedKarteRp}) => {
+    expect(reducedKarteRp.getSiblingsOf(reducedKarteRp.features[1])).toMatchObject([
+        reducedKarteRp.features[6], 
+        reducedKarteRp.features[12],
+        reducedKarteRp.features[18],
+        reducedKarteRp.features[27]])
+    expect(reducedKarteRp.getSiblingsOf(reducedKarteRp.features[1],true)).toMatchObject([
+        reducedKarteRp.features[1], 
+        reducedKarteRp.features[6], 
+        reducedKarteRp.features[12],
+        reducedKarteRp.features[18],
+        reducedKarteRp.features[27]])
+    expect(reducedKarteRp.getSiblingsOf(reducedKarteRp.features[1], false, true)).toMatchObject([
+        reducedKarteRp.features[6],
+        reducedKarteRp.features[7],
+        reducedKarteRp.features[8],
+        reducedKarteRp.features[9],
+        reducedKarteRp.features[10], 
+        reducedKarteRp.features[11],
+        reducedKarteRp.features[12],
+        reducedKarteRp.features[13],
+        reducedKarteRp.features[14],
+        reducedKarteRp.features[15],
+        reducedKarteRp.features[16],
+        reducedKarteRp.features[17],
+        reducedKarteRp.features[18],
+        reducedKarteRp.features[19],
+        reducedKarteRp.features[20],
+        reducedKarteRp.features[21],
+        reducedKarteRp.features[22],
+        reducedKarteRp.features[23],
+        reducedKarteRp.features[24],
+        reducedKarteRp.features[25],
+        reducedKarteRp.features[26],
+        reducedKarteRp.features[27]])
+    expect(reducedKarteRp.getSiblingsOf(reducedKarteRp.features[1], true, true)).toMatchObject([
+        reducedKarteRp.features[1],
+        reducedKarteRp.features[2],
+        reducedKarteRp.features[3],
+        reducedKarteRp.features[4],    
+        reducedKarteRp.features[5], 
+        reducedKarteRp.features[6],
+        reducedKarteRp.features[7],
+        reducedKarteRp.features[8],
+        reducedKarteRp.features[9],
+        reducedKarteRp.features[10], 
+        reducedKarteRp.features[11],
+        reducedKarteRp.features[12],
+        reducedKarteRp.features[13],
+        reducedKarteRp.features[14],
+        reducedKarteRp.features[15],
+        reducedKarteRp.features[16],
+        reducedKarteRp.features[17],
+        reducedKarteRp.features[18],
+        reducedKarteRp.features[19],
+        reducedKarteRp.features[20],
+        reducedKarteRp.features[21],
+        reducedKarteRp.features[22],
+        reducedKarteRp.features[23],
+        reducedKarteRp.features[24],
+        reducedKarteRp.features[25],
+        reducedKarteRp.features[26],
+        reducedKarteRp.features[27]])
 
-    expect(karteRp.getSiblingsOf(karteRp.features[2], true, true)).toMatchObject([karteRp.features[1], karteRp.features[2], karteRp.features[3], karteRp.features[4]])    
-    expect(karteRp.getSiblingsOf(karteRp.features[2], false, true)).toMatchObject([karteRp.features[1], karteRp.features[4]])
 })
 
 owsContextTest('getRightSiblings of Autobahnen', ({karteRp}) => {

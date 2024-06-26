@@ -3899,3 +3899,6 @@ export const karteRpFeatures: OWSResource[] = [
       }
   }
 ]
+
+// till Flughafenflaeche layer (included)
+export const reducedKarteRpFeatures: OWSResource[] = karteRpFeatures.slice(0, 28)
