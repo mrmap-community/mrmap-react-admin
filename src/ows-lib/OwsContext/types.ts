@@ -128,7 +128,7 @@ export interface OWSResource extends Omit<Feature, "geometry"> {
 
 export interface TreeifiedOWSResource extends OWSResource{
     children: TreeifiedOWSResource[]
-  }
+}
   
 
 export interface OWSContext extends Omit<FeatureCollection, "features"> {

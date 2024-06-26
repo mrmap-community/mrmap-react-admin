@@ -97,7 +97,7 @@ export class OWSContext implements IOWSContext{
     this.type = "FeatureCollection",      
     this.features = features,
     this.bbox = bbox,
-    this.properties = properties
+    this.properties = JSON.parse(JSON.stringify(properties))
   }
 
   appendWms(capabilitites: string): IOWSContext {

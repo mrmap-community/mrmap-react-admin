@@ -1,15 +1,16 @@
-import {ReactNode} from 'react'
+import { ReactNode } from 'react';
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
-import {karteRpFeatures as testdata} from '../../ows-lib/OwsContext/tests/data'
+import { OWSResource } from '../../ows-lib/OwsContext/core';
+import { karteRpFeatures as testdata } from '../../ows-lib/OwsContext/tests/data';
 import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
 import LayerTree from './LayerTree';
 
 
 const getKarteRpFeatures = () => {
-  return JSON.parse(JSON.stringify(testdata))
+  return testdata.map(resource => new OWSResource(resource.properties, resource.id, resource.bbox, resource.geometry));
 }
 
 const MapViewerBaseWrapper = ({ children }: { children: ReactNode }) => {

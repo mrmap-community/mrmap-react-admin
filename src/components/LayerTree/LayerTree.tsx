@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState, type ReactNode, type SyntheticEvent } f
 import { SimpleTreeView } from '@mui/x-tree-view'
 
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { getLeafNodes } from '../../ows-lib/OwsContext/utils'
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import { DragableTreeItem } from './DragableTreeItem'
 import TreeNodeCheckbox from './NodeCheckbox'
@@ -31,11 +30,11 @@ const darkStyle = {
 const LayerTree = ({ 
   initialExpanded = [] 
 }: LayerTreeProps): ReactNode => {
-  const { trees, features } = useOwsContextBase()
+  const { trees, owsContext } = useOwsContextBase()
 
   const defaultExpandedNodes = useMemo(()=> {
-    return getLeafNodes(features).map(feature => feature.properties.folder?? '')
-  },[features])
+    return owsContext.getLeafNodes().map(feature => feature.properties.folder?? '')
+  },[owsContext])
 
   const [expanded, setExpanded] = useState<string[]>([...initialExpanded, ...defaultExpandedNodes])
 

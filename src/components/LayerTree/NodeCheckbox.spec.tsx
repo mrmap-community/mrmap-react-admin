@@ -3,15 +3,15 @@ import { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { OWSResource } from '../../ows-lib/OwsContext/core';
 import { karteRpFeatures as testdata } from '../../ows-lib/OwsContext/tests/data';
-import { OWSResource } from '../../ows-lib/OwsContext/types';
 import { treeify } from '../../ows-lib/OwsContext/utils';
 import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
 import NodeCheckbox from './NodeCheckbox';
 
 
 const getKarteRpFeatures = () => {
-  return JSON.parse(JSON.stringify(testdata))
+  return testdata.map(resource => new OWSResource(resource.properties, resource.id, resource.bbox, resource.geometry));
 }
 
 const karteRp: OWSResource[] = getKarteRpFeatures()

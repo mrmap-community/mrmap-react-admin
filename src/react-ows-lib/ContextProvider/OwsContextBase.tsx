@@ -28,7 +28,7 @@ export interface OwsContextBaseProps extends PropsWithChildren {
   initialFeatures?: OWSResource[] 
 }
 
-const copyOWSContext = (owsContext: OWSContext)=>{
+const copyOWSContext = (owsContext: OWSContext) => {
   return new OWSContext(
     owsContext.id,
     owsContext.features,

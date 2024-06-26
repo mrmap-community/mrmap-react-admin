@@ -285,4 +285,8 @@ export const getFeatureFolderIndex = (feature: IOWSResource) => {
     return Number(feature.properties.folder?.split('/').slice(-1)[0])
 }
 
+export const getParentFolder = (folder: string) => {
+    if (folder?.split('/').length === 2) return // root node
+    return folder?.split('/').slice(0, -1).join('/')
+  }
 

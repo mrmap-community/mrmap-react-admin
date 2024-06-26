@@ -5,11 +5,10 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import { TreeItemProps } from '@mui/lab';
 import { TreeItem } from '@mui/x-tree-view';
 import Sortable from 'sortablejs';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Position } from '../../ows-lib/OwsContext/enums';
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types';
-import { findNodeByFolder, getParentFolder, isLeafNode } from '../../ows-lib/OwsContext/utils';
+import { getParentFolder } from '../../ows-lib/OwsContext/utils';
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase';
 
 
@@ -31,7 +30,7 @@ export const DragableTreeItem = ({
     ...props
   }: DragableTreeItemProps): ReactNode => {
     const ref = useRef(null)
-    const { features, moveFeature } = useOwsContextBase()
+    const { owsContext, moveFeature } = useOwsContextBase()
   
     const createSortable = useCallback(()=>{
       if (ref.current === null || ref.current === undefined) return
@@ -53,22 +52,21 @@ export const DragableTreeItem = ({
   
           const targetFolder = evt.to.dataset.owscontextFolder
           if (targetFolder === undefined) return
-          const target = findNodeByFolder(features, targetFolder)
-          
+          const target = owsContext.findResourceByFolder(targetFolder)
+
           // get the correct source object (not a shallow coppy)
           const sourceFolder = node.properties.folder
 
           if (sourceFolder === undefined) return
-          const source = findNodeByFolder(features, sourceFolder)
+          const source = owsContext.findResourceByFolder(sourceFolder)
           if (source == undefined) return
 
           if (target === undefined) {
             // undefined signals new subtree move event
             // move the node as child to the fictive parent
-  
             const parentFolder = getParentFolder(targetFolder)
             if (parentFolder === undefined) return
-            const parent = findNodeByFolder(features, parentFolder)
+            const parent = owsContext.findResourceByFolder(parentFolder)
             if (parent === undefined) return
             moveFeature(source, parent, Position.firstChild)          
           } else {
@@ -84,19 +82,27 @@ export const DragableTreeItem = ({
         ...sortable
       })
   
-    }, [features, ref, moveFeature])
+    }, [owsContext, ref, moveFeature])
   
     useEffect(()=>{
       createSortable()
     },[])
-  
+    
 
-    const isLeaf = useMemo(() => isLeafNode(features, node),[features, node])
+    const isLeaf = useMemo(() => {
+      if (node.properties.folder !== undefined) {
+        const resource = owsContext.findResourceByFolder(node.properties.folder)
+        if (resource !== undefined) {
+          return owsContext.isLeafNode(resource)
+        }
+      }
+      return false
+    },[owsContext, node])
 
     return (
       <TreeItem
         ref={ref}
-        itemId={imaginary ? uuidv4(): node.properties.folder}
+        itemId={imaginary ? Date.now().toString(): node.properties.folder}
         slots={{
           expandIcon: !isLeaf ? KeyboardArrowRightIcon: ImaginaryIcon,
           collapseIcon: !isLeaf ? KeyboardArrowDownIcon: ImaginaryIcon

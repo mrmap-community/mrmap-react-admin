@@ -3,7 +3,6 @@ import { MouseEvent, useCallback, useMemo, type ChangeEvent, type ReactNode } fr
 import { Checkbox } from '@mui/material'
 
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { checkIndeterminateActive, findNodeByFolder } from '../../ows-lib/OwsContext/utils'
 import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export interface TreeNodeCheckboxProps {
@@ -13,10 +12,10 @@ export interface TreeNodeCheckboxProps {
 const TreeNodeCheckbox = ({ 
   node 
 }: TreeNodeCheckboxProps): ReactNode => {
-  const { features, setFeatureActive } = useOwsContextBase()
+  const { owsContext, setFeatureActive } = useOwsContextBase()
 
   const feature = useMemo(()=>{
-    return findNodeByFolder(features, node.properties.folder ?? '')
+    return owsContext.findResourceByFolder(node.properties.folder ?? '')
   },[node])
 
   const handleChange = useCallback((event: ChangeEvent | MouseEvent, checked?: boolean) => {
@@ -28,8 +27,8 @@ const TreeNodeCheckbox = ({
 
   const isIndeterminate = useMemo(() => {
     if (feature === undefined) return
-    return checkIndeterminateActive(features, feature)
-  }, [features, node])
+    return owsContext.getIndeterminateStateOf(feature)
+  }, [owsContext, feature])
 
   return (
     <Checkbox
