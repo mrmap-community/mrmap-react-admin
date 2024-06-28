@@ -105,7 +105,7 @@ const LayerTree = ({
         </SimpleTreeView>
       )
     })
-  }, [ trees, handleToggle, expanded, renderTree])
+  }, [trees, handleToggle, expanded, renderTree])
 
   return (
     <>

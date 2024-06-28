@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@mui/lab": "^5.0.0-alpha.163",
-    "@mui/x-tree-view": "^7.5.0",
+    "@mui/x-tree-view": "^7.7.1",
     "@react-hook/resize-observer": "^1.2.6",
     "@types/inflection": "^1.13.0",
     "@types/proj4": "^2.5.5",

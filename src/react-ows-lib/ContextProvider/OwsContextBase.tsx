@@ -49,16 +49,15 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   
   const trees = useMemo(() => {
     return treeify(owsContext.features)
-  }, [owsContext.features])
+  }, [owsContext])
 
   const atomicGetMapUrls = useMemo(()=>{
     return getOptimizedGetMapUrls(trees)
   }, [trees])
 
   const activeFeatures = useMemo(()=>{
-
     return owsContext.features.filter(feature => feature.properties.active === true)
-  }, [owsContext.features])
+  }, [owsContext])
 
  
   const addWMSByUrl = useCallback((url: string)=>{

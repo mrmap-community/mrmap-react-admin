@@ -102,7 +102,7 @@ export const DragableTreeItem = ({
     return (
       <TreeItem
         ref={ref}
-        itemId={imaginary ? Date.now().toString(): node.properties.folder}
+        itemId={imaginary ? "id" + Math.random().toString(16).slice(2): node.properties.folder ?? "id" + Math.random().toString(16).slice(2)}
         slots={{
           expandIcon: !isLeaf ? KeyboardArrowRightIcon: ImaginaryIcon,
           collapseIcon: !isLeaf ? KeyboardArrowDownIcon: ImaginaryIcon

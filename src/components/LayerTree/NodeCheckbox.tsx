@@ -21,20 +21,20 @@ const TreeNodeCheckbox = ({
   const handleChange = useCallback((event: ChangeEvent | MouseEvent, checked?: boolean) => {
     event.stopPropagation()
     if (feature === undefined) return
-    setFeatureActive(feature, checked ?? !node.properties.active)
-  }, [node, setFeatureActive])
+    setFeatureActive(feature, checked ?? !feature.properties.active)
+  }, [feature, setFeatureActive])
 
 
   const isIndeterminate = useMemo(() => {
-    if (feature === undefined) return
-    return owsContext.getIndeterminateStateOf(feature)
+    if (feature === undefined) return false
+    return !feature.properties.active && owsContext.getIndeterminateStateOf(feature)
   }, [owsContext, feature])
 
   return (
     <Checkbox
-      key={`checkbox-node-${node.properties.folder}`}
-      id={`checkbox-node-${node.properties.folder}`}
-      checked={node.properties.active ?? false}
+      key={`checkbox-node-${feature?.properties.folder}`}
+      id={`checkbox-node-${feature?.properties.folder}`}
+      checked={feature?.properties.active ?? false}
       indeterminate={isIndeterminate}
       tabIndex={-1}
       onChange={handleChange}

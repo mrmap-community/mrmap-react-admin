@@ -291,8 +291,9 @@ export class OWSContext implements IOWSContext{
   }
 
   getIndeterminateStateOf(target: OWSResource){
+    if (this.properties.active === true) return false
     const descendants = this.getDescandantsOf(target)
-    return !this.properties.active && descendants.length > 0 && descendants.find(feature => feature.properties.active === true) !== undefined
+    return descendants.length > 0 && descendants.find(feature => feature.properties.active === true) !== undefined
   }
 
   isLeafNode(target: OWSResource){

@@ -22,8 +22,6 @@ const MapViewerBaseWrapper = ({ children }: { children: ReactNode }) => {
 }
 
 
-
-
 describe('LayerTree', () => {
   it('LayerTree renders with initial data', () => {
     render(<LayerTree />, {wrapper: MapViewerBaseWrapper})
