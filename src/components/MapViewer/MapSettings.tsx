@@ -1,12 +1,9 @@
 import type { Polygon } from 'geojson'
 
-import { useState, type PropsWithChildren, type ReactNode, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
 
 import { FormGroup } from '@mui/material'
-import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
 
-import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import { boundsToGeoJSON, featuresToCollection, latLngToGeoJSON, polygonToFeature } from './utils'
 
 
@@ -104,10 +101,9 @@ const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
   return (
       <>
         {/* <DisplayPosition 
-          crsBbox={selectedCrs?.bbox}
-        />
+        /> */}
 
-        <Select
+        {/* <Select
             labelId="crs-select-label"
             id="crs-simple-select"
             value={crs}

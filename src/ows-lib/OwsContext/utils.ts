@@ -36,7 +36,8 @@ export const updateOrAppendSearchParam = (params: URLSearchParams, key: string, 
 
 
 export const prepareGetMapUrl = (
-    capabilities: WmsCapabilitites, node: WmsLayer
+    capabilities: WmsCapabilitites, 
+    node: WmsLayer
 ): URL => {
     const url = new URL(capabilities.operationUrls.getMap.get)
     const params = url.searchParams
@@ -45,6 +46,7 @@ export const prepareGetMapUrl = (
     updateOrAppendSearchParam(params, 'REQUEST', 'GetMap')
     updateOrAppendSearchParam(params, 'FORMAT', 'image/png') // todo: should be configureable
     updateOrAppendSearchParam(params, 'LAYERS', node.metadata.name)
+
     return url
 }
 

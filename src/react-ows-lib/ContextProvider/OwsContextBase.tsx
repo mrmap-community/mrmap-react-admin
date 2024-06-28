@@ -6,7 +6,7 @@ import _ from 'lodash'
 import { OWSContext, OWSResource } from '../../ows-lib/OwsContext/core'
 import { Position } from '../../ows-lib/OwsContext/enums'
 import { TreeifiedOWSResource } from '../../ows-lib/OwsContext/types'
-import { getOptimizedGetMapUrls, treeify } from '../../ows-lib/OwsContext/utils'
+import { treeify } from '../../ows-lib/OwsContext/utils'
 
 export interface OwsContextBaseType {
   // TODO: crs handling
@@ -50,10 +50,6 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
   const trees = useMemo(() => {
     return treeify(owsContext.features)
   }, [owsContext])
-
-  const atomicGetMapUrls = useMemo(()=>{
-    return getOptimizedGetMapUrls(trees)
-  }, [trees])
 
   const activeFeatures = useMemo(()=>{
     return owsContext.features.filter(feature => feature.properties.active === true)

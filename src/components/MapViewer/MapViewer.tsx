@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react'
 import { type SimpleShowLayoutProps } from 'react-admin'
-import { MapContainer, Marker, Popup, ScaleControl } from 'react-leaflet'
+import { ImageOverlay, MapContainer, Marker, Popup, ScaleControl } from 'react-leaflet'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Box } from '@mui/material'
@@ -10,8 +10,10 @@ import AccordionSummary from '@mui/material/AccordionSummary'
 import useResizeObserver from '@react-hook/resize-observer'
 import { CRS, type LatLng, type Map } from 'leaflet'
 
+import proj4 from 'proj4'
 import ListGuesser from '../../jsonapi/components/ListGuesser'
-import { OwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
+import { getOptimizedGetMapUrls, updateOrAppendSearchParam } from '../../ows-lib/OwsContext/utils'
+import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 import BottomDrawer from '../Drawer/BottomDrawer'
 import { DrawerBase } from '../Drawer/DrawerContext'
 import RightDrawer from '../Drawer/RightDrawer'
@@ -32,13 +34,94 @@ export interface WMSLayerTreeProps extends Partial<SimpleShowLayoutProps> {
 
 }
 
+export interface Tile {
+  leafletTile: ReactNode
+  getMapUrl?: URL
+  getFeatureinfoUrl?: URL
+}
+
 const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
+  const [mapBounds, setMapBounds] = useState(map?.getBounds())
+  const [mapSize, setMapSize] = useState(map?.getSize())
+
   const mapRef = useRef(map)
   //const { setMap: setMapContext } = useOwsContextBase()
-  //const { tiles } = useOwsContextBase()
+  const { trees } = useOwsContextBase()
   //const tilesRef = useRef(tiles)
+
+  const [selectedCrs, setSelectedCrs] = useState({stringRepresentation: 'EPSG:4326', isXyOrder: false, wkt: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'})
+
+  const atomicGetMapUrls = useMemo(()=>{
+    return getOptimizedGetMapUrls(trees)
+  }, [trees])
+
+  const tiles = useMemo(() => {
+    const _tiles: Tile[] = []
+
+    if (mapBounds === undefined || mapSize === undefined) {
+      console.log('discard recalc', map, mapBounds, mapSize)
+      return _tiles
+    }
+    const sw = mapBounds.getSouthWest()
+    const ne = mapBounds.getNorthEast()
+    let minXy = {x: sw.lng, y: sw.lat}
+    let maxXy = {x: ne.lng, y: ne.lat}
+
+    const getMapUrls = [...atomicGetMapUrls].reverse()
+
+    if (selectedCrs.stringRepresentation !== 'EPSG:4326') {
+      const proj = proj4('EPSG:4326', selectedCrs.wkt)
+      minXy = proj.forward(minXy)
+      maxXy = proj.forward(maxXy)
+    }
+
+    getMapUrls.forEach((atomicGetMapUrl, index) => {
+      const params = atomicGetMapUrl.searchParams
+      const version = params.get('version') ?? params.get('VERSION')
+
+      if (version === '1.3.0') {
+        if (selectedCrs.isXyOrder) {
+          // no axis order correction needed.
+          updateOrAppendSearchParam(params, 'BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
+        } else {
+          updateOrAppendSearchParam(params, 'BBOX',  `${minXy.y},${minXy.x},${maxXy.y},${maxXy.x}`)
+        }
+        updateOrAppendSearchParam(params, 'CRS',  selectedCrs.stringRepresentation)
+
+      } else {
+        // always minx,miny,maxx,maxy (minLng,minLat,maxLng,maxLat)
+        updateOrAppendSearchParam(params, 'BBOX', `${minXy.x},${minXy.y},${maxXy.x},${maxXy.y}`)
+        updateOrAppendSearchParam(params, 'SRS',  selectedCrs.stringRepresentation)
+      }
+      updateOrAppendSearchParam(params, 'WIDTH', mapSize.x.toString())
+      updateOrAppendSearchParam(params, 'HEIGHT', mapSize.y.toString())
+      updateOrAppendSearchParam(params, 'STYLES', '') // todo: shall be configureable
+      _tiles.push(
+        {
+          leafletTile: <ImageOverlay
+            key={(Math.random() + 1).toString(36).substring(7)}
+            bounds={mapBounds}
+            interactive={true}
+            url={atomicGetMapUrl.href}
+          />,
+          getMapUrl: atomicGetMapUrl,
+          getFeatureinfoUrl: undefined
+        }
+      )
+    })
+    
+    console.log('recalced tiles', map?.getCenter())
+    return _tiles
+  }, [mapBounds, mapSize, atomicGetMapUrls, selectedCrs])
+
+
+  const tilesRef = useRef(tiles)
+
+
+
+
 
   const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
   const [featureInfos, setFeatureInfos] = useState<any[]>([])
@@ -139,7 +222,7 @@ const MapViewerCore = (): ReactNode => {
   //       ).catch(reason => { console.log(reason) })
   //     })
   //   }
-  // }, [map, setMapContext, tiles])
+  // }, [map, tiles])
 
   useEffect(() => {
     // on every size change, we need to tell the map context to invalidate the old size values.
@@ -149,6 +232,15 @@ const MapViewerCore = (): ReactNode => {
       map.invalidateSize()
     }
   }, [size, map])
+
+  useEffect(() => {
+    setMapBounds(map?.getBounds())
+    setMapSize(map?.getSize())
+    map?.addEventListener('resize moveend zoomend', (event) => {
+      setMapBounds(map.getBounds())
+      setMapSize(map.getSize())
+    })
+  }, [map])
 
   return (
     <DrawerBase>
@@ -169,7 +261,7 @@ const MapViewerCore = (): ReactNode => {
             }}
             
           >
-            {/* {...tiles.map(tile => tile.leafletTile)} */}
+            {...tiles.map(tile => tile.leafletTile)}
             {featureInfoMarker}
             <ScaleControl position="topleft" />
           </MapContainer>
