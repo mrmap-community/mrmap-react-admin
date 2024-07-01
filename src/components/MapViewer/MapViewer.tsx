@@ -9,8 +9,8 @@ import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
 import useResizeObserver from '@react-hook/resize-observer'
 import { CRS, type LatLng, type Map } from 'leaflet'
-
 import proj4 from 'proj4'
+
 import ListGuesser from '../../jsonapi/components/ListGuesser'
 import { getOptimizedGetMapUrls, updateOrAppendSearchParam } from '../../ows-lib/OwsContext/utils'
 import { OwsContextBase, useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
@@ -21,6 +21,7 @@ import LayerTree from '../LayerTree/LayerTree'
 import { TabListBase } from '../Tab/TabListContext'
 import { Tabs } from '../Tab/Tabs'
 import MapSettingsEditor from './MapSettings'
+import { MapViewerBase, useMapViewerBase } from './MapViewerBase'
 import { OwsContextActionButtons } from './OwsContextGuiActions/OwsContextActionButtons'
 const style = {
   position: 'relative',
@@ -44,14 +45,11 @@ const MapViewerCore = (): ReactNode => {
   const containerId = useId()
   const [map, setMap] = useState<Map>()
   const [mapBounds, setMapBounds] = useState(map?.getBounds())
-  const [mapSize, setMapSize] = useState(map?.getSize())
+  const [mapSize, setMapSize] = useState(map?.getSize())  
+  const { setMap: setMapContext, selectedCrs } = useMapViewerBase()
 
-  const mapRef = useRef(map)
-  //const { setMap: setMapContext } = useOwsContextBase()
   const { trees } = useOwsContextBase()
   //const tilesRef = useRef(tiles)
-
-  const [selectedCrs, setSelectedCrs] = useState({stringRepresentation: 'EPSG:4326', isXyOrder: false, wkt: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'})
 
   const atomicGetMapUrls = useMemo(()=>{
     return getOptimizedGetMapUrls(trees)
@@ -112,14 +110,8 @@ const MapViewerCore = (): ReactNode => {
       )
     })
     
-    console.log('recalced tiles', map?.getCenter())
     return _tiles
   }, [mapBounds, mapSize, atomicGetMapUrls, selectedCrs])
-
-
-  const tilesRef = useRef(tiles)
-
-
 
 
 
@@ -234,82 +226,86 @@ const MapViewerCore = (): ReactNode => {
   }, [size, map])
 
   useEffect(() => {
-    setMapBounds(map?.getBounds())
-    setMapSize(map?.getSize())
-    map?.addEventListener('resize moveend zoomend', (event) => {
+    if (map !== undefined && map !== null){
+      setMapContext(map)
       setMapBounds(map.getBounds())
       setMapSize(map.getSize())
-    })
+      map.addEventListener('resize moveend zoomend', (event) => {
+        setMapBounds(map.getBounds())
+        setMapSize(map.getSize())
+      })
+    }
   }, [map])
 
   return (
-    <DrawerBase>
-      <TabListBase>
-        <Box id={containerId} sx={{ ...style }}>
-          <MapContainer
-            ref={setMap}
-            center={[51.505, -0.09]}
-            zoom={2}
-            crs={CRS.EPSG4326}
-            maxZoom={20}
-            minZoom={0}
-            maxBoundsViscosity={0.8}
-            continuousWorld={true}
-            scrollWheelZoom={true}
-            style={{
-              flex: 1, height: '100%', width: '100%', position: 'relative'
-            }}
-            
+      <DrawerBase>
+        <TabListBase>
+          <Box id={containerId} sx={{ ...style }}>
+            <MapContainer
+              ref={setMap}
+              center={[51.505, -0.09]}
+              zoom={2}
+              crs={CRS.EPSG4326}
+              maxZoom={20}
+              minZoom={0}
+              maxBoundsViscosity={0.8}
+              continuousWorld={true}
+              scrollWheelZoom={true}
+              style={{
+                flex: 1, height: '100%', width: '100%', position: 'relative'
+              }}
+            >
+              {...tiles.map(tile => tile.leafletTile)}
+              {featureInfoMarker}
+              <ScaleControl position="topleft" />
+            </MapContainer>
+          </Box>
+          <RightDrawer
+            leftComponentId={containerId}
+            callback={() => map?.invalidateSize()}
           >
-            {...tiles.map(tile => tile.leafletTile)}
-            {featureInfoMarker}
-            <ScaleControl position="topleft" />
-          </MapContainer>
-        </Box>
-        <RightDrawer
-          leftComponentId={containerId}
-          callback={() => map?.invalidateSize()}
-        >
-          <OwsContextActionButtons />
-          <LayerTree/>
-        </RightDrawer>
-        <BottomDrawer
-          aboveComponentId={containerId}
-          callback={() => map?.invalidateSize()}
-        >
-          <Tabs
-            defaultTabs={
-              [{
-                tab: { label: 'Map Settings' },
-                tabPanel: {
-                  children: <MapSettingsEditor/>
-                },
-                closeable: false
-              }, {
-                tab: { label: 'WMS List' },
-                tabPanel: {
-                  children: <ListGuesser
-                    resource='WebMapService'
-                    onRowClick={(resource) => {
-                      console.log('clicked: ',resource)
-                    }}
-                  />
-                },
-                closeable: false
-              }]
-            }
-          />
-        </BottomDrawer>
-      </TabListBase>
-    </DrawerBase>
+            <OwsContextActionButtons />
+            <LayerTree/>
+          </RightDrawer>
+          <BottomDrawer
+            aboveComponentId={containerId}
+            callback={() => map?.invalidateSize()}
+          >
+            <Tabs
+              defaultTabs={
+                [{
+                  tab: { label: 'Map Settings' },
+                  tabPanel: {
+                    children: <MapSettingsEditor/>
+                  },
+                  closeable: false
+                }, {
+                  tab: { label: 'WMS List' },
+                  tabPanel: {
+                    children: <ListGuesser
+                      resource='WebMapService'
+                      onRowClick={(resource) => {
+                        console.log('clicked: ',resource)
+                      }}
+                    />
+                  },
+                  closeable: false
+                }]
+              }
+            />
+          </BottomDrawer>
+        </TabListBase>
+      </DrawerBase>
   )
 }
 
 const MapViewer = ({ children }: PropsWithChildren): ReactNode => {
   return (
     <OwsContextBase>
-      <MapViewerCore />
-      {children}
+      <MapViewerBase>
+        <MapViewerCore />
+        {children}
+      </MapViewerBase>
     </OwsContextBase>
 
   )

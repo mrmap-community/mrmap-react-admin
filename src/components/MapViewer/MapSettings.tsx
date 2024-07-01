@@ -1,67 +1,22 @@
 import type { Polygon } from 'geojson'
 
-import { useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
+import { type PropsWithChildren, type ReactNode } from 'react'
 
 import { FormGroup } from '@mui/material'
 
-import { boundsToGeoJSON, featuresToCollection, latLngToGeoJSON, polygonToFeature } from './utils'
+import { useMapViewerBase } from './MapViewerBase'
 
 
 export interface DisplayPositionProps {
   crsBbox?: Polygon
 }
 
-
-
 const DisplayPosition = ({
   crsBbox
 }: DisplayPositionProps): ReactNode => {
 
-  //const { map } = useOwsContextBase()
+  const { featureCollection } = useMapViewerBase()
 
-  const [position, setPosition] = useState(() => map?.getCenter())
-  const [bounds, setBounds] = useState(() => map?.getBounds())
-
-  const positionGeoJSON = useMemo(()=>{
-    return position ? latLngToGeoJSON(position): undefined
-  },[position])
-
-  const boundsGeoJSON = useMemo(()=>{
-    return bounds ? boundsToGeoJSON(bounds): undefined
-  },[bounds])
-
-  const featureCollection = useMemo(()=>{
-    const features = []
-    if (crsBbox !== undefined){
-      features.push(polygonToFeature(crsBbox, "crs bbox"))
-    }
-    if (positionGeoJSON !== undefined){
-      features.push(positionGeoJSON)
-    }
-    if (boundsGeoJSON !== undefined){
-      features.push(boundsGeoJSON)
-    }
-      
-    return featuresToCollection(features)
-  },[position, bounds])
-
-
-
-  // const onMove = useCallback(() => {
-  //   if (map !== undefined) {
-  //     setPosition(map.getCenter())
-  //     setBounds(map.getBounds())
-  //   }
-  // }, [map])
-
-  // useEffect(() => {
-  //   if (map !== undefined) {
-  //     map.on('move', onMove)
-  //     return () => {
-  //       map.off('move', onMove)
-  //     }
-  //   }
-  // }, [map, onMove])
 
   return (
     <FormGroup>
@@ -74,8 +29,9 @@ const DisplayPosition = ({
 }
 
 
-
 const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
+  const { selectedCrs, setSelectedCrs } = useMapViewerBase()
+
   //const { crsIntersection, selectedCrs, setSelectedCrs } = useOwsContextBase()
 
   //const [crs, setCrs] = useState<string>(selectedCrs?.stringRepresentation ?? 'EPSG:4326')
@@ -100,8 +56,7 @@ const MapSettingsEditor = ({ children }: PropsWithChildren): ReactNode => {
 
   return (
       <>
-        {/* <DisplayPosition 
-        /> */}
+        <DisplayPosition/>
 
         {/* <Select
             labelId="crs-select-label"
