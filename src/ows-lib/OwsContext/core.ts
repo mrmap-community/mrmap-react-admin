@@ -100,14 +100,14 @@ export class OWSContext implements IOWSContext{
     this.properties = JSON.parse(JSON.stringify(properties))
   }
 
-  appendWms(capabilitites: string): IOWSContext {
+  appendWms(capabilitites: string): OWSContext {
     const parsedWms = parseWms(capabilitites)
     const additionalFeatures = wmsToOWSResources(parsedWms, this.getNextRootId()).map(resource => new OWSResource(resource.properties))
     this.features.push(...additionalFeatures)
     return this
   }
 
-  appendWfs(capabilities: string): IOWSContext {
+  appendWfs(capabilities: string): OWSContext {
     throw new Error('Method not implemented.');
   }
   
@@ -463,6 +463,32 @@ export class OWSContext implements IOWSContext{
     return this.features
   }
 
+  async collectWmsCapabilities(){
+    const capabilititesRequests = this.features.map((feature) => {
+      const wmsOffering = feature.properties.offerings?.find(offering => offering.code === "http://www.opengis.net/spec/owc/1.0/req/wms")
+      const getCapabilitiesOp = wmsOffering?.operations?.find(operation => operation.code === "GetCapabilities")
+      return {
+        feature: feature,
+        fetchCapabilitites: getCapabilitiesOp && fetch(getCapabilitiesOp.href).then(response => response.text())
+      }
+    })
+
+    const wellDefinedCapRequests = capabilititesRequests.filter(req => req.fetchCapabilitites !== undefined)
+
+    const parsedWebMapServices = []
+    try {
+      const responses = await Promise.all(wellDefinedCapRequests.map(capRequests => capRequests.fetchCapabilitites))
+      responses.forEach((rawCapabilitites, index) => {
+        if(rawCapabilitites !== undefined){
+          parsedWebMapServices.push({
+            feature: wellDefinedCapRequests[index].feature,
+            parsedWms: parseWms(rawCapabilitites)
+          })
+        }
+      })
+      return parsedWebMapServices
+    } catch (error) {
+      console.error('[request failed]', error.message)
+    }
+  }
 }
-
-

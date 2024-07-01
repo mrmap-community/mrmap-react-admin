@@ -6,7 +6,7 @@ export interface Link {
     lang?: string // RFC-3066 code
     title?: string
     length?: number
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface PreviewLink extends Link {
@@ -28,7 +28,7 @@ export interface Operation {
     href: string
     request?: Content
     result?: Content
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface Content {
@@ -36,7 +36,7 @@ export interface Content {
     href?: string
     title?: string
     content?: string
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface StyleSet {
@@ -46,7 +46,7 @@ export interface StyleSet {
     default?: boolean
     legendURL?: string
     content?: Content
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 
@@ -55,7 +55,7 @@ export interface Offering {
     operations?: Operation[]
     contents?: Content[]
     styles?: StyleSet[]
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 
@@ -80,7 +80,7 @@ export interface CreatorDisplay {
     pixelWidth?: number // shall be positive integer number
     pixelHeight?: number // shall be positive integer number
     mmPerPixel?: number // shall be floating
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface Category {
@@ -99,7 +99,7 @@ export interface OWSContextProperties {
     display?: CreatorDisplay
     rights?: string
     categories?: Category[]    
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface OWSResourceProperties {
@@ -109,7 +109,7 @@ export interface OWSResourceProperties {
     authors?: Author[]
     publisher?: string
     rights?: string
-    date?: string // iso-8601 format
+    date?: string // iso-8601 format; Date or range of dates relevant to the Context resource
     links?: OWSResourceLinks
     offerings?: Offering[]
     active?: boolean // default is true
@@ -117,25 +117,26 @@ export interface OWSResourceProperties {
     minscaledenominator?: number 
     maxscaledenominator?: number 
     folder?: string
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface OWSResource extends Omit<Feature, "geometry"> {
     properties: OWSResourceProperties
-    geometry?: Geometry
+    geometry?: Geometry // spatial extent or scope of the content of the Context resource
 }
 
 
 export interface TreeifiedOWSResource extends OWSResource{
     children: TreeifiedOWSResource[]
 }
-  
+
 
 export interface OWSContext extends Omit<FeatureCollection, "features"> {
     id: string // String type that SHALL contain a URI value
     properties: OWSContextProperties
-    bbox?: BBox
-    date?: string // iso-8601 date
+    bbox?: BBox // is this the current bbox of the leaflet for example?
+    date?: string // iso-8601 date; is this the current selected time dimension?
     features: OWSResource[]
+    [name: string]: unknown // extension, any other
 }
 
