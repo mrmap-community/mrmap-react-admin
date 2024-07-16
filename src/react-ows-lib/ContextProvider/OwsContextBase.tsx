@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from 'react'
 
 import { Point } from 'geojson'
 import _ from 'lodash'
@@ -25,7 +25,7 @@ export interface OwsContextBaseType {
 export const context = createContext<OwsContextBaseType | undefined>(undefined)
 
 export interface OwsContextBaseProps extends PropsWithChildren {
-  initialFeatures?: OWSResource[] 
+  initialFeatures?: OWSResource[]
 }
 
 const copyOWSContext = (owsContext: OWSContext) => {
@@ -33,7 +33,8 @@ const copyOWSContext = (owsContext: OWSContext) => {
     owsContext.id,
     owsContext.features,
     owsContext.bbox,
-    owsContext.properties
+    owsContext.properties,
+    owsContext.capabilititesMap
   )
 }
 
@@ -45,41 +46,43 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
     title: 'mrmap ows context',
     updated: new Date().toISOString(),
     display: {}
-  }, ))
-  
+  },))
+
   const trees = useMemo(() => {
     return treeify(owsContext.features)
   }, [owsContext])
 
-  const activeFeatures = useMemo(()=>{
-    return owsContext.features.filter(feature => feature.properties.active === true)
+  const activeFeatures = useMemo(() => {
+    return owsContext.getActiveFeatures()
   }, [owsContext])
 
- 
-  const addWMSByUrl = useCallback((url: string)=>{
+
+  const addWMSByUrl = useCallback((url: string) => {
     const request = new Request(url, {
       method: 'GET',
     })
     fetch(request).then(response => response.text()).then(xmlString => {
       const newContext = copyOWSContext(owsContext)
-      newContext.appendWms(xmlString)
+      newContext.appendWms(url, xmlString)
       setOwsContext(newContext)
-    }      
-  )
+    }
+    )
   }, [owsContext])
 
-  const initialFromOwsContext = useCallback((url: string)=>{
+  const initialFromOwsContext = useCallback((url: string) => {
     const request = new Request(url, {
       method: 'GET',
     })
-    fetch(request).then(response => response.json()).then((json: any) => {
+    fetch(request).then(response => response.json()).then(async (json: OWSContext) => {
       // todo: check type before setting features.
       // todo: set also other variables
-      const newOwsContext = new OWSContext(undefined, json.features, json.bbox ?? undefined)
+      const newOwsContext = new OWSContext(undefined, json.features.map(feature => new OWSResource(feature.properties, feature.id, feature.bbox, feature.geometry)), json.bbox ?? undefined)
+      await newOwsContext.initialize()
+
       setOwsContext(newOwsContext)
       // TODO: initial map with current display if exists  map?.fitBounds()
-    }      
-  )
+    }
+    )
   }, [])
 
   const setFeatureActive = useCallback((feature: OWSResource, active: boolean) => {
@@ -105,7 +108,11 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
     !_.isEqual(owsContext.properties.display, newDisplay) && setOwsContext(newContext)
   }, [owsContext])
 
-   // /** crs handling*/
+  useEffect(() => {
+    console.log('owsContext', owsContext)
+  }, [owsContext])
+
+  // /** crs handling*/
   // const [selectedCrs, setSelectedCrs] = useState()
 
   // // intersection of all reference systems
