@@ -13,6 +13,24 @@
             ]
         },
         {
+            "label": "run test",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "test"
+            ]
+        },
+        {
+            "label": "run test with coverage",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "test-coverage",
+            ]
+        },
+        {
             "label": "run lint",
             "type": "shell",
             "command": "npm",

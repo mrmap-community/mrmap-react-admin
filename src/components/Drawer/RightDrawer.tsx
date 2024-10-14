@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import { Drawer, type DrawerProps, IconButton } from '@mui/material'
+
 import { useDrawerContext } from './DrawerContext'
 
 export interface RightDrawerProps extends DrawerProps {

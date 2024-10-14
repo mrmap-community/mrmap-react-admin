@@ -18,7 +18,7 @@ const getIcon = (record: RaRecord): ReactNode => {
 }
 
 const getTertiaryText = (record: RaRecord): ReactNode => {
-  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+   
   return `${new Date(record.historyDate).toLocaleString('de-DE')}, by ${record.historyUser?.username}`
 }
 
@@ -47,7 +47,7 @@ const PrimaryText = ({ record, related, selectedRecord }: PrimaryTextProps): Rea
         )
       }
     } else if (record.historyType === 'deleted') {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+       
       return `${record.title} (${record.historyRelation.id})`
     } else {
       return <RecordRepresentation record={record.historyRelation} resource={related} />

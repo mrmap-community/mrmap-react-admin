@@ -1,14 +1,15 @@
-import { TextInput, useCreateContext, SimpleForm, CreateBase, useInput, type TextInputProps } from 'react-admin'
 import { useEffect, type ReactNode, useState } from 'react'
-import { useMapViewerContext } from '../MapViewer/MapViewerContext'
+import { TextInput, useCreateContext, SimpleForm, CreateBase, useInput, type TextInputProps } from 'react-admin'
+
 import SchemaAutocompleteArrayInput from '../../jsonapi/components/SchemaAutocompleteArrayInput'
 import SchemaAutocompleteInput from '../../jsonapi/components/SchemaAutocompleteInput'
+import { useOwsContextBase } from '../../react-ows-lib/ContextProvider/OwsContextBase'
 
 export const GeoJSONInput = ({
   source,
   ...rest
 }: TextInputProps): ReactNode => {
-  const { geoJSON, setGeoJSON } = useMapViewerContext()
+  const { geoJSON, setGeoJSON } = useOwsContextBase()
   const { field: { onChange } } = useInput({ source })
 
   const [isOver, setIsOver] = useState(false)

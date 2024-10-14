@@ -1,8 +1,10 @@
 {
     "eslint.enable": true,
     "editor.formatOnSave": true,
+    "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
+        "source.fixAll.eslint": "always",
+        "source.organizeImports": "always"
     },
     "eslint.validate": [
         "javascript",
@@ -10,7 +12,6 @@
         "typescript",
         "typescriptreact"
     ],
-    "files.associations": {
-        "*.yaml": "home-assistant"
-    }
+    "eslint.experimental.useFlatConfig": true,
+    "eslint.format.enable": false
 }

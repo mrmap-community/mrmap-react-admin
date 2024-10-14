@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
@@ -21,13 +21,18 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "__tests__/**/*",
+    "src/ows-lib/OwsContext/tests/.spec.ts",
+    "src/ows-lib/XMLParser/tests/.spec.js"
   ],
   "exclude": [
     "node_modules",
     "build",
     "dist",
     "scripts",
-    "src/vite-env.d.ts"
+    "src/vite-env.d.ts",
+    "./vite.config.ts",
+    "__tests__"
   ]
 }

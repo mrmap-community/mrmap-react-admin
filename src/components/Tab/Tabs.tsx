@@ -1,12 +1,14 @@
 import { type ReactNode, type SyntheticEvent, useMemo, useCallback } from 'react'
-import Box from '@mui/material/Box'
-import Tab from '@mui/material/Tab'
+
+import CancelIcon from '@mui/icons-material/Cancel'
 import TabContext from '@mui/lab/TabContext'
 import TabList from '@mui/lab/TabList'
 import TabPanel from '@mui/lab/TabPanel'
-import { type TabListProps, useTabListContext } from './TabListContext'
+import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
-import CancelIcon from '@mui/icons-material/Cancel'
+import Tab from '@mui/material/Tab'
+
+import { type TabListProps, useTabListContext } from './TabListContext'
 
 export interface TabsProps {
   defaultTabs?: TabListProps[]

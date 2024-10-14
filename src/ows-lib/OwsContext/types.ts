@@ -1,4 +1,4 @@
-import { Feature, FeatureCollection, GeoJsonProperties, BBox } from 'geojson'
+import { BBox, Feature, FeatureCollection, Geometry } from 'geojson'
 
 export interface Link {
     href: string
@@ -6,7 +6,7 @@ export interface Link {
     lang?: string // RFC-3066 code
     title?: string
     length?: number
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface PreviewLink extends Link {
@@ -19,9 +19,7 @@ export interface OWSContextLinks {
     profiles: string[]// Specification Reference (requirements class) identifying that this is an OWC Context document and its version
     via?: Link[]
    // [name: string]: Link 
-
 }
-
 
 export interface Operation {
     code: string
@@ -30,7 +28,7 @@ export interface Operation {
     href: string
     request?: Content
     result?: Content
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface Content {
@@ -38,7 +36,7 @@ export interface Content {
     href?: string
     title?: string
     content?: string
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface StyleSet {
@@ -48,16 +46,18 @@ export interface StyleSet {
     default?: boolean
     legendURL?: string
     content?: Content
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
+
 
 export interface Offering {
     code: string
-    operation?: Operation[]
+    operations?: Operation[]
     contents?: Content[]
     styles?: StyleSet[]
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
+
 
 export interface OWSResourceLinks {
     alternates?: Link
@@ -80,7 +80,7 @@ export interface CreatorDisplay {
     pixelWidth?: number // shall be positive integer number
     pixelHeight?: number // shall be positive integer number
     mmPerPixel?: number // shall be floating
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface Category {
@@ -99,36 +99,44 @@ export interface OWSContextProperties {
     display?: CreatorDisplay
     rights?: string
     categories?: Category[]    
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
 export interface OWSResourceProperties {
+    title: string
     abstract?: string
     updated: string // RFC-3339 date format
     authors?: Author[]
     publisher?: string
     rights?: string
-    date?: string // iso-8601 format
+    date?: string // iso-8601 format; Date or range of dates relevant to the Context resource
     links?: OWSResourceLinks
-    offering?: Offering
+    offerings?: Offering[]
     active?: boolean // default is true
     categories?: Category[]   
     minscaledenominator?: number 
     maxscaledenominator?: number 
     folder?: string
-    [name: string]: any // extension, any other
+    [name: string]: unknown // extension, any other
 }
 
-export interface OWSResource extends Feature {
-    title: string
+export interface OWSResource extends Omit<Feature, "geometry"> {
     properties: OWSResourceProperties
-    //geometry?: Geometry
+    geometry?: Geometry // spatial extent or scope of the content of the Context resource
 }
 
-export interface OWSContext extends FeatureCollection {
-    id: string // String type that SHALL contain a URI value
-    properties: GeoJsonProperties
-    bbox?: BBox
-    date?: string // iso-8601 date
-    features: OWSResource[]
+
+export interface TreeifiedOWSResource extends OWSResource{
+    children: TreeifiedOWSResource[]
 }
+
+
+export interface OWSContext extends Omit<FeatureCollection, "features"> {
+    id: string // String type that SHALL contain a URI value
+    properties: OWSContextProperties
+    bbox?: BBox // is this the current bbox of the leaflet for example?
+    date?: string // iso-8601 date; is this the current selected time dimension?
+    features: OWSResource[]
+    [name: string]: unknown // extension, any other
+}
+
