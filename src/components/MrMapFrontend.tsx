@@ -1,10 +1,9 @@
 import { type ReactElement, useContext, useMemo } from 'react'
 import {
+  type RaThemeOptions,
   Admin,
   CustomRoutes,
   defaultTheme, Loading,
-  useStore,
-  type RaThemeOptions,
   localStorageStore
 } from 'react-admin'
 import { Route } from 'react-router-dom'
@@ -19,6 +18,7 @@ import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
 import authProvider from '../providers/authProvider'
 import jsonApidataProvider from '../providers/dataProvider'
 import MyLayout from './Layout'
+import PortalSearch from './PortalSearch/PortalSearch'
 import WmsList from './WMS/WmsList'
 import WmsViewer from './WMS/WmsViewer'
 
@@ -79,7 +79,7 @@ const MrMapFrontend = (): ReactElement => {
 
         <CustomRoutes>
           <Route path="/viewer" element={<WmsViewer />} />
-
+          <Route path="/search" element={<PortalSearch />} />
         </CustomRoutes>
       </Admin>
     )
