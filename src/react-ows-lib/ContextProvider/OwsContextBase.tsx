@@ -75,7 +75,7 @@ export const OwsContextBase = ({ initialFeatures = [], children }: OwsContextBas
     fetch(request).then(response => response.json()).then((json: any) => {
       // todo: check type before setting features.
       // todo: set also other variables
-      const newOwsContext = new OWSContext(undefined, json.features, json.bbox ?? undefined)
+      const newOwsContext = new OWSContext(undefined, json.features.map(feature => new OWSResource(feature.properties, feature.id, feature.bbox, feature.geometry)), json.bbox ?? undefined)
       setOwsContext(newOwsContext)
       // TODO: initial map with current display if exists  map?.fitBounds()
     }      
