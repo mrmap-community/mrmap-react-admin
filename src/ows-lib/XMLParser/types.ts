@@ -8,6 +8,10 @@ export interface Metadata {
     abstract?: string
 }
 
+export interface Dimension {
+
+}
+
 export interface TempDimension {
     unit: string
     unitSymbol: string
@@ -29,6 +33,8 @@ export interface TimeDimension {
     resolution?: Duration
 }
 
+
+
 export interface LegendUrl {
     href: URL
     mimeType: string
@@ -44,15 +50,29 @@ export interface Style {
 export interface WmsLayer {
     metadata: Metadata
     referenceSystems?: string[]
-    bbox?: Polygon
-    dimension?: TimeDimension | TempDimension | ElevationDimension
+    bbox?: Polygon[]
+    dimension?: (TimeDimension | TempDimension | ElevationDimension)[]
     children?: WmsLayer[]
+    parent?: WmsLayer
+    path?: WmsLayer[]
     styles?: Style[]
     minScaleDenominator?: number
     maxScaleDenominator?: number
     isQueryable?: boolean
     isQpaque?: boolean
     isCascaded?: boolean
+}
+
+export interface InheritableProperties {
+    referenceSystems: string[]          // 1+; add
+    styles: Style[]                     // 0+; add
+    bbox: Polygon[]                     // 1+; replace
+    dimension?: (TimeDimension | TempDimension | ElevationDimension)[] // 0+; replace
+    minScaleDenominator?: number        // 0/1; replace
+    maxScaleDenominator?: number        // 0/1; replace
+    isQueryable?: boolean               // replace
+    isQpaque?: boolean                  // replace
+    isCascaded?: boolean                // replace
 }
 
 export interface OperationUrl {
