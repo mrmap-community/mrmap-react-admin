@@ -9,11 +9,13 @@ import {
 import { Route } from 'react-router-dom';
 
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+import DatasetIcon from '@mui/icons-material/Dataset';
 import LayersIcon from '@mui/icons-material/Layers';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import MapIcon from '@mui/icons-material/Map';
 import NotListedLocationIcon from '@mui/icons-material/NotListedLocation';
 import CustomerIcon from '@mui/icons-material/Person';
+import PlagiarismIcon from '@mui/icons-material/Plagiarism';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
 import { HttpClientContext } from '../context/HttpClientContext';
@@ -68,24 +70,38 @@ const MrMapFrontend = (): ReactElement => {
         layout={MyLayout}
         store={localStorageStore(STORE_VERSION)}
       >
+        {/* webmapservice */}
         <ResourceGuesser name={'WebMapService'} list={<WmsList />} icon={MapIcon} >
           <Route path=":id/viewer" element={<WmsViewer />} />
         </ResourceGuesser>
         <ResourceGuesser name={'HistoricalWebMapService'} />
-
         <ResourceGuesser name={'Layer'} icon={LayersIcon} />
+
+        {/* webfeatureservice */}
         <ResourceGuesser name={'WebFeatureService'} icon={TravelExploreIcon} />
         <ResourceGuesser name={'FeatureType'} icon={NotListedLocationIcon} />
+
+        {/* catalogueservice */}
+        <ResourceGuesser name={'CatalogueService'} icon={PlagiarismIcon} />
+
+
+        {/* metadata */}
         <ResourceGuesser name={'Keyword'} icon={LocalOfferIcon} />
+        <ResourceGuesser name={'DatasetMetadataRecord'} icon={DatasetIcon} />
+
+        {/* processing */}
         <ResourceGuesser name={'BackgroundProcess'} />
-        <ResourceGuesser name={'DatasetMetadata'} />
+
+        {/* securityproxy */}
         <ResourceGuesser name={'AllowedWebMapServiceOperation'} />
+
+        {/* accounting */}
         <ResourceGuesser name={'User'} icon={CustomerIcon}/>
         <ResourceGuesser name={'Organization'} icon={CorporateFareIcon}/>
 
+        {/* ows context based mapviewer */}
         <CustomRoutes>
           <Route path="/viewer" element={<WmsViewer />} />
-          {/* <Route path="/" element={<Dashboard />} /> */}
         </CustomRoutes>
       </Admin>
     )

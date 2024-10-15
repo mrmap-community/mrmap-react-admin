@@ -1,4 +1,5 @@
 import {
+    CreateButton,
     ListBase,
     SimpleList,
     SortPayload,
@@ -11,7 +12,6 @@ import { Link } from 'react-router-dom';
 import { Avatar, Box, Button } from '@mui/material';
 
 import CardWithIcon from './CardWithIcon';
-
 
 export interface ResourceListCardProps {
     resource: string
@@ -27,8 +27,7 @@ const ResourceListCard = (
     }: ResourceListCardProps
 ) => {
   const translate = useTranslate();
-  const { name, icon } = useResourceDefinition({ resource: resource })
-
+  const { name, icon, hasCreate } = useResourceDefinition({ resource: resource })
   return (
       <ListBase
           resource={resource}
@@ -44,6 +43,10 @@ const ResourceListCard = (
                   <WithListContext render={({ total }) => <>{total}</>} />
               }
           > 
+            {
+                hasCreate ?
+                <CreateButton/>: null
+            }
             {
                 withList ? 
                     <div>

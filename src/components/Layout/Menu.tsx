@@ -7,19 +7,20 @@ import {
     useSidebarState
 } from 'react-admin';
 
+import FeedIcon from '@mui/icons-material/Feed';
 import { Box } from '@mui/material';
 
 import SubMenu from './SubMenu';
 
 
-
-type MenuName = 'menuWms' | 'menuWfs' | 'menuCsw'| 'menuAccounts';
+type MenuName = 'menuWms' | 'menuWfs' | 'menuCsw'| 'menuMetadata'| 'menuAccounts';
 
 const Menu = ({ dense = false }: MenuProps) => {
     const [state, setState] = useState({
         menuWms: true,
         menuWfs: true,
         menuCsw: true,
+        menuMetadata: true,
         menuAccounts: true,
     });
     const [open] = useSidebarState();
@@ -32,11 +33,15 @@ const Menu = ({ dense = false }: MenuProps) => {
     const { name: layerName, icon: layerIcon } = useResourceDefinition({ resource: "Layer" })
     const { name: wfsName, icon: wfsIcon } = useResourceDefinition({ resource: "WebFeatureService" })
     const { name: featureTypeName, icon: featureTypeIcon } = useResourceDefinition({ resource: "FeatureType" })
-    
+    const { name: cswName, icon: cswIcon } = useResourceDefinition({ resource: "CatalogueService" })
+    const { name: datasetName, icon: datasetIcon } = useResourceDefinition({ resource: "DatasetMetadataRecord" })
+
     const wmsIconComponent = useMemo(()=> wmsIcon === undefined ? <div></div>: createElement(wmsIcon),[wmsIcon])
     const layerIconComponent = useMemo(()=> layerIcon === undefined ? <div></div>: createElement(layerIcon),[layerIcon])
     const wfsIconComponent = useMemo(()=> wfsIcon === undefined ? <div></div>: createElement(wfsIcon),[wfsIcon])
     const featureTypeIconComponent = useMemo(()=> featureTypeIcon === undefined ? <div></div>: createElement(featureTypeIcon),[featureTypeIcon])
+    const cswIconComponent = useMemo(()=> cswIcon === undefined ? <div></div>: createElement(cswIcon),[cswIcon])
+    const datasetIconComponent = useMemo(()=> datasetIcon === undefined ? <div></div>: createElement(datasetIcon),[datasetIcon])
 
 
     return (
@@ -98,7 +103,30 @@ const Menu = ({ dense = false }: MenuProps) => {
                     dense={dense}
                 />
             </SubMenu>
-            
+
+            <MenuItemLink
+                to={`/${cswName}`}
+                state={{ _scrollToTop: true }}
+                primaryText={cswName}
+                leftIcon={cswIconComponent}
+                dense={dense}
+            />
+            <SubMenu
+                handleToggle={() => handleToggle('menuMetadata')}
+                isOpen={state.menuMetadata}
+                name={"Metadata"}
+                icon={<FeedIcon/>}
+                dense={dense}
+            >
+                <MenuItemLink
+                    to={`/${datasetName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={datasetName}
+                    leftIcon={datasetIconComponent}
+                    dense={dense}
+                />
+                
+            </SubMenu>           
             
         </Box>
     );

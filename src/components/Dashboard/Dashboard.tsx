@@ -14,49 +14,37 @@ const Spacer = () => <span style={{ width: '1em' }} />;
 
 
 const Dashboard = (): ReactNode => {
-
-
-
   return (
-    <div style={styles.flex}>
-        <div style={styles.leftCol}>
-            <div style={styles.flex}>
-                <ResourceListCard resource={'WebMapService'} withList={false}/>
-                <Spacer />
-                <ResourceListCard resource={'Layer'} withList={false}/>
-                <Spacer />
-                <ResourceListCard resource={'WebFeatureService'} withList={false}/>
-                <Spacer />
-                <ResourceListCard resource={'FeatureType'} withList={false}/>
-                {/* <NbNewOrders value={nbNewOrders} /> */}
-            </div>
-            <div style={styles.singleCol}>
-                {/* <OrderChart orders={recentOrders} /> */}
-            </div>
-            <div style={styles.singleCol}>
-                {/* <PendingOrders orders={pendingOrders} /> */}
-            </div>
+    <div style={styles.singleCol}>
+      <div style={styles.singleCol}>
+        <div style={styles.flex}>
+          <ResourceListCard resource={'WebMapService'} withList={false}/>
+          <Spacer />
+          <ResourceListCard resource={'Layer'} withList={false}/>
         </div>
-        <div style={styles.rightCol}>
-            <div style={styles.flex}>
-                <ResourceListCard resource={'Organization'} />
-                <Spacer />
-                <ResourceListCard resource={'User'} />
-            </div>
+      </div>
+      <div style={styles.singleCol}>
+        <div style={styles.flex}>
+          <ResourceListCard resource={'WebFeatureService'} withList={false}/>
+          <Spacer />
+          <ResourceListCard resource={'FeatureType'} withList={false}/> {/* <OrderChart orders={recentOrders} /> */}
         </div>
+      </div>
+      <div style={styles.singleCol}>
+        <div style={styles.flex}>
+          <ResourceListCard resource={'CatalogueService'} withList={false} />
+          <Spacer />
+          <ResourceListCard resource={'DatasetMetadataRecord'} withList={false} />
+        </div>
+      </div>
+      <div style={styles.singleCol}>
+        <div style={styles.flex}>
+          <ResourceListCard resource={'Organization'} />
+          <Spacer />
+          <ResourceListCard resource={'User'} />
+        </div>
+      </div>
     </div>
-
-
-    // <Card>
-    //         <CardHeader title={translate('pos.dashboard.month_history')} />
-    //         <CardContent>
-    //             <div style={{ width: '100%', height: 300 }}>
-    //                 <ResponsiveContainer>
-                        
-    //                 </ResponsiveContainer>
-    //             </div>
-    //         </CardContent>
-    //     </Card>
   )
 }
 
