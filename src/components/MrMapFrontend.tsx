@@ -1,26 +1,29 @@
-import { type ReactElement, useContext, useMemo } from 'react'
+import { type ReactElement, useContext, useMemo } from 'react';
 import {
   Admin,
   CustomRoutes,
   defaultTheme, Loading,
-  useStore,
-  type RaThemeOptions,
-  localStorageStore
-} from 'react-admin'
-import { Route } from 'react-router-dom'
+  localStorageStore,
+  type RaThemeOptions
+} from 'react-admin';
+import { Route } from 'react-router-dom';
 
-import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt'
-import LayersIcon from '@mui/icons-material/Layers'
-import LocalOfferIcon from '@mui/icons-material/LocalOffer'
-import MapIcon from '@mui/icons-material/Map'
+import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+import LayersIcon from '@mui/icons-material/Layers';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import MapIcon from '@mui/icons-material/Map';
+import NotListedLocationIcon from '@mui/icons-material/NotListedLocation';
+import CustomerIcon from '@mui/icons-material/Person';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
-import { HttpClientContext } from '../context/HttpClientContext'
-import ResourceGuesser from '../jsonapi/components/ResourceGuesser'
-import authProvider from '../providers/authProvider'
-import jsonApidataProvider from '../providers/dataProvider'
-import MyLayout from './Layout'
-import WmsList from './WMS/WmsList'
-import WmsViewer from './WMS/WmsViewer'
+import { HttpClientContext } from '../context/HttpClientContext';
+import ResourceGuesser from '../jsonapi/components/ResourceGuesser';
+import authProvider from '../providers/authProvider';
+import jsonApidataProvider from '../providers/dataProvider';
+import Dashboard from './Dashboard/Dashboard';
+import MyLayout from './Layout/Layout';
+import WmsList from './WMS/WmsList';
+import WmsViewer from './WMS/WmsViewer';
 
 export const TOKENNAME = 'token'
 const STORE_VERSION = '1'
@@ -60,6 +63,7 @@ const MrMapFrontend = (): ReactElement => {
         darkTheme={darkTheme}
         lightTheme={customTheme}
         dataProvider={dataProvider}
+        dashboard={Dashboard}
         authProvider={authProvider()}
         layout={MyLayout}
         store={localStorageStore(STORE_VERSION)}
@@ -70,16 +74,18 @@ const MrMapFrontend = (): ReactElement => {
         <ResourceGuesser name={'HistoricalWebMapService'} />
 
         <ResourceGuesser name={'Layer'} icon={LayersIcon} />
-        <ResourceGuesser name={'WebFeatureService'} />
-        <ResourceGuesser name={'FeatureType'} icon={AddLocationAltIcon} />
+        <ResourceGuesser name={'WebFeatureService'} icon={TravelExploreIcon} />
+        <ResourceGuesser name={'FeatureType'} icon={NotListedLocationIcon} />
         <ResourceGuesser name={'Keyword'} icon={LocalOfferIcon} />
         <ResourceGuesser name={'BackgroundProcess'} />
         <ResourceGuesser name={'DatasetMetadata'} />
         <ResourceGuesser name={'AllowedWebMapServiceOperation'} />
+        <ResourceGuesser name={'User'} icon={CustomerIcon}/>
+        <ResourceGuesser name={'Organization'} icon={CorporateFareIcon}/>
 
         <CustomRoutes>
           <Route path="/viewer" element={<WmsViewer />} />
-
+          {/* <Route path="/" element={<Dashboard />} /> */}
         </CustomRoutes>
       </Admin>
     )
