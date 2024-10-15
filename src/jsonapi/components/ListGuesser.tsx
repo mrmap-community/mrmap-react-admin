@@ -27,7 +27,7 @@ interface ListGuesserProps extends Partial<ListProps> {
   onRowClick?: (clickedRecord: RaRecord) => void
 }
 
-const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
+const FieldWrapper = ({ children }: FieldWrapperProps): ReactNode => children
 
 const isInvalidSort = (error: JsonApiErrorObject): boolean => {
   if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
@@ -94,16 +94,6 @@ const ListGuesser = ({
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
-
-  const createOperationId = useMemo(() => {
-    if (relatedResource !== undefined && relatedResource !== '') {
-      return `create_${relatedResource}`
-    } else {
-      return `create_${name}`
-    }
-  }, [relatedResource])
-
-  const { schema: createSchema } = useOperationSchema(createOperationId)
 
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
@@ -198,10 +188,8 @@ const ListGuesser = ({
   }
   return (
     <List
-
       filters={filters}
       actions={<ListActions filters={filters} />}
-      hasCreate={(createSchema !== undefined)}
       queryOptions={{
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')

@@ -43,7 +43,14 @@ const ResourceGuesser = ({
   }
 
   return (
-    <Resource list={list} create={create} edit={edit} {...rest} >
+    <Resource 
+      {...{
+        ...((create !== null) && {create: create}),
+        ...((edit !== null) && {edit: edit}),
+        ...((list !== null) && {list: list}),
+        ...rest
+      }}
+      >
       {relatedRoutes}
       {rest.children}
     </Resource>
@@ -53,26 +60,13 @@ const ResourceGuesser = ({
 ResourceGuesser.raName = 'Resource'
 
 ResourceGuesser.registerResource = ({
-  create,
-  edit,
-  icon,
-  list,
   name,
-  options,
-  show,
   recordRepresentation,
-  hasCreate,
-  hasEdit,
-  hasShow
+  ...rest
 }: ResourceProps) => ({
   name,
-  options,
-  hasList: (list !== null),
-  hasCreate: (create !== null) || !!(hasCreate ?? false),
-  hasEdit: (edit !== null) || !!(hasEdit ?? false),
-  hasShow: (show !== null) || !!(hasShow ?? false),
-  icon,
-  recordRepresentation: recordRepresentation ?? _recordRepresentation
+  recordRepresentation: recordRepresentation ?? _recordRepresentation,
+  ...rest
 })
 
 ResourceGuesser.propTypes = {
