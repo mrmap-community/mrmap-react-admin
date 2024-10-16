@@ -27,7 +27,6 @@ const TreeNodeCheckbox = ({
 
   const isIndeterminate = useMemo(() => {
     if (feature === undefined) return false
-    console.log(feature)
     return !feature.properties.active && owsContext.getIndeterminateStateOf(feature)
   }, [owsContext, feature])
 

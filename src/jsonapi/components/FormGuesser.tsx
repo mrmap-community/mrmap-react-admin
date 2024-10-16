@@ -86,7 +86,7 @@ export const CreateGuesser = (
     mutationOptions,
     ...rest
   }: CreateProps
-): ReactElement | null => {
+): ReactElement => {
   const { name, options } = useResourceDefinition({ resource: rest.resource })
   const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
   const { schema } = useOperationSchema(createOperationId)
@@ -96,7 +96,6 @@ export const CreateGuesser = (
   const _mutationOptions = useMemo(() => {
     return (mutationOptions != null) ? { ...mutationOptions, meta: { type: options?.type } } : { meta: { type: options?.type } }
   }, [mutationOptions])
-
 
   return (
     <Create

@@ -59,7 +59,6 @@ const MapViewerCore = (): ReactNode => {
     const _tiles: Tile[] = []
 
     if (mapBounds === undefined || mapSize === undefined) {
-      console.log('discard recalc', map, mapBounds, mapSize)
       return _tiles
     }
     const sw = mapBounds.getSouthWest()
