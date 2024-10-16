@@ -69,11 +69,12 @@ const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[]
 const ListActions = (
   { filters }: ListActionsProps
 ): ReactNode => {
+  const { hasCreate} = useResourceDefinition()
   return (
     <TopToolbar>
       <SelectColumnsButton />
       <FilterButton filters={filters} />
-      <CreateButton />
+      {hasCreate && <CreateButton />}
       <ExportButton />
     </TopToolbar>
   )
@@ -86,12 +87,13 @@ const ListGuesser = ({
   onRowClick = undefined,
   ...props
 }: ListGuesserProps): ReactElement => {
+  const { name, hasShow, hasEdit } = useResourceDefinition(props)
+
   const [open] = useSidebarState()
 
   const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
 
   const { id } = useParams()
-  const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
 
@@ -186,6 +188,7 @@ const ListGuesser = ({
     // untill a new full render cyclus becomes started for the datagrid. (for example page change)
     return <div />
   }
+
   return (
     <List
       filters={filters}
@@ -241,10 +244,7 @@ const ListGuesser = ({
       {...props}
 
     >
-
-      {/* rowClick='edit' only if the resource provide edit operations */}
-
-      < DatagridConfigurable
+      <DatagridConfigurable
         rowClick={(id, resource, record) => {
           if (onRowClick !== undefined) {
             onRowClick(record)
@@ -255,16 +255,13 @@ const ListGuesser = ({
             }
           }
           return false
-        }
-
-        }
-      // FIXME: this styling shoud be part of the parent and this component should always fill full available size
+        }}
       >
         {...fields}
-
-        < FieldWrapper label="Actions" >
-          {(hasShow ?? false) && <ShowButton />}
-          {(hasEdit ?? false) && <EditButton />}
+        {/**TODO: label should be translated */}
+        <FieldWrapper label="Actions" >
+          {hasShow && <ShowButton />}
+          {hasEdit && <EditButton />}
           {additionalActions}
         </FieldWrapper >
       </DatagridConfigurable >
