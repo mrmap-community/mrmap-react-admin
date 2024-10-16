@@ -27,7 +27,7 @@ interface ListGuesserProps extends Partial<ListProps> {
   onRowClick?: (clickedRecord: RaRecord) => void
 }
 
-const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
+const FieldWrapper = ({ children }: FieldWrapperProps): ReactNode => children
 
 const isInvalidSort = (error: JsonApiErrorObject): boolean => {
   if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
@@ -94,16 +94,6 @@ const ListGuesser = ({
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
-
-  const createOperationId = useMemo(() => {
-    if (relatedResource !== undefined && relatedResource !== '') {
-      return `create_${relatedResource}`
-    } else {
-      return `create_${name}`
-    }
-  }, [relatedResource])
-
-  const { schema: createSchema } = useOperationSchema(createOperationId)
 
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
@@ -198,10 +188,8 @@ const ListGuesser = ({
   }
   return (
     <List
-
       filters={filters}
       actions={<ListActions filters={filters} />}
-      hasCreate={(createSchema !== undefined)}
       queryOptions={{
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
@@ -218,16 +206,17 @@ const ListGuesser = ({
       }}
       sx={
         {
-
           '& .RaList-main': {
-            width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px'})`,
-            maxHeight: 'calc(100vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
-            overfloxX: 'hidden'
-
+            width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px - 2em'})`,
+            //maxHeight: 'calc(50vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
+            overfloxX: 'hidden',
+            marginLeft: "1em",
+            marginRight: "1em",
+            marginBottom: "1em",
           },
           '& .RaDatagrid-tableWrapper': {
-            overflowX: 'scroll'
-
+            overflowX: 'scroll',
+            margin: "1em",
           }
         }
       }
@@ -239,8 +228,7 @@ const ListGuesser = ({
           record={selectedRecord}
           cardSx={
             {
-              marginLeft: '1em',
-              marginTop: '1em',
+              margin: '1em',
               height: 'calc(100vh - 110px - 1em)', // 174px ==> 50 appbar, 52 pagination,  1 em top padding
               width: `calc(${open ? '40vw' : '20vw'} - 1em - ${open ? '240px' : '50px'})`,
               overflowY: 'scroll'
