@@ -97,15 +97,15 @@ const ListGuesser = ({
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
 
-  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
+  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
-  const [listParams, setListParams] = useStore(`${props.resource ?? name}.listParams`)
+  const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${props.resource ?? name}.datagrid.availableColumns`, [])
-  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${props.resource ?? name}.datagrid.columns`, [])
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
+  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   const sparseFieldsQueryValue = useMemo(
     () => availableColumns.filter(
@@ -141,14 +141,14 @@ const ListGuesser = ({
   )
 
   useEffect(() => {
-    if ((props.resource ?? name) !== undefined) {
+    if (name !== undefined) {
       if (relatedResource !== undefined && relatedResource !== '') {
-        setOperationId(`list_related_${props.resource ?? name}_of_${relatedResource}`)
+        setOperationId(`list_related_${name}_of_${relatedResource}`)
       } else {
-        setOperationId(`list_${props.resource ?? name}`)
+        setOperationId(`list_${name}`)
       }
     }
-  }, [props.resource, name])
+  }, [name])
 
   const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
@@ -226,8 +226,8 @@ const ListGuesser = ({
 
       aside={
         <HistoryList
-          resource={`Historical${props.resource ?? ''}`}
-          related={props.resource ?? ''}
+          resource={`Historical${name ?? ''}`}
+          related={name ?? ''}
           record={selectedRecord}
           cardSx={
             {
