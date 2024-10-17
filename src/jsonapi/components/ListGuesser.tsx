@@ -113,7 +113,7 @@ const ListGuesser = ({
   const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   useEffect(()=>{
-    const defaultShowColumns = ["title", "abstract", "actions"]
+    const defaultShowColumns = ["title", "abstract", "username", "actions"]
     const wellDefinedColumns = availableColumns.map(col => col.source).filter(source => source !== undefined)    
     setOmit(wellDefinedColumns.filter(source => !defaultShowColumns.includes(source)))
   },[availableColumns])
