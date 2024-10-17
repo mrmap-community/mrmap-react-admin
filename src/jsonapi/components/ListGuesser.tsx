@@ -23,6 +23,7 @@ interface ListActionsProps {
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
   additionalActions?: ReactNode
+  omit?: string[]
   onRowSelect?: (selectedRecord: RaRecord) => void
   onRowClick?: (clickedRecord: RaRecord) => void
 }
@@ -58,7 +59,9 @@ const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArrayS
 
 const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
   const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
+  console.log('fparams',parameters)
   return parameters?.filter((parameter) => parameter.name.includes('filter'))
+
     .filter((filter) => !filter.name.includes(orderMarker))
     .map((filter) => {
       const schema = filter.schema as OpenAPIV3.NonArraySchemaObject
@@ -85,6 +88,7 @@ const ListGuesser = ({
   additionalActions = undefined,
   onRowSelect = () => { },
   onRowClick = undefined,
+  omit = [],
   ...props
 }: ListGuesserProps): ReactElement => {
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
@@ -105,7 +109,14 @@ const ListGuesser = ({
   const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
+  const [_omit, setOmit ] = useStore<string[]>(`preferences.${name}.datagrid.omit`, omit)
   const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
+
+  useEffect(()=>{
+    const defaultShowColumns = ["title", "abstract", "actions"]
+    const wellDefinedColumns = availableColumns.map(col => col.source).filter(source => source !== undefined)    
+    setOmit(wellDefinedColumns.filter(source => !defaultShowColumns.includes(source)))
+  },[availableColumns])
 
   const sparseFieldsQueryValue = useMemo(
     () => availableColumns.filter(
@@ -139,6 +150,7 @@ const ListGuesser = ({
     }
     , [sparseFieldsQueryValue, includeQueryValue]
   )
+
 
   useEffect(() => {
     if (name !== undefined) {
