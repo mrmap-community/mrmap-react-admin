@@ -86,7 +86,6 @@ const tokenAuthProvider = (
           id: responseJson.data.id,
           fullName: fullName !== " " && fullName || responseJson.data.attributes.username
         }
-        console.log(userIdentity)
         return userIdentity
       }
       if (response.headers.get('content-type') !== 'application/json') {
