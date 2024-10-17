@@ -25,7 +25,7 @@ import { HttpClientContext } from '../context/HttpClientContext';
 import { CreateGuesser, EditGuesser } from '../jsonapi/components/FormGuesser';
 import ListGuesser from '../jsonapi/components/ListGuesser';
 import authProvider from '../providers/authProvider';
-import jsonApidataProvider from '../providers/dataProvider';
+import jsonApiDataProvider from '../providers/dataProvider';
 import Dashboard from './Dashboard/Dashboard';
 import MyLayout from './Layout/Layout';
 import MapViewer from './MapViewer/MapViewer';
@@ -64,7 +64,7 @@ const MrMapFrontend = (): ReactElement => {
   const dataProvider = useMemo(() => {
     if (!isLoading && client !== undefined) {
       const asyncClient = client.api.getClient()
-      return jsonApidataProvider({
+      return jsonApiDataProvider({
         entrypoint: 'http://localhost:8001/',
         httpClient: asyncClient,
         realtimeBus: 'ws://localhost:8001/ws/default/'
