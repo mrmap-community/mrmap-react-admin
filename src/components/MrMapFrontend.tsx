@@ -28,6 +28,7 @@ import authProvider from '../providers/authProvider';
 import jsonApiDataProvider from '../providers/dataProvider';
 import Dashboard from './Dashboard/Dashboard';
 import MyLayout from './Layout/Layout';
+import WmsList from './Lists/WmsList';
 import MapViewer from './MapViewer/MapViewer';
 
 export const TOKENNAME = 'token'
@@ -39,7 +40,7 @@ export interface Token {
 }
 
 const resources: Array<ResourceProps> = [
-  {name: "WebMapService", icon: MapIcon},
+  {name: "WebMapService", icon: MapIcon, list: WmsList},
   {name: "HistoricalWebMapService"},
   {name: "Layer", icon: LayersIcon},
   {name: "WebFeatureService", icon: TravelExploreIcon},

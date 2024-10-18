@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react'
-import { useStore, type SimpleShowLayoutProps } from 'react-admin'
+import { Identifier, RaRecord, useGetMany, useStore, type SimpleShowLayoutProps } from 'react-admin'
 import { ImageOverlay, MapContainer, Marker, Popup, ScaleControl } from 'react-leaflet'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -59,7 +59,19 @@ const MapViewerCore = (): ReactNode => {
   const { trees } = useOwsContextBase()
   //const tilesRef = useRef(tiles)
 
-  const [getCapabilititesUrls, setGetCapabilititesUrls] = useStore<string[]>(`mrmap.mapviewer.append.wms`, [])
+  const [pendingWmsIds, setPendingWmsIds] = useStore<Identifier[]>(`mrmap.mapviewer.append.wms`, [])
+  const { data: pendingWms, isPending, error, refetch } = useGetMany(
+    "WebMapService",
+    { 
+      ids: pendingWmsIds, 
+      meta: {
+        "jsonApiParams": {
+          "include": "operationUrls",
+          // FIXME fields are not included if we use sparsefields: "fields[WebMapService]": "operationUrls",
+        }
+      }
+    },
+  );
 
   const atomicGetMapUrls = useMemo(()=>{
     return getOptimizedGetMapUrls(trees)
@@ -239,11 +251,27 @@ const MapViewerCore = (): ReactNode => {
   }, [map])
 
   useEffect(() => {
-    if (getCapabilititesUrls.length > 0){
-      getCapabilititesUrls.forEach(url => addWMSByUrl(url))
-      setGetCapabilititesUrls([])
+    if (pendingWms !== undefined && pendingWms?.length > 0){
+      pendingWms.forEach(
+        wms => {
+          const getCapabilititesUrl = wms.operationUrls.find(
+            (opUrl: RaRecord) => {
+              return opUrl.method === "Get" && opUrl.operation === "GetCapabilities"
+            })?.url
+          if (getCapabilititesUrl !== undefined){
+            const url = new URL(getCapabilititesUrl)
+            const params = url.searchParams
+            updateOrAppendSearchParam(params, 'SERVICE', 'wms')
+            updateOrAppendSearchParam(params, 'VERSION', wms.version)
+            updateOrAppendSearchParam(params, 'REQUEST', 'GetCapabilities')
+           
+            addWMSByUrl(url.href)
+          }
+        }
+      )
+      setPendingWmsIds([])
     }
-  }, [getCapabilititesUrls])
+  }, [pendingWms])
 
   return (
       <DrawerBase>

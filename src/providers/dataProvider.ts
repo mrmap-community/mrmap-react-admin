@@ -250,8 +250,10 @@ const dataProvider = ({
       // TODO: pk is not always id...
       const parameters: ParamsArray = [
         { name: 'filter[id.in]', value: params.ids.join(',') },
-        { name: 'include', value: params.meta?.include }
       ]
+      // json:api specific stuff like 'include' or 'fields[Resource]'
+      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+
 
       return await httpClient.then(async (client) => {
         const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
