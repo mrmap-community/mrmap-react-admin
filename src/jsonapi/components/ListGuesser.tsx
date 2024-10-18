@@ -23,7 +23,7 @@ interface ListActionsProps {
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
   additionalActions?: ReactNode
-  omit?: string[]
+  defaultOmit?: string[]
   onRowSelect?: (selectedRecord: RaRecord) => void
   onRowClick?: (clickedRecord: RaRecord) => void
 }
@@ -59,7 +59,6 @@ const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArrayS
 
 const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
   const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
-  console.log('fparams',parameters)
   return parameters?.filter((parameter) => parameter.name.includes('filter'))
 
     .filter((filter) => !filter.name.includes(orderMarker))
@@ -88,7 +87,7 @@ const ListGuesser = ({
   additionalActions = undefined,
   onRowSelect = () => { },
   onRowClick = undefined,
-  omit = [],
+  defaultOmit = [],
   ...props
 }: ListGuesserProps): ReactElement => {
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
@@ -109,7 +108,7 @@ const ListGuesser = ({
   const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
-  const [_omit, setOmit ] = useStore<string[]>(`preferences.${name}.datagrid.omit`, omit)
+  const [omit, setOmit ] = useStore<string[]>(`preferences.${name}.datagrid.omit`, defaultOmit)
   const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   useEffect(()=>{
@@ -119,10 +118,13 @@ const ListGuesser = ({
   },[availableColumns])
 
   const sparseFieldsQueryValue = useMemo(
-    () => availableColumns.filter(
-      column => (selectedColumnsIdxs.includes(column.index) &&
-        column.source !== undefined && sparseFieldOptions.includes(column.source)) || selectedColumnsIdxs.length === 0
-    ).map(column =>
+    () => availableColumns.filter(column => {
+      if (column.source === undefined) return false
+      
+      return sparseFieldOptions.includes(column.source) &&
+      selectedColumnsIdxs.length > 0 ? selectedColumnsIdxs.includes(column.index): !omit.includes(column.source)
+     }
+      ).map(column =>
       // TODO: django jsonapi has an open issue where no snake to cammel case translation are made
       // See https://github.com/django-json-api/django-rest-framework-json-api/issues/1053
       snakeCase(column.source)
