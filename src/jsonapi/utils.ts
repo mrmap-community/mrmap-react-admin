@@ -118,7 +118,7 @@ export const getSparseFieldOptions = (operation: Operation): string[] => {
   return []
 }
 
-export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord): ReactElement[] => {
+export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord, includeReadOnlyFields: boolean = false): ReactElement[] => {
   const fields: ReactElement[] = []
   if (schema !== undefined) {
     const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
@@ -133,13 +133,19 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
 
     Object.entries(jsonApiResourceAttributes ?? {}).forEach(([name, schema]) => {
       const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
-      fields.push(inputGuesser(name, schema, isRequired, record))
+      const isReadOnly = (schema.readOnly ?? false)
+      if (!isReadOnly || includeReadOnlyFields){
+        fields.push(inputGuesser(name, schema, isRequired, record))
+      }
     })
 
     const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
     Object.entries(jsonApiResourceRelationships ?? {}).forEach(([name, schema]) => {
       const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
-      fields.push(RelationInputGuesser(name, schema, isRequired, record))
+      const isReadOnly = (schema.readOnly ?? false)
+      if (!isReadOnly || includeReadOnlyFields){
+        fields.push(RelationInputGuesser(name, schema, isRequired, record))
+      }
     })
   }
   return fields

@@ -1,10 +1,10 @@
-import { type ReactElement, useMemo } from 'react'
-import { Create, type CreateProps, Edit, type EditProps, Loading, SimpleForm, useRecordContext, useResourceDefinition } from 'react-admin'
+import { type ReactElement, useMemo } from 'react';
+import { Create, type CreateProps, Edit, type EditProps, Loading, SaveButton, SimpleForm, Toolbar, useRecordContext, useResourceDefinition } from 'react-admin';
 
-import { snakeCase } from 'lodash'
+import { snakeCase } from 'lodash';
 
-import useOperationSchema from '../hooks/useOperationSchema'
-import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils'
+import useOperationSchema from '../hooks/useOperationSchema';
+import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils';
 
 export const EditGuesser = (
   props: EditProps
@@ -81,12 +81,20 @@ export const EditGuesser = (
   )
 }
 
+export const CreateToolbar = () => (
+  <Toolbar>
+      <SaveButton alwaysEnable />
+  </Toolbar>
+);
+
+
 export const CreateGuesser = (
   {
     mutationOptions,
     ...rest
   }: CreateProps
 ): ReactElement => {
+
   const { name, options } = useResourceDefinition({ resource: rest.resource })
   const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
   const { schema } = useOperationSchema(createOperationId)
@@ -97,13 +105,15 @@ export const CreateGuesser = (
     return (mutationOptions != null) ? { ...mutationOptions, meta: { type: options?.type } } : { meta: { type: options?.type } }
   }, [mutationOptions])
 
+
   return (
     <Create
       redirect="list" // default is edit... but this is not possible on async created resources
       mutationOptions={_mutationOptions}
       {...rest}
     >
-      <SimpleForm>
+      <SimpleForm
+      toolbar={<CreateToolbar/>}>
         {fields}
       </SimpleForm>
     </Create>

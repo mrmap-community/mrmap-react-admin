@@ -1,4 +1,4 @@
-import { createElement, useState } from 'react';
+import { useState } from 'react';
 import {
     DashboardMenuItem,
     MenuItemLink,
@@ -12,15 +12,11 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import PublicIcon from '@mui/icons-material/Public';
 import { Box } from '@mui/material';
 
+import { createElementIfDefined } from '../../utils';
 import SubMenu from './SubMenu';
 
 
 type MenuName = 'menuWms' | 'menuWfs' | 'menuCsw'| 'menuMetadata'| 'menuAccounts';
-
-
-const createElementIfDefined = (elem: any) => {
-   return elem === undefined ? <div></div> : createElement(elem)
-}
 
 
 const Menu = ({ dense = false }: MenuProps) => {
@@ -47,10 +43,7 @@ const Menu = ({ dense = false }: MenuProps) => {
     const { name: serviceMetadataName, icon: serviceMetadataIcon } = useResourceDefinition({ resource: "ServiceMetadataRecord" })
 
     const { name: userName, icon: userIcon } = useResourceDefinition({ resource: "User" })
-    const { name: organizationName, icon: organizationIcon } = useResourceDefinition({ resource: "Organization" })
-
-
-    
+    const { name: organizationName, icon: organizationIcon } = useResourceDefinition({ resource: "Organization" })    
 
     return (
         <Box
