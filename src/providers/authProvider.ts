@@ -1,4 +1,4 @@
-import { type AuthProvider } from 'ra-core'
+import { type AuthProvider, type UserIdentity } from 'ra-core'
 
 export interface LoginParams {
   username: string
@@ -22,7 +22,8 @@ export const TOKENNAME = 'mrmap.token'
 
 const tokenAuthProvider = (
     loginUrl = 'http://localhost:8001/api/auth/login',
-    logoutUrl = 'http://localhost:8001/api/auth/logout'
+    logoutUrl = 'http://localhost:8001/api/auth/logout',
+    identityUrl = 'http://localhost:8001/api/accounts/who-am-i/',
 ): AuthProvider => {
   return {
     login: async ({ username, password }: LoginParams) => {
@@ -67,13 +68,34 @@ const tokenAuthProvider = (
     getPermissions: async () => {
       await Promise.resolve()
     },
-    getIdentity: () => {
-      // try {
-      //     const { id, fullName, avatar } = JSON.parse(localStorage.getItem('auth'));
-      //     return Promise.resolve({ id, fullName, avatar });
-      // } catch (error) {
-      //     return Promise.reject(error);
-      // }
+    getIdentity: async () => {
+      const authToken = getParsedAuthToken()
+
+      const request = new Request(identityUrl, {
+        method: 'GET',
+        ...(authToken && {headers: new Headers({ Authorization: `Token ${authToken?.token}` })})
+      })
+      const response = await fetch(request)
+      if (response.ok) {
+        const responseJson = await response.json()
+        const name = [responseJson.data.attributes.firstName, responseJson.data.attributes.lastName]
+
+        const fullName = name.filter(n => n !== undefined).join(" ")
+
+        const userIdentity: UserIdentity = {
+          id: responseJson.data.id,
+          fullName: fullName !== " " && fullName || responseJson.data.attributes.username
+        }
+        return userIdentity
+      }
+      if (response.headers.get('content-type') !== 'application/json') {
+        throw new Error(response.statusText)
+      }
+
+      const json = await response.json()
+      const error = json.non_field_errors
+      throw new Error(error ?? response.statusText)
+
     }
   }
 }

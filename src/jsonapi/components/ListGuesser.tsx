@@ -23,11 +23,12 @@ interface ListActionsProps {
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
   additionalActions?: ReactNode
+  defaultOmit?: string[]
   onRowSelect?: (selectedRecord: RaRecord) => void
   onRowClick?: (clickedRecord: RaRecord) => void
 }
 
-const FieldWrapper = ({ children, label }: FieldWrapperProps): ReactNode => children
+const FieldWrapper = ({ children }: FieldWrapperProps): ReactNode => children
 
 const isInvalidSort = (error: JsonApiErrorObject): boolean => {
   if (error.code === 'invalid' && error.detail.includes('sort parameter')) {
@@ -59,6 +60,7 @@ const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArrayS
 const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
   const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
   return parameters?.filter((parameter) => parameter.name.includes('filter'))
+
     .filter((filter) => !filter.name.includes(orderMarker))
     .map((filter) => {
       const schema = filter.schema as OpenAPIV3.NonArraySchemaObject
@@ -69,11 +71,12 @@ const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[]
 const ListActions = (
   { filters }: ListActionsProps
 ): ReactNode => {
+  const { hasCreate} = useResourceDefinition()
   return (
     <TopToolbar>
       <SelectColumnsButton />
       <FilterButton filters={filters} />
-      <CreateButton />
+      {hasCreate && <CreateButton />}
       <ExportButton />
     </TopToolbar>
   )
@@ -84,42 +87,44 @@ const ListGuesser = ({
   additionalActions = undefined,
   onRowSelect = () => { },
   onRowClick = undefined,
+  defaultOmit = [],
   ...props
 }: ListGuesserProps): ReactElement => {
+  const { name, hasShow, hasEdit } = useResourceDefinition(props)
+
   const [open] = useSidebarState()
 
   const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
 
   const { id } = useParams()
-  const { name, hasShow, hasEdit } = useResourceDefinition(props)
   const [operationId, setOperationId] = useState('')
   const { schema, operation } = useOperationSchema(operationId)
 
-  const createOperationId = useMemo(() => {
-    if (relatedResource !== undefined && relatedResource !== '') {
-      return `create_${relatedResource}`
-    } else {
-      return `create_${name}`
-    }
-  }, [relatedResource])
-
-  const { schema: createSchema } = useOperationSchema(createOperationId)
-
-  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(props.resource ?? name, schema, operation) : [], [schema, operation])
+  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
-  const [listParams, setListParams] = useStore(`${props.resource ?? name}.listParams`)
+  const [listParams, setListParams] = useStore(`${name}.listParams`)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${props.resource ?? name}.datagrid.availableColumns`, [])
-  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${props.resource ?? name}.datagrid.columns`, [])
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
+  const [omit, setOmit ] = useStore<string[]>(`preferences.${name}.datagrid.omit`, defaultOmit)
+  const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
+
+  useEffect(()=>{
+    const defaultShowColumns = ["title", "abstract", "username", "actions"]
+    const wellDefinedColumns = availableColumns.map(col => col.source).filter(source => source !== undefined)    
+    setOmit(wellDefinedColumns.filter(source => !defaultShowColumns.includes(source)))
+  },[availableColumns])
 
   const sparseFieldsQueryValue = useMemo(
-    () => availableColumns.filter(
-      column => (selectedColumnsIdxs.includes(column.index) &&
-        column.source !== undefined && sparseFieldOptions.includes(column.source)) || selectedColumnsIdxs.length === 0
-    ).map(column =>
+    () => availableColumns.filter(column => {
+      if (column.source === undefined) return false
+      
+      return sparseFieldOptions.includes(column.source) &&
+      selectedColumnsIdxs.length > 0 ? selectedColumnsIdxs.includes(column.index): !omit.includes(column.source)
+     }
+      ).map(column =>
       // TODO: django jsonapi has an open issue where no snake to cammel case translation are made
       // See https://github.com/django-json-api/django-rest-framework-json-api/issues/1053
       snakeCase(column.source)
@@ -148,15 +153,16 @@ const ListGuesser = ({
     , [sparseFieldsQueryValue, includeQueryValue]
   )
 
+
   useEffect(() => {
-    if ((props.resource ?? name) !== undefined) {
+    if (name !== undefined) {
       if (relatedResource !== undefined && relatedResource !== '') {
-        setOperationId(`list_related_${props.resource ?? name}_of_${relatedResource}`)
+        setOperationId(`list_related_${name}_of_${relatedResource}`)
       } else {
-        setOperationId(`list_${props.resource ?? name}`)
+        setOperationId(`list_${name}`)
       }
     }
-  }, [props.resource, name])
+  }, [name])
 
   const onError = useCallback((error: any): void => {
     /** Custom error handler for jsonApi bad request response
@@ -196,12 +202,11 @@ const ListGuesser = ({
     // untill a new full render cyclus becomes started for the datagrid. (for example page change)
     return <div />
   }
+
   return (
     <List
-
       filters={filters}
       actions={<ListActions filters={filters} />}
-      hasCreate={(createSchema !== undefined)}
       queryOptions={{
         onError,
         meta: (relatedResource !== undefined && relatedResource !== '')
@@ -218,29 +223,29 @@ const ListGuesser = ({
       }}
       sx={
         {
-
           '& .RaList-main': {
-            width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px'})`,
-            maxHeight: 'calc(100vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
-            overfloxX: 'hidden'
-
+            width: `calc(${open ? '60vw' : '80vw'} - ${open ? '240px' : '50px - 2em'})`,
+            //maxHeight: 'calc(50vh - 174px )', // 174px ==> 50 appbar, 52 pagination, 64 table actions, 8 top padding
+            overfloxX: 'hidden',
+            marginLeft: "1em",
+            marginRight: "1em",
+            marginBottom: "1em",
           },
           '& .RaDatagrid-tableWrapper': {
-            overflowX: 'scroll'
-
+            overflowX: 'scroll',
+            margin: "1em",
           }
         }
       }
 
       aside={
         <HistoryList
-          resource={`Historical${props.resource ?? ''}`}
-          related={props.resource ?? ''}
+          resource={`Historical${name ?? ''}`}
+          related={name ?? ''}
           record={selectedRecord}
           cardSx={
             {
-              marginLeft: '1em',
-              marginTop: '1em',
+              margin: '1em',
               height: 'calc(100vh - 110px - 1em)', // 174px ==> 50 appbar, 52 pagination,  1 em top padding
               width: `calc(${open ? '40vw' : '20vw'} - 1em - ${open ? '240px' : '50px'})`,
               overflowY: 'scroll'
@@ -253,10 +258,7 @@ const ListGuesser = ({
       {...props}
 
     >
-
-      {/* rowClick='edit' only if the resource provide edit operations */}
-
-      < DatagridConfigurable
+      <DatagridConfigurable
         rowClick={(id, resource, record) => {
           if (onRowClick !== undefined) {
             onRowClick(record)
@@ -267,16 +269,13 @@ const ListGuesser = ({
             }
           }
           return false
-        }
-
-        }
-      // FIXME: this styling shoud be part of the parent and this component should always fill full available size
+        }}
       >
         {...fields}
-
-        < FieldWrapper label="Actions" >
-          {(hasShow ?? false) && <ShowButton />}
-          {(hasEdit ?? false) && <EditButton />}
+        {/**TODO: label should be translated */}
+        <FieldWrapper label="Actions" >
+          {hasShow && <ShowButton />}
+          {hasEdit && <EditButton />}
           {additionalActions}
         </FieldWrapper >
       </DatagridConfigurable >

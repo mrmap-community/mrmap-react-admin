@@ -10,25 +10,24 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
 
   const commonProps = {
-    key: name,
     source: name,
     label: schema?.title ?? name,
     sortable: isSortable
   }
   if (['integer', 'number'].includes(schema?.type ?? '')) {
-    return <NumberField {...commonProps} />
+    return <NumberField key={name} {...commonProps} />
   } else if (schema?.type === 'boolean') {
-    return <BooleanField {...commonProps} />
+    return <BooleanField key={name} {...commonProps} />
   } else if (schema?.type === 'string') {
     // Time specific fields
     if (['date', 'time', 'duration', 'date-time'].includes(schema?.format ?? '')) {
-      return <DateField {...commonProps} showTime={['time', 'date-time'].includes(schema?.format ?? '')} />
+      return <DateField key={name} {...commonProps} showTime={['time', 'date-time'].includes(schema?.format ?? '')} />
     } else if (schema?.format === 'uri') {
-      return <UrlField {...commonProps} />
+      return <UrlField key={name} {...commonProps} />
     } else if (schema?.format === 'email') {
-      return <EmailField {...commonProps} />
+      return <EmailField key={name} {...commonProps} />
     } else if (schema?.format === 'geojson') {
-      return <GeoJsonInput {...commonProps} />
+      return <GeoJsonInput key={name} {...commonProps} />
     }
   } else if (schema?.type === 'object') {
     const primaryDataSchema = schema?.properties?.data as OpenAPIV3.SchemaObject
@@ -44,12 +43,12 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
       const arraySchema = primaryDataSchema?.items as OpenAPIV3.NonArraySchemaObject
       const typeSchema = arraySchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
       const related = typeSchema?.enum?.[0]
-      return <ReferenceManyCount {...commonProps} resource={currentResource} relatedType={related} source={name} />
+      return <ReferenceManyCount key={name} {...commonProps} resource={currentResource} relatedType={related} source={name} />
     }
   }
 
   // default fallback
-  return <TextField {...commonProps} />
+  return <TextField key={name} {...commonProps} />
 }
 
 export default FieldGuesser

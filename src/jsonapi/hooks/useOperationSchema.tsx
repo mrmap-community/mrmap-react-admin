@@ -19,6 +19,8 @@ const useOperationSchema = (operationId: string): OperationSchema => {
     if (operationId !== undefined && operationId !== '' && client !== undefined) {
       const _operation = client.api.getOperation(operationId)
       if (_operation === undefined) {
+        setOperation(undefined)
+        setSchema(undefined)
         return
       }
       const encapsulatedSchema = getEncapsulatedSchema(_operation)

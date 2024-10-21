@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type PropsWithChildren, type ReactNode } from 'react'
-import { type SimpleShowLayoutProps } from 'react-admin'
+import { Identifier, RaRecord, useGetMany, useStore, type SimpleShowLayoutProps } from 'react-admin'
 import { ImageOverlay, MapContainer, Marker, Popup, ScaleControl } from 'react-leaflet'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -46,10 +46,32 @@ const MapViewerCore = (): ReactNode => {
   const [map, setMap] = useState<Map>()
   const [mapBounds, setMapBounds] = useState(map?.getBounds())
   const [mapSize, setMapSize] = useState(map?.getSize())  
+
+  const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
+  const [featureInfos, setFeatureInfos] = useState<any[]>([])
+
+  const [size, setSize] = useState<DOMRectReadOnly>()
+  const sizeRef = useRef<DOMRectReadOnly>()
+
+  const {addWMSByUrl} = useOwsContextBase()
   const { setMap: setMapContext, selectedCrs } = useMapViewerBase()
 
   const { trees } = useOwsContextBase()
   //const tilesRef = useRef(tiles)
+
+  const [pendingWmsIds, setPendingWmsIds] = useStore<Identifier[]>(`mrmap.mapviewer.append.wms`, [])
+  const { data: pendingWms, isPending, error, refetch } = useGetMany(
+    "WebMapService",
+    { 
+      ids: pendingWmsIds, 
+      meta: {
+        "jsonApiParams": {
+          "include": "operationUrls",
+          // FIXME fields are not included if we use sparsefields: "fields[WebMapService]": "operationUrls",
+        }
+      }
+    },
+  );
 
   const atomicGetMapUrls = useMemo(()=>{
     return getOptimizedGetMapUrls(trees)
@@ -59,7 +81,6 @@ const MapViewerCore = (): ReactNode => {
     const _tiles: Tile[] = []
 
     if (mapBounds === undefined || mapSize === undefined) {
-      console.log('discard recalc', map, mapBounds, mapSize)
       return _tiles
     }
     const sw = mapBounds.getSouthWest()
@@ -112,14 +133,6 @@ const MapViewerCore = (): ReactNode => {
     
     return _tiles
   }, [mapBounds, mapSize, atomicGetMapUrls, selectedCrs])
-
-
-
-  const [featureInfoMarkerPosition, setFeatureInfoMarkerPosition] = useState<LatLng | undefined>(undefined)
-  const [featureInfos, setFeatureInfos] = useState<any[]>([])
-
-  const [size, setSize] = useState<DOMRectReadOnly>()
-  const sizeRef = useRef<DOMRectReadOnly>()
 
   const featureInfoAccordions = useMemo(() => featureInfos.map((featureInfoHtml, index) => {
     return <Accordion
@@ -236,6 +249,29 @@ const MapViewerCore = (): ReactNode => {
       })
     }
   }, [map])
+
+  useEffect(() => {
+    if (pendingWms !== undefined && pendingWms?.length > 0){
+      pendingWms.forEach(
+        wms => {
+          const getCapabilititesUrl = wms.operationUrls.find(
+            (opUrl: RaRecord) => {
+              return opUrl.method === "Get" && opUrl.operation === "GetCapabilities"
+            })?.url
+          if (getCapabilititesUrl !== undefined){
+            const url = new URL(getCapabilititesUrl)
+            const params = url.searchParams
+            updateOrAppendSearchParam(params, 'SERVICE', 'wms')
+            updateOrAppendSearchParam(params, 'VERSION', wms.version)
+            updateOrAppendSearchParam(params, 'REQUEST', 'GetCapabilities')
+           
+            addWMSByUrl(url.href)
+          }
+        }
+      )
+      setPendingWmsIds([])
+    }
+  }, [pendingWms])
 
   return (
       <DrawerBase>
