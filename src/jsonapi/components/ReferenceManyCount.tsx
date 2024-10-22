@@ -30,6 +30,7 @@ export const ReferenceManyCount = (
 
   const recordRepresentation = useSchemaRecordRepresentation(`list_${props.relatedType}`)
   const RefLink = useMemo(() => <Link
+    state={{}}
     to={{
       pathname: createPath({ resource: props.resource, id: record.id, type: 'edit' }) + `/${props.relatedType}`
     }}
@@ -40,6 +41,9 @@ export const ReferenceManyCount = (
   </Link>, [record, references])
 
   const PopOverContent = useMemo(() => references?.map((reference: RaRecord) => (<Chip key={`${record.id}.${reference.id}`} label={reference[recordRepresentation]} />)), [recordRepresentation, references])
+
+
+
 
   return isWellDescribedRefernce
     ? <MouseOverPopover

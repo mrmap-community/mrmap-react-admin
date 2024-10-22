@@ -1,4 +1,4 @@
-import { createElement, useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
     DashboardMenuItem,
     MenuItemLink,
@@ -12,10 +12,12 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import PublicIcon from '@mui/icons-material/Public';
 import { Box } from '@mui/material';
 
+import { createElementIfDefined } from '../../utils';
 import SubMenu from './SubMenu';
 
 
 type MenuName = 'menuWms' | 'menuWfs' | 'menuCsw'| 'menuMetadata'| 'menuAccounts';
+
 
 const Menu = ({ dense = false }: MenuProps) => {
     const [state, setState] = useState({
@@ -36,20 +38,12 @@ const Menu = ({ dense = false }: MenuProps) => {
     const { name: wfsName, icon: wfsIcon } = useResourceDefinition({ resource: "WebFeatureService" })
     const { name: featureTypeName, icon: featureTypeIcon } = useResourceDefinition({ resource: "FeatureType" })
     const { name: cswName, icon: cswIcon } = useResourceDefinition({ resource: "CatalogueService" })
+    const { name: harvestingJobName, icon: harvestingJobIcon } = useResourceDefinition({ resource: "HarvestingJob" })
     const { name: datasetName, icon: datasetIcon } = useResourceDefinition({ resource: "DatasetMetadataRecord" })
+    const { name: serviceMetadataName, icon: serviceMetadataIcon } = useResourceDefinition({ resource: "ServiceMetadataRecord" })
+
     const { name: userName, icon: userIcon } = useResourceDefinition({ resource: "User" })
-    const { name: organizationName, icon: organizationIcon } = useResourceDefinition({ resource: "Organization" })
-
-
-    const wmsIconComponent = useMemo(()=> wmsIcon === undefined ? <div></div>: createElement(wmsIcon),[wmsIcon])
-    const layerIconComponent = useMemo(()=> layerIcon === undefined ? <div></div>: createElement(layerIcon),[layerIcon])
-    const wfsIconComponent = useMemo(()=> wfsIcon === undefined ? <div></div>: createElement(wfsIcon),[wfsIcon])
-    const featureTypeIconComponent = useMemo(()=> featureTypeIcon === undefined ? <div></div>: createElement(featureTypeIcon),[featureTypeIcon])
-    const cswIconComponent = useMemo(()=> cswIcon === undefined ? <div></div>: createElement(cswIcon),[cswIcon])
-    const datasetIconComponent = useMemo(()=> datasetIcon === undefined ? <div></div>: createElement(datasetIcon),[datasetIcon])
-    const userIconComponent = useMemo(()=> userIcon === undefined ? <div></div>: createElement(userIcon),[userIcon])
-    const organizationIconComponent = useMemo(()=> organizationIcon === undefined ? <div></div>: createElement(organizationIcon),[organizationIcon])
-
+    const { name: organizationName, icon: organizationIcon } = useResourceDefinition({ resource: "Organization" })    
 
     return (
         <Box
@@ -69,21 +63,21 @@ const Menu = ({ dense = false }: MenuProps) => {
                 handleToggle={() => handleToggle('menuWms')}
                 isOpen={state.menuWms}
                 name={wmsName}
-                icon={wmsIconComponent}
+                icon={createElementIfDefined(wmsIcon)}
                 dense={dense}
             >
                 <MenuItemLink
                     to={`/${wmsName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={wmsName}
-                    leftIcon={wmsIconComponent}
+                    leftIcon={createElementIfDefined(wmsIcon)}
                     dense={dense}
                 />
                 <MenuItemLink
                     to={`/${layerName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={layerName}
-                    leftIcon={layerIconComponent}
+                    leftIcon={createElementIfDefined(layerIcon)}
                     dense={dense}
                 />
             </SubMenu>
@@ -91,32 +85,48 @@ const Menu = ({ dense = false }: MenuProps) => {
                 handleToggle={() => handleToggle('menuWfs')}
                 isOpen={state.menuWfs}
                 name={wfsName}
-                icon={wfsIconComponent}
+                icon={createElementIfDefined(wfsIcon)}
                 dense={dense}
             >
                 <MenuItemLink
                     to={`/${wfsName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={wfsName}
-                    leftIcon={wfsIconComponent}
+                    leftIcon={createElementIfDefined(wfsIcon)}
                     dense={dense}
                 />
                 <MenuItemLink
                     to={`/${featureTypeName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={featureTypeName}
-                    leftIcon={featureTypeIconComponent}
+                    leftIcon={createElementIfDefined(featureTypeIcon)}
                     dense={dense}
                 />
             </SubMenu>
-
-            <MenuItemLink
-                to={`/${cswName}`}
-                state={{ _scrollToTop: true }}
-                primaryText={cswName}
-                leftIcon={cswIconComponent}
-                dense={dense}
-            />
+            <SubMenu
+                handleToggle={() => handleToggle('menuCsw')}
+                    isOpen={state.menuCsw}
+                    name={"CatalogueService"}
+                    icon={createElementIfDefined(cswIcon)}
+                    dense={dense}
+                >
+                <MenuItemLink
+                    to={`/${cswName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={cswName}
+                    leftIcon={createElementIfDefined(cswIcon)}
+                    dense={dense}
+                />
+                <MenuItemLink
+                    to={`/${harvestingJobName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={harvestingJobName}
+                    leftIcon={createElementIfDefined(harvestingJobIcon)}
+                    dense={dense}
+                />
+                
+            </SubMenu>       
+           
             <SubMenu
                 handleToggle={() => handleToggle('menuMetadata')}
                 isOpen={state.menuMetadata}
@@ -128,7 +138,14 @@ const Menu = ({ dense = false }: MenuProps) => {
                     to={`/${datasetName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={datasetName}
-                    leftIcon={datasetIconComponent}
+                    leftIcon={createElementIfDefined(datasetIcon)}
+                    dense={dense}
+                />
+                <MenuItemLink
+                    to={`/${serviceMetadataName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={serviceMetadataName}
+                    leftIcon={createElementIfDefined(serviceMetadataIcon) ?? <div></div>}
                     dense={dense}
                 />
                 
@@ -144,14 +161,14 @@ const Menu = ({ dense = false }: MenuProps) => {
                     to={`/${userName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={userName}
-                    leftIcon={userIconComponent}
+                    leftIcon={createElementIfDefined(userIcon)}
                     dense={dense}
                 />
                 <MenuItemLink
                     to={`/${organizationName}`}
                     state={{ _scrollToTop: true }}
                     primaryText={organizationName}
-                    leftIcon={organizationIconComponent}
+                    leftIcon={createElementIfDefined(organizationIcon)}
                     dense={dense}
                 />
                 

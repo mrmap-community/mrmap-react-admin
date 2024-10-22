@@ -90,6 +90,7 @@ const ListGuesser = ({
   defaultOmit = [],
   ...props
 }: ListGuesserProps): ReactElement => {
+
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
 
   const [open] = useSidebarState()
@@ -112,7 +113,7 @@ const ListGuesser = ({
   const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   useEffect(()=>{
-    const defaultShowColumns = ["title", "abstract", "actions"]
+    const defaultShowColumns = ["stringRepresentation", "title", "abstract", "username", "actions"]
     const wellDefinedColumns = availableColumns.map(col => col.source).filter(source => source !== undefined)    
     setOmit(wellDefinedColumns.filter(source => !defaultShowColumns.includes(source)))
   },[availableColumns])
@@ -260,6 +261,7 @@ const ListGuesser = ({
     >
       <DatagridConfigurable
         rowClick={(id, resource, record) => {
+          console.log(record)
           if (onRowClick !== undefined) {
             onRowClick(record)
           } else {
