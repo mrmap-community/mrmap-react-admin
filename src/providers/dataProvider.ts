@@ -1,13 +1,11 @@
 import { HttpError, type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type DeleteResult, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult } from 'react-admin'
 
-import { AxiosHeaders } from 'axios'
 import jsonpointer from 'jsonpointer'
-import { AxiosRequestConfig, type AxiosError, type OpenAPIClient, type ParamsArray } from 'openapi-client-axios'
+import OpenAPIClientAxios, { type AxiosError, type ParamsArray } from 'openapi-client-axios'
+import { WebSocketLike } from 'react-use-websocket/dist/lib/types'
 
-import { type Token } from '../components/MrMapFrontend'
-import { JsonApiMimeType, type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
+import { type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
-import { getParsedAuthToken } from './authProvider'
 
 export interface RelatedResource {
   resource: string
@@ -22,12 +20,9 @@ export interface GetListJsonApiParams extends GetListParams {
 }
 
 export interface JsonApiDataProviderOptions extends Options {
-  entrypoint: string
-  realtimeBus?: string
-  httpClient: Promise<OpenAPIClient>
+  httpClient: OpenAPIClientAxios
   total?: string
-  headers?: AxiosHeaders
-  token?: Token
+  realtimeBus?: WebSocketLike
 }
 
 type EventTypes = 'created' | 'updated' | 'deleted'
@@ -61,12 +56,7 @@ export interface Subscription {
   callback: (event: CrudEvent) => void
 }
 
-export interface CheckAuthReturn {
-  token: string
-  headers: AxiosHeaders
-}
-
-let socket: WebSocket| undefined = undefined
+//let socket: WebSocket| undefined = undefined
 let subscriptions: Subscription[] = []
 
 const handleApiError = (error: AxiosError): void => {
@@ -105,71 +95,37 @@ const realtimeOnMessage = (event: MessageEvent): void => {
       observer => { observer.callback(raEvent) })
 }
 
-const createRealtimeSocket = (realtimeBus: string) => {
-  if (socket !== undefined){
-    return
-  }
-  const authToken = getParsedAuthToken()
-  if (authToken !== null && authToken !== undefined) {
-    if (realtimeBus !== '') {
-      socket = new WebSocket(`${realtimeBus}?token=${authToken.token}`)
-      socket.onopen = (event) => { console.log('open', event) }
-      socket.onmessage = realtimeOnMessage
-      socket.onerror = (event) => { console.log('error', event) }
-    }
-  }
-}
-
-const updateAuthHeader = (axiosRequestConf: AxiosRequestConfig) => {
-  const authToken = getParsedAuthToken()
-  if (authToken?.token !== '' && !axiosRequestConf.headers?.hasAuthorization()){
-    axiosRequestConf?.headers?.setAuthorization(`Token ${authToken?.token}`)
-  }
-  return axiosRequestConf
-}
-
 const dataProvider = ({
-  headers = new AxiosHeaders(
-    {
-      Accept: JsonApiMimeType,
-      'Content-Type': JsonApiMimeType
-
-    }
-  ),
   total = '/meta/pagination/count',
-  realtimeBus = '',
   httpClient,
-  ...rest
-}: JsonApiDataProviderOptions): DataProvider => {
-
-  // TODO: get baseURL from open api client
-  const axiosRequestConf = { baseURL: rest.entrypoint, headers }
+  realtimeBus,
+}: JsonApiDataProviderOptions): DataProvider => {  
   
-  const updateResource = async (resource: string, params: UpdateParams): Promise<UpdateResult<any>> =>
-    await httpClient.then(async (client) => {
-      const operationId = `partial_update_${resource}`
-      const operation = client.api.getOperation(operationId)
-      if (operation === undefined) {
-        throw new Error('update operatio not found')
-      }
+  if (realtimeBus !== undefined) {
+    realtimeBus.onmessage = realtimeOnMessage
+  }
 
-      // FIXME: only post the edited fields for partial update
-      const conf = client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, updateAuthHeader(axiosRequestConf)])
-      return await client.request(conf)
-    }).then((response) => {
+  const updateResource = async (resource: string, params: UpdateParams): Promise<UpdateResult<any>> => {
+    const operationId = `partial_update_${resource}`
+    const operation = httpClient.client.api.getOperation(operationId)
+    if (operation === undefined) {
+      throw new Error('update operatio not found')
+    }
+    // FIXME: only post the edited fields for partial update
+    const conf = httpClient.client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }])
+    return await httpClient.client.request(conf).then((response) => {
       const jsonApiDocument = response.data as JsonApiDocument
       const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
       return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
     })
+  }
 
-  const deleteResource = async (resource: string, params: DeleteParams): Promise<DeleteResult<any>> =>
-    await httpClient.then(async (client) => {
-      const conf = client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }, undefined, updateAuthHeader(axiosRequestConf)])
-      return await client.request(conf)
-    }).then((response) => {
+  const deleteResource = async (resource: string, params: DeleteParams): Promise<DeleteResult<any>> => {
+      const conf = httpClient.client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }])
+      return await httpClient.client.request(conf).then((response) => {
       return { data: { id: params.id } }
     })
-
+  }
   return {
     getList: async (resource: string, params: GetListJsonApiParams) => {
       let operationId = `list_${resource}`
@@ -201,41 +157,37 @@ const dataProvider = ({
         operationId = `list_related_${resource}_of_${relatedResource.resource}`
       }
 
-      return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(operationId, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
-        return await client.request(conf)
+      const conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response) => {
+        const jsonApiDocument = response.data as JsonApiDocument
+        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+        return {
+          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+          )),
+          total: getTotal(jsonApiDocument, total)
+        }
+      }).catch((error: AxiosError) => {
+        handleApiError(error)
+        return { data: [], total: 0 }
       })
-        .then((response) => {
-          const jsonApiDocument = response.data as JsonApiDocument
-          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-          return {
-            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-            )),
-            total: getTotal(jsonApiDocument, total)
-          }
-        }).catch((error: AxiosError) => {
-          handleApiError(error)
-          return { data: [], total: 0 }
-        })
     },
 
     getOne: async (resource: string, params: GetOneParams) => {
       if (params.id === undefined) {
         return { data: { id: '' } }
       }
-      return await httpClient.then(async (client) => {
-        const parameters: ParamsArray = [{
-          name: 'id',
-          value: params.id,
-          in: 'path'
-        }]
-        // json:api specific stuff like 'include' or 'fields[Resource]'
-        Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+      
+      const parameters: ParamsArray = [{
+        name: 'id',
+        value: params.id,
+        in: 'path'
+      }]
+      // json:api specific stuff like 'include' or 'fields[Resource]'
+      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
-        const conf = client.api.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
-        return await client.request(conf)
-      }).then((response) => {
+      const conf = httpClient.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
@@ -244,28 +196,22 @@ const dataProvider = ({
 
     getMany: async (resource: string, params: GetManyParams) => {
       // TODO: pk is not always id...
-  
-
       const parameters: ParamsArray = [
         { name: 'filter[id.in]', value: params.ids.join(',') },
       ]
       // json:api specific stuff like 'include' or 'fields[Resource]'
       Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
-
-      return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, updateAuthHeader(axiosRequestConf)])
-        return await client.request(conf)
+      const conf = httpClient.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response) => {
+        const jsonApiDocument = response.data as JsonApiDocument
+        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+        return {
+          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+          ))
+        }
       })
-        .then((response) => {
-          const jsonApiDocument = response.data as JsonApiDocument
-          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-          return {
-            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-            ))
-          }
-        })
     },
 
     getManyReference: async (resource: string, params: GetManyReferenceParams) => {
@@ -289,33 +235,27 @@ const dataProvider = ({
         query[`filter[id.in]`] = params.id
 
       }
-      return await httpClient.then(async (client) => {
-        const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, updateAuthHeader(axiosRequestConf)])
-        return await client.request(conf)
+      const conf = httpClient.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response) => {
+        const jsonApiDocument = response.data as JsonApiDocument
+        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+        return {
+          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+          )),
+          total: getTotal(jsonApiDocument, total)
+        }
       })
-        .then((response) => {
-          const jsonApiDocument = response.data as JsonApiDocument
-          const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-          return {
-            data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-              encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-            )),
-            total: getTotal(jsonApiDocument, total)
-          }
-        })
     },
 
-    create: async (resource: string, params: CreateParams) =>
-      await httpClient.then(async (client) => {
-        const operationId = `create_${resource}`
-        const operation = client.api.getOperation(operationId)
-        if (operation === undefined) {
-          throw new Error('create operation not found')
-        }
-
-        const conf = client.api.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, updateAuthHeader(axiosRequestConf)])
-        return await client.request(conf)
-      }).then((response) => {
+    create: async (resource: string, params: CreateParams) => {
+      const operationId = `create_${resource}`
+      const operation = httpClient.client.api.getOperation(operationId)
+      if (operation === undefined) {
+        throw new Error('create operation not found')
+      }
+      const conf = httpClient.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
@@ -345,8 +285,8 @@ const dataProvider = ({
         } else {
           return await Promise.reject(error)
         }
-      }),
-
+      })
+    },
     update: async (resource: string, params: UpdateParams) =>
       await updateResource(resource, params),
 
@@ -386,7 +326,7 @@ const dataProvider = ({
 
     // async realtime features
     subscribe: async (topic: string, callback: (event: CrudEvent) => void) => {
-      createRealtimeSocket(realtimeBus)
+      //createRealtimeSocket(realtimeBus)
       subscriptions.push({ topic, callback })
       return await Promise.resolve({ data: null })
     },

@@ -10,22 +10,18 @@ export interface AuthToken {
   expiry: string
 }
 
-export const getParsedAuthToken = (): AuthToken | undefined => {
-  const tokenObjectString= window.localStorage.getItem(TOKENNAME)
-  if (tokenObjectString !== null) {
-      return JSON.parse(tokenObjectString)
-  }
-  return undefined
-}
-
 export const TOKENNAME = 'mrmap.token'
 
 const tokenAuthProvider = (
     loginUrl = 'http://localhost:8001/api/auth/login',
     logoutUrl = 'http://localhost:8001/api/auth/logout',
     identityUrl = 'http://localhost:8001/api/accounts/who-am-i/',
+    authToken: AuthToken | undefined,
+    setAuthToken: (authToken: AuthToken | undefined) => void,
 ): AuthProvider => {
+  
   return {
+    
     login: async ({ username, password }: LoginParams) => {
       const request = new Request(loginUrl, {
         method: 'POST',
@@ -34,7 +30,8 @@ const tokenAuthProvider = (
       const response = await fetch(request)
       if (response.ok) {
         const responseJson = await response.json()
-        window.localStorage.setItem(TOKENNAME, JSON.stringify(responseJson))
+        setAuthToken(responseJson)
+        //window.localStorage.setItem(TOKENNAME, JSON.stringify(responseJson))
         return
       }
       if (response.headers.get('content-type') !== 'application/json') {
@@ -47,11 +44,11 @@ const tokenAuthProvider = (
     },
     logout: async () => {
       // TODO: call logoutUrl with token
-      window.localStorage.removeItem(TOKENNAME)
+      setAuthToken(undefined)
+      //window.localStorage.removeItem(TOKENNAME)
       await Promise.resolve()
     },
     checkAuth: async () => {
-      const authToken = getParsedAuthToken()
       const expired = authToken !== undefined ? new Date(authToken.expiry) < new Date(): true
       expired
         ? await Promise.reject(new Error('Your Session has expired. Please authenticate again.'))
@@ -60,7 +57,7 @@ const tokenAuthProvider = (
     checkError: async error => {
       const status = error.status
       if (status === 401) {
-        window.localStorage.removeItem(TOKENNAME)
+        setAuthToken(undefined)
         await Promise.reject(new Error('unauthorized')); return
       }
       await Promise.resolve()
@@ -69,12 +66,11 @@ const tokenAuthProvider = (
       await Promise.resolve()
     },
     getIdentity: async () => {
-      const authToken = getParsedAuthToken()
-
       const request = new Request(identityUrl, {
         method: 'GET',
-        ...(authToken && {headers: new Headers({ Authorization: `Token ${authToken?.token}` })})
+        headers: authToken && {"Authorization": `Token ${authToken?.token}`}
       })
+
       const response = await fetch(request)
       if (response.ok) {
         const responseJson = await response.json()
@@ -96,7 +92,8 @@ const tokenAuthProvider = (
       const error = json.non_field_errors
       throw new Error(error ?? response.statusText)
 
-    }
+    },
+    
   }
 }
 

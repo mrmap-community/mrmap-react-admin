@@ -1,14 +1,16 @@
-import { useContext, useMemo, type ReactElement } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import {
   Admin,
   CustomRoutes,
-  defaultTheme, Loading,
+  defaultTheme,
+  Loading,
   localStorageStore,
   Resource,
   ResourceProps,
   type RaThemeOptions
 } from 'react-admin';
 import { Route } from 'react-router-dom';
+import useWebSocket from 'react-use-websocket';
 
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
@@ -22,7 +24,7 @@ import PlagiarismIcon from '@mui/icons-material/Plagiarism';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import { type Operation as AxiosOperation, type OpenAPIV3 } from 'openapi-client-axios';
 
-import { HttpClientContext } from '../context/HttpClientContext';
+import { useHttpClientContext } from '../context/HttpClientContext';
 import { CreateGuesser, EditGuesser } from '../jsonapi/components/FormGuesser';
 import ListGuesser from '../jsonapi/components/ListGuesser';
 import { getResourceSchema } from '../jsonapi/openapi/parser';
@@ -35,13 +37,7 @@ import WmsList from './Lists/WmsList';
 import MapViewer from './MapViewer/MapViewer';
 import PortalSearch from './PortalSearch/PortalSearch';
 
-export const TOKENNAME = 'token'
 const STORE_VERSION = '1'
-
-export interface Token {
-  token: string
-  expiry: string
-}
 
 const resources: Array<ResourceProps> = [
   {name: "WebMapService", icon: MapIcon, list: WmsList},
@@ -61,32 +57,42 @@ const resources: Array<ResourceProps> = [
   {name: "Organization", icon: CorporateFareIcon},
 ]
 
+
+
 const MrMapFrontend = (): ReactElement => {
   const lightTheme = defaultTheme
   const customTheme: RaThemeOptions = { ...defaultTheme, transitions: {} }
 
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
-  const { client, isLoading } = useContext(HttpClientContext)
+  const { api: client, authToken, setAuthToken } = useHttpClientContext()
+
+  const { readyState, getWebSocket } = useWebSocket(
+    `ws://localhost:8001/ws/default/?token=${authToken?.token}`,
+    {
+      shouldReconnect: () => true,
+      reconnectAttempts: 10,
+      //attemptNumber will be 0 the first time it attempts to reconnect, so this equation results in a reconnect pattern of 1 second, 2 seconds, 4 seconds, 8 seconds, and then caps at 10 seconds until the maximum number of attempts is reached
+      reconnectInterval: (attemptNumber) =>
+        Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
+    }
+  );
 
   const dataProvider = useMemo(() => {
-    if (!isLoading && client !== undefined) {
-      const asyncClient = client.api.getClient()
-      return jsonApiDataProvider({
-        entrypoint: 'http://localhost:8001/',
-        httpClient: asyncClient,
-        realtimeBus: 'ws://localhost:8001/ws/default/'
-      })
-    }
-  }, [isLoading, client])
+    const websocket = getWebSocket()
+    return client && jsonApiDataProvider({
+      httpClient: client, 
+      ...(websocket !== null && { realtimeBus: websocket }),
+    })
+  }, [client, readyState])
   
   const resourceDefinitions = useMemo(() => {
     return resources.map((resource)=> {
-      const createOperation = client?.api.getOperation(`create_${resource.name}`)
-      const editOperation = client?.api.getOperation(`partial_update_${resource.name}`)
-      const listOperation = client?.api.getOperation(`list_${resource.name}`)
+      const createOperation = client?.client.api.getOperation(`create_${resource.name}`)
+      const editOperation = client?.client.api.getOperation(`partial_update_${resource.name}`)
+      const listOperation = client?.client.api.getOperation(`list_${resource.name}`)
 
-      const related_list_operations = client?.api.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
+      const related_list_operations = client?.client.api.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
       const related_list_resources = related_list_operations?.map((schema) => {
         const resourceSchema = getResourceSchema(schema)
 
@@ -95,8 +101,6 @@ const MrMapFrontend = (): ReactElement => {
         const jsonApiTypeProperty = items?.properties?.type as OpenAPIV3.NonArraySchemaObject
         const jsonApiTypeReferences = jsonApiTypeProperty?.allOf as OpenAPIV3.SchemaObject[]
         return jsonApiTypeReferences?.[0]?.enum?.[0] as string
-
-
       }) ?? []
 
       return {
@@ -112,10 +116,9 @@ const MrMapFrontend = (): ReactElement => {
     })
   }, [client])
 
-
   if (dataProvider === undefined) {
     return (
-      <Loading loadingPrimary="OpenApi Client is loading...." loadingSecondary='OpenApi Client is loading....' />
+      <Loading loadingPrimary="Initialize...." loadingSecondary='OpenApi Client is loading....' />
     )
   } else {
     return (
@@ -125,10 +128,9 @@ const MrMapFrontend = (): ReactElement => {
         lightTheme={customTheme}
         dataProvider={dataProvider}
         dashboard={Dashboard}
-        authProvider={authProvider()}
+        authProvider={authProvider(undefined, undefined, undefined, authToken, setAuthToken)}
         layout={MyLayout}
         store={localStorageStore(STORE_VERSION)}
-        
       >
         {resourceDefinitions.map((resource) => (
           <Resource key={resource.name} {...resource} />
@@ -143,5 +145,6 @@ const MrMapFrontend = (): ReactElement => {
     )
   }
 }
+
 
 export default MrMapFrontend
