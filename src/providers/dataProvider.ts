@@ -185,20 +185,16 @@ const dataProvider = ({
       ]
 
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
-        const value = filterValue as string
-        parameters.push({ name: `filter[${filterName}]`, value })
-      }
+        const _filterName = filterName.includes('_filter_lookup_') ? filterName.replace('_filter_lookup_', '.') : filterName
+        if (Array.isArray(filterValue)){
+          parameters.push({ name: `filter[${_filterName}.in]`, value: filterValue.map((f: RaRecord) => f.id).join(',') })
+        } else {
+          parameters.push({ name: `filter[${_filterName}]`, value: filterValue as string})
+        }
 
+      }
       // json:api specific stuff like 'include' or 'fields[Resource]'
       Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
-
-      for (const [filterName, filterValue] of Object.entries(params.filter)) {
-        const _filterValue = filterValue as string
-
-        parameters.push(
-          { name: `filter[${filterName.includes('_filter_lookup_') ? filterName.replace('_filter_lookup_', '.') : filterName}]`, value: _filterValue }
-        )
-      }
 
       if (relatedResource !== undefined) {
         parameters.push({ name: `${relatedResource.resource}Id`, value: relatedResource.id, in: 'path' })
@@ -248,6 +244,8 @@ const dataProvider = ({
 
     getMany: async (resource: string, params: GetManyParams) => {
       // TODO: pk is not always id...
+  
+
       const parameters: ParamsArray = [
         { name: 'filter[id.in]', value: params.ids.join(',') },
       ]
@@ -278,13 +276,19 @@ const dataProvider = ({
         'page[size]': perPage,
         sort: `${order === 'ASC' ? '' : '-'}${field}`
       }
-
+      
       for (const [filterName, filterValue] of Object.entries(params.filter)) {
+        
         query[`filter[${filterName}]`] = filterValue
       }
 
-      query[`filter[${params.target}]`] = params.id
+      if (typeof params.id === 'object') {
+        query[`filter[id.in]`] = params.id.id
 
+      } else {
+        query[`filter[id.in]`] = params.id
+
+      }
       return await httpClient.then(async (client) => {
         const conf = client.api.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, updateAuthHeader(axiosRequestConf)])
         return await client.request(conf)

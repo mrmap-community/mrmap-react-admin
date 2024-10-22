@@ -20,11 +20,12 @@ import NotListedLocationIcon from '@mui/icons-material/NotListedLocation';
 import CustomerIcon from '@mui/icons-material/Person';
 import PlagiarismIcon from '@mui/icons-material/Plagiarism';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
-import { type OpenAPIV3 } from 'openapi-client-axios';
+import { type Operation as AxiosOperation, type OpenAPIV3 } from 'openapi-client-axios';
 
 import { HttpClientContext } from '../context/HttpClientContext';
 import { CreateGuesser, EditGuesser } from '../jsonapi/components/FormGuesser';
 import ListGuesser from '../jsonapi/components/ListGuesser';
+import { getResourceSchema } from '../jsonapi/openapi/parser';
 import authProvider from '../providers/authProvider';
 import jsonApiDataProvider from '../providers/dataProvider';
 import Dashboard from './Dashboard/Dashboard';
@@ -84,12 +85,18 @@ const MrMapFrontend = (): ReactElement => {
       const createOperation = client?.api.getOperation(`create_${resource.name}`)
       const editOperation = client?.api.getOperation(`partial_update_${resource.name}`)
       const listOperation = client?.api.getOperation(`list_${resource.name}`)
-      const related_list_operations = client?.api.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as OpenAPIV3.NonArraySchemaObject[]
+
+      const related_list_operations = client?.api.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
       const related_list_resources = related_list_operations?.map((schema) => {
-        const properties = schema?.properties as OpenAPIV3.NonArraySchemaObject
-        const jsonApiTypeProperty = properties?.type as OpenAPIV3.NonArraySchemaObject
+        const resourceSchema = getResourceSchema(schema)
+
+        const properties = resourceSchema?.properties?.data as OpenAPIV3.ArraySchemaObject
+        const items = properties.items as OpenAPIV3.SchemaObject
+        const jsonApiTypeProperty = items?.properties?.type as OpenAPIV3.NonArraySchemaObject
         const jsonApiTypeReferences = jsonApiTypeProperty?.allOf as OpenAPIV3.SchemaObject[]
         return jsonApiTypeReferences?.[0]?.enum?.[0] as string
+
+
       }) ?? []
 
       return {
@@ -98,7 +105,7 @@ const MrMapFrontend = (): ReactElement => {
         ...(resource.edit || editOperation && {edit: EditGuesser, hasEdit: true}),
         
         ...(resource.children || related_list_operations && { 
-          children: related_list_resources.map((relatedResource) => <Route key={''} path={`:id/${resource.name}`} element={<ListGuesser resource={resource.name} relatedResource={relatedResource}> </ListGuesser>}></Route>)
+          children: related_list_resources.map((relatedResource) => <Route key={`nested-${relatedResource}-of-${resource.name}`} path={`:id/${relatedResource}`} element={<ListGuesser resource={relatedResource} relatedResource={resource.name}> </ListGuesser>}></Route>)
         }) as ReactElement[],
         ...resource,
       }

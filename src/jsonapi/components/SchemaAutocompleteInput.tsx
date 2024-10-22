@@ -1,9 +1,7 @@
-import { type ReactElement, useCallback, useMemo, useState } from 'react';
-import { AutocompleteArrayInput, AutocompleteInput, type AutocompleteInputProps, type RaRecord, useGetList } from 'react-admin';
-import { useFormContext } from 'react-hook-form';
+import { type ReactElement, useState } from 'react';
+import { AutocompleteArrayInput, AutocompleteInput, type AutocompleteInputProps, Identifier, type RaRecord, useGetList } from 'react-admin';
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation';
-import CreateResourceDialog from './CreateResourceDialog';
 export interface SchemaAutocompleteInputProps extends AutocompleteInputProps {
   reference: string
   source: string
@@ -22,54 +20,40 @@ const SchemaAutocompleteInput = (
   {
     reference,
     source,
-    sort,
     multiple = false,
     ...rest
   }: SchemaAutocompleteInputProps
 ): ReactElement => {
-  const { setValue , getValues } = useFormContext();
-  // TODO: check query param by schema ...
-  const [filter, setFilter] = useState({ search: '' })
+  const [ filter, setFilter] = useState<any>();
+  const { data, isPending, isFetching } = useGetList(reference, {filter: filter});
 
   const optionText = useSchemaRecordRepresentation()
-    
-  const { data: fetchedChoices, isPending, refetch: refetchChoices } = useGetList(
-    reference,
-    {
-      pagination: { page: 1, perPage: 10 },
-      sort: { field: sort ?? 'id', order: 'DESC' },
-      filter: filter,
-    }
-  )
-
-  const onCreateSuccess = useCallback((data: RaRecord) => {
-    setValue(source, [...getValues(source), data])
-  }, [source, setValue, getValues])
-
-  const props = useMemo(()=>{return {
-      name: source,
-      source: source,
-      isLoading: isPending,
-      optionText: optionText,
-      choices: fetchedChoices,
-      setFilter: (value: string) =>  setFilter({ search: value }),
-      onOpen: () => refetchChoices,
-      create: <CreateResourceDialog creatProps={{ resource: reference, mutationOptions: { onSuccess: onCreateSuccess } }} dialogProps={{ open: true }} />,
-      multiple: multiple,
-      ...rest
-    }
-  }, [source, isPending, optionText, fetchedChoices, refetchChoices, onCreateSuccess, multiple, rest])
-
-
+  
   if (multiple){
-    return <AutocompleteArrayInput
-
-      {...props}
-    />
+    return (
+        <AutocompleteArrayInput 
+          setFilter={searchText => setFilter({ search: searchText})}
+          source={source}
+          choices={data}
+          isPending={isPending}
+          isFetching={isFetching}
+          optionText={optionText}
+          parse={(value: Identifier[]) => { return value?.map(identifier => ({id: identifier})) }} // form input value (string) ---> parse ---> form state value
+          format={(value: RaRecord[]) => value?.map(record => (record.id))}
+        
+        />
+      )
   } else {
     return (
-      <AutocompleteInput
-        {...props}
+      <AutocompleteInput 
+        setFilter={searchText => setFilter({ search: searchText})}
+        source={source}
+        choices={data}
+        isPending={isPending}
+        isFetching={isFetching}
+        optionText={optionText}
+        parse={(value: Identifier) => { return { id: value } }} // form input value (string) ---> parse ---> form state value
+        format={(value: RaRecord) => value?.id}
       />
     )
   }

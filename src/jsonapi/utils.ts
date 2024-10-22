@@ -60,7 +60,7 @@ export const findIncludedData = (resourceIdentifierObject: ResourceIdentifierObj
   return returnVal
 }
 // concrete the return value;
-export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument | undefined, data: JsonApiPrimaryData): any => {
+export const encapsulateJsonApiPrimaryData = (document: JsonApiDocument | undefined, data: JsonApiPrimaryData): RaRecord => {
   /** helper to transform json:api primary data object to react admin record
      *
      */
@@ -152,3 +152,5 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
 }
 
 export const hasIncludedData = (record: RaRecord): boolean => (Object.entries(record).find(([name, schema]) => name !== 'id') != null)
+
+

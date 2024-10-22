@@ -82,6 +82,8 @@ export const EditGuesser = (
 }
 
 export const CreateToolbar = () => (
+  // To support initialize all fields we need to set alwaysEnable to true
+  // see https://github.com/marmelab/react-admin/issues/5796
   <Toolbar>
       <SaveButton alwaysEnable />
   </Toolbar>
