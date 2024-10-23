@@ -1,10 +1,11 @@
 import { type ReactElement } from 'react'
-import { BooleanField, DateField, EmailField, NumberField, ReferenceOneField, TextField, UrlField } from 'react-admin'
+import { BooleanField, DateField, EmailField, NumberField, ReferenceOneField, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import GeoJsonInput from '../../components/GeoJsonInput'
 import { ReferenceManyCount } from './ReferenceManyCount'
+import TruncatedTextField from './TruncatedTextField'
 
 const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSortable: boolean = true, currentResource: string): ReactElement => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
@@ -14,6 +15,7 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
     label: schema?.title ?? name,
     sortable: isSortable
   }
+
   if (['integer', 'number'].includes(schema?.type ?? '')) {
     return <NumberField key={name} {...commonProps} />
   } else if (schema?.type === 'boolean') {
@@ -48,7 +50,7 @@ const FieldGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isSo
   }
 
   // default fallback
-  return <TextField key={name} {...commonProps} />
+  return <TruncatedTextField key={name} {...commonProps} textOverflow={'ellipsis'}/>
 }
 
 export default FieldGuesser
