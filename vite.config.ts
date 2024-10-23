@@ -19,7 +19,9 @@ export default defineConfig({
         host: true,
     },
     base: './',
-    
+    optimizeDeps: {
+        include: ['@mui/material/Tooltip'],
+    }
     // resolve: {
     //     alias: {
     //         '@api-platform/admin/src/InputGuesser': './node_modules/@api-platform/admin/src/InputGuesser'

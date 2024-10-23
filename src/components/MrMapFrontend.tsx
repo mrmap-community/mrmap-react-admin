@@ -10,7 +10,6 @@ import {
   type RaThemeOptions
 } from 'react-admin';
 import { Route } from 'react-router-dom';
-import useWebSocket from 'react-use-websocket';
 
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
@@ -65,18 +64,7 @@ const MrMapFrontend = (): ReactElement => {
 
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
-  const { api, authToken, setAuthToken } = useHttpClientContext()
-
-  const { readyState, getWebSocket } = useWebSocket(
-    `ws://localhost:8001/ws/default/?token=${authToken?.token}`,
-    {
-      shouldReconnect: () => true,
-      reconnectAttempts: 10,
-      //attemptNumber will be 0 the first time it attempts to reconnect, so this equation results in a reconnect pattern of 1 second, 2 seconds, 4 seconds, 8 seconds, and then caps at 10 seconds until the maximum number of attempts is reached
-      reconnectInterval: (attemptNumber) =>
-        Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
-    }
-  );
+  const { api, authToken, setAuthToken, getWebSocket, readyState} = useHttpClientContext()
 
   const dataProvider = useMemo(() => {
     const websocket = getWebSocket()
