@@ -6,6 +6,7 @@ import { snakeCase } from 'lodash'
 import { AxiosError, type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
 import HistoryList from '../../components/HistoryList'
+import { useHttpClientContext } from '../../context/HttpClientContext'
 import useOperationSchema from '../hooks/useOperationSchema'
 import inputGuesser from '../openapi/inputGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
@@ -92,6 +93,7 @@ const ListGuesser = ({
 }: ListGuesserProps): ReactElement => {
 
   const { name, hasShow, hasEdit } = useResourceDefinition(props)
+  const { api } = useHttpClientContext()
 
   const [open] = useSidebarState()
 
@@ -105,6 +107,8 @@ const ListGuesser = ({
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
+
+  const hasHistoricalEndpoint = useMemo(()=>Boolean(api?.getOperation(`list_Historical${name}`)),[api])
 
   const [listParams, setListParams] = useStore(`${name}.listParams`, {})
   const [searchParams, setSearchParams] = useSearchParams()
@@ -236,8 +240,9 @@ const ListGuesser = ({
           }
         }
       }
-
+      // TODO: only add if historical endpoint is provided!!
       aside={
+        hasHistoricalEndpoint ?
         <HistoryList
           resource={`Historical${name ?? ''}`}
           related={name ?? ''}
@@ -250,8 +255,7 @@ const ListGuesser = ({
               overflowY: 'scroll'
             }
           }
-
-        />
+        />: undefined
       }
 
       {...props}

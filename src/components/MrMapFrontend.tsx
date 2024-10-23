@@ -65,7 +65,7 @@ const MrMapFrontend = (): ReactElement => {
 
   const darkTheme: RaThemeOptions = { ...defaultTheme, palette: { mode: 'dark' } }
 
-  const { api: client, authToken, setAuthToken } = useHttpClientContext()
+  const { api, authToken, setAuthToken } = useHttpClientContext()
 
   const { readyState, getWebSocket } = useWebSocket(
     `ws://localhost:8001/ws/default/?token=${authToken?.token}`,
@@ -80,19 +80,19 @@ const MrMapFrontend = (): ReactElement => {
 
   const dataProvider = useMemo(() => {
     const websocket = getWebSocket()
-    return client && jsonApiDataProvider({
-      httpClient: client, 
+    return api && jsonApiDataProvider({
+      httpClient: api, 
       ...(websocket !== null && { realtimeBus: websocket }),
     })
-  }, [client, readyState])
+  }, [api, readyState])
   
   const resourceDefinitions = useMemo(() => {
     return resources.map((resource)=> {
-      const createOperation = client?.client.api.getOperation(`create_${resource.name}`)
-      const editOperation = client?.client.api.getOperation(`partial_update_${resource.name}`)
-      const listOperation = client?.client.api.getOperation(`list_${resource.name}`)
+      const createOperation = api?.getOperation(`create_${resource.name}`)
+      const editOperation = api?.getOperation(`partial_update_${resource.name}`)
+      const listOperation = api?.getOperation(`list_${resource.name}`)
 
-      const related_list_operations = client?.client.api.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
+      const related_list_operations = api?.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
       const related_list_resources = related_list_operations?.map((schema) => {
         const resourceSchema = getResourceSchema(schema)
 
@@ -114,7 +114,7 @@ const MrMapFrontend = (): ReactElement => {
         ...resource,
       }
     })
-  }, [client])
+  }, [api])
 
   if (dataProvider === undefined) {
     return (
