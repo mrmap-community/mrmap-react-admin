@@ -28,7 +28,7 @@ const TruncatedTextField = (
       <MouseOverPopover
         content={value}
       >
-        <Typography>...</Typography>
+        <span>...</span>
       </MouseOverPopover>
     </div>
    

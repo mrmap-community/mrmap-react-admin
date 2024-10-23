@@ -1,9 +1,11 @@
 import { useCallback, type ReactNode } from 'react'
-import { Button, Identifier, Link, useRecordContext, useStore } from 'react-admin'
+import { Identifier, Link, useRecordContext, useStore } from 'react-admin'
 
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 
 import ListGuesser from '../../jsonapi/components/ListGuesser'
+
+
 const TreeButton = (): ReactNode => {
   const record = useRecordContext()
   const [wmsList, setWmsList] = useStore<Identifier[]>(`mrmap.mapviewer.append.wms`, [])
@@ -16,14 +18,14 @@ const TreeButton = (): ReactNode => {
   }, [wmsList, setWmsList])
 
   return (
-    <Button
-      component={Link}
+    <Link
       to={`/viewer`}
       color="primary"
       onClick={handleOnClick}
+      
     >
       <AccountTreeIcon />
-    </Button>
+    </Link>
   )
 }
 
