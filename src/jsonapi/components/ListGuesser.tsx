@@ -3,7 +3,7 @@ import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, Ed
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { snakeCase } from 'lodash'
-import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
+import { AxiosError, type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
 import HistoryList from '../../components/HistoryList'
 import useOperationSchema from '../hooks/useOperationSchema'
@@ -43,14 +43,14 @@ const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArrayS
     const parameters = operation?.parameters as ParameterObject[]
     const sortParameterSchema = parameters?.find((parameter) => parameter.name === 'sort')?.schema as OpenAPIV3.ArraySchemaObject
     const sortParameterItemsSchema = sortParameterSchema?.items as OpenAPIV3.SchemaObject
-    const sortParameterValues = sortParameterItemsSchema?.enum?.filter((value) => value.includes('-') === false)
+    const sortParameterValues = sortParameterItemsSchema?.enum?.filter((value) => value.includes('-') === false) ||  []
 
     const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
     const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties as OpenAPIV3.NonArraySchemaObject
     const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
 
     Object.entries({ id: jsonApiPrimaryDataProperties?.id, ...jsonApiResourceAttributes ?? {}, ...jsonApiResourceRelationships ?? {} }).forEach(([name, schema]) => {
-      const isSortable = sortParameterValues?.includes(name)
+      const isSortable = sortParameterValues.includes(name)
       fields.push(FieldGuesser(name, schema, isSortable, currentResource))
     })
   }
@@ -106,7 +106,7 @@ const ListGuesser = ({
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
-  const [listParams, setListParams] = useStore(`${name}.listParams`)
+  const [listParams, setListParams] = useStore(`${name}.listParams`, {})
   const [searchParams, setSearchParams] = useSearchParams()
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(`preferences.${name}.datagrid.availableColumns`, [])
   const [omit, setOmit ] = useStore<string[]>(`preferences.${name}.datagrid.omit`, defaultOmit)
@@ -165,7 +165,7 @@ const ListGuesser = ({
     }
   }, [name])
 
-  const onError = useCallback((error: any): void => {
+  const onError = useCallback((error: AxiosError): void => {
     /** Custom error handler for jsonApi bad request response
      *
      * possible if:
@@ -176,14 +176,12 @@ const ListGuesser = ({
      *
     */
     if (error?.status === 400) {
-      const jsonApiDocument: JsonApiDocument = error.body
+      const jsonApiDocument = error.response?.data as JsonApiDocument
 
-      jsonApiDocument.errors?.forEach((apiError: JsonApiErrorObject) => {
+      jsonApiDocument?.errors?.forEach((apiError: JsonApiErrorObject) => {
         if (isInvalidSort(apiError)) {
           // remove sort from storage
-          const newParams = listParams
-          newParams.sort = ''
-          setListParams(newParams)
+          setListParams({...listParams, sort: ''})
 
           // remove sort from current location
           searchParams.delete('sort')
@@ -261,7 +259,6 @@ const ListGuesser = ({
     >
       <DatagridConfigurable
         rowClick={(id, resource, record) => {
-          console.log(record)
           if (onRowClick !== undefined) {
             onRowClick(record)
           } else {

@@ -108,6 +108,7 @@ const HistoryList = ({
             isLoading={isLoading}
             total={total}
             // sx={{ overflowY: 'scroll' }}
+            
             {...props}
           />
         }

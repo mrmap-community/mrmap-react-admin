@@ -1,7 +1,7 @@
 import { HttpError, type CreateParams, type DataProvider, type DeleteManyParams, type DeleteParams, type DeleteResult, type GetListParams, type GetManyParams, type GetManyReferenceParams, type GetOneParams, type Identifier, type Options, type RaRecord, type UpdateManyParams, type UpdateParams, type UpdateResult } from 'react-admin'
 
 import jsonpointer from 'jsonpointer'
-import OpenAPIClientAxios, { type AxiosError, type ParamsArray } from 'openapi-client-axios'
+import OpenAPIClientAxios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, Operation, type ParamsArray } from 'openapi-client-axios'
 import { WebSocketLike } from 'react-use-websocket/dist/lib/types'
 
 import { type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
@@ -56,21 +56,76 @@ export interface Subscription {
   callback: (event: CrudEvent) => void
 }
 
+class OperationNotFoundError extends Error {
+  constructor(operationId: string) {
+    super(`Operation '${operationId}' not found.`);
+    this.name = "OperationNotFoundError";
+  }
+}
+
 //let socket: WebSocket| undefined = undefined
 let subscriptions: Subscription[] = []
 
-const handleApiError = (error: AxiosError): void => {
-  // if (error.response?.status === 403) {
-  //   const apiErrors = error.response?.data as JsonApiDocument
-  //   apiErrors?.errors?.forEach(
-  //     (apiError: JsonApiErrorObject) => {
-  //       if (apiError.detail === 'Invalid token.') {
-  //         localStorage.removeItem(TOKENNAME)
-  //         window.location.href = '/login'
-  //       }
-  //     }
-  //   )
-  // }
+const handleOperationNotFoundError = (): void => {
+
+}
+
+const buildQueryParams = (params: GetListParams | GetManyParams | GetManyReferenceParams) => {
+  const parameters: ParamsArray = []
+
+  const relatedResource = params.meta?.relatedResource
+  relatedResource && parameters.push({ name: `${relatedResource.resource}Id`, value: relatedResource.id, in: 'path' })
+
+  const hasPagination = "pagination" in params
+  const hasSort = "sort" in params
+  const hasFilter = "filter" in params // GetListParams && GetManyReferenceParams specific
+  const hasIds = "ids" in params // GetManyParams specific
+  const hasId = "id" in params  // GetManyReferenceParams specific
+
+  hasPagination && params.pagination !== undefined && parameters.push({ name: 'page[number]', value: params.pagination.page })
+  hasPagination && params.pagination !== undefined && parameters.push({ name: 'page[size]', value: params.pagination.perPage })
+  hasSort && params.sort !== undefined && parameters.push(   { name: 'sort', value: `${params.sort.order === 'ASC' ? '' : '-'}${params.sort.field}` })
+
+  hasFilter && params.filter !== undefined && Object.entries(params.filter ?? {}).forEach(([filterName, filterValue]) => {
+    const _filterName = filterName.includes('_filter_lookup_') ? filterName.replace('_filter_lookup_', '.') : filterName
+    if (Array.isArray(filterValue)){
+      parameters.push({ name: `filter[${_filterName}.in]`, value: filterValue.map((f: RaRecord) => f.id).join(',') })
+    } else {
+      parameters.push({ name: `filter[${_filterName}]`, value: filterValue as string})
+    }
+  })
+
+  // json:api specific stuff like 'include' or 'fields[Resource]'
+  Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { 
+    parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) 
+  })
+
+  // GetMany request with list of ids as a filter
+  hasIds && parameters.push({ name: 'filter[id.in]', value: params.ids.join(',') })
+
+  if (hasId) { 
+    typeof params.id === 'object' ? parameters.push({name: 'filter[id.in]', value: params.id.id}): parameters.push({name: 'filter[id.in]', value: params.id})
+  }
+
+  return parameters
+}
+
+const  handleListRequest = async (client: AxiosInstance, conf: AxiosRequestConfig, total: string): Promise<{
+  data: unknown[];
+  total: number;
+}> => {
+  return await client
+  .request(conf)
+  .then((response: AxiosResponse) => {
+    const jsonApiDocument = response.data as JsonApiDocument
+    const resources = jsonApiDocument.data as JsonApiPrimaryData[]
+    return {
+      data: resources.map((data: JsonApiPrimaryData) => Object.assign(
+        encapsulateJsonApiPrimaryData(jsonApiDocument, data)
+      )),
+      total: getTotal(jsonApiDocument, total)
+    }
+  })
 }
 
 const getTotal = (response: JsonApiDocument, total: string): number => {
@@ -95,6 +150,14 @@ const realtimeOnMessage = (event: MessageEvent): void => {
       observer => { observer.callback(raEvent) })
 }
 
+const checkOperationExists = (api: OpenAPIClientAxios, operationId: string): Operation => {
+  const operation = api.getOperation(operationId)
+  if (operation === undefined) {
+    throw new OperationNotFoundError(operationId)
+  }
+  return operation
+}
+
 const dataProvider = ({
   total = '/meta/pagination/count',
   httpClient,
@@ -107,13 +170,11 @@ const dataProvider = ({
 
   const updateResource = async (resource: string, params: UpdateParams): Promise<UpdateResult<any>> => {
     const operationId = `partial_update_${resource}`
-    const operation = httpClient.client.api.getOperation(operationId)
-    if (operation === undefined) {
-      throw new Error('update operatio not found')
-    }
+    const operation = checkOperationExists(httpClient, operationId)
+
     // FIXME: only post the edited fields for partial update
-    const conf = httpClient.client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }])
-    return await httpClient.client.request(conf).then((response) => {
+    const conf = httpClient.client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, httpClient.axiosConfigDefaults])
+    return await httpClient.client.request(conf).then((response: AxiosResponse) => {
       const jsonApiDocument = response.data as JsonApiDocument
       const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
       return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
@@ -121,56 +182,24 @@ const dataProvider = ({
   }
 
   const deleteResource = async (resource: string, params: DeleteParams): Promise<DeleteResult<any>> => {
-      const conf = httpClient.client.api.getAxiosConfigForOperation(`destroy_${resource}`, [{ id: params.id }])
-      return await httpClient.client.request(conf).then((response) => {
+    const operationId = `destroy_${resource}`
+    checkOperationExists(httpClient, operationId)
+    
+    const conf = httpClient.client.api.getAxiosConfigForOperation(operationId, [{ id: params.id }, undefined, httpClient.axiosConfigDefaults])
+      return await httpClient.client.request(conf).then((response: AxiosResponse) => {
       return { data: { id: params.id } }
     })
   }
   return {
     getList: async (resource: string, params: GetListJsonApiParams) => {
-      let operationId = `list_${resource}`
       const relatedResource = params.meta?.relatedResource
-
-      const { page, perPage } = params.pagination
-      const { field, order } = params.sort
-
-      const parameters: ParamsArray = [
-        { name: 'page[number]', value: page },
-        { name: 'page[size]', value: perPage },
-        { name: 'sort', value: `${order === 'ASC' ? '' : '-'}${field}` }
-      ]
-
-      for (const [filterName, filterValue] of Object.entries(params.filter)) {
-        const _filterName = filterName.includes('_filter_lookup_') ? filterName.replace('_filter_lookup_', '.') : filterName
-        if (Array.isArray(filterValue)){
-          parameters.push({ name: `filter[${_filterName}.in]`, value: filterValue.map((f: RaRecord) => f.id).join(',') })
-        } else {
-          parameters.push({ name: `filter[${_filterName}]`, value: filterValue as string})
-        }
-
-      }
-      // json:api specific stuff like 'include' or 'fields[Resource]'
-      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
-
-      if (relatedResource !== undefined) {
-        parameters.push({ name: `${relatedResource.resource}Id`, value: relatedResource.id, in: 'path' })
-        operationId = `list_related_${resource}_of_${relatedResource.resource}`
-      }
-
-      const conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
-      return await httpClient.client.request(conf).then((response) => {
-        const jsonApiDocument = response.data as JsonApiDocument
-        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-        return {
-          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-          )),
-          total: getTotal(jsonApiDocument, total)
-        }
-      }).catch((error: AxiosError) => {
-        handleApiError(error)
-        return { data: [], total: 0 }
-      })
+      const operationId = relatedResource === undefined ? `list_${resource}` : `list_related_${resource}_of_${relatedResource.resource}`
+      checkOperationExists(httpClient, operationId)
+      
+      const parameters = buildQueryParams(params)
+      const  conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
+      
+      return await handleListRequest(httpClient.client, conf, total)
     },
 
     getOne: async (resource: string, params: GetOneParams) => {
@@ -186,8 +215,15 @@ const dataProvider = ({
       // json:api specific stuff like 'include' or 'fields[Resource]'
       Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
 
-      const conf = httpClient.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
-      return await httpClient.client.request(conf).then((response) => {
+      let conf = undefined;
+      try {
+        conf = httpClient.getAxiosConfigForOperation(`retrieve_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
+      } catch (error) {
+        handleOperationNotFoundError();
+        return  { data: [], total: 0 }
+      }
+
+      return await httpClient.client.request(conf).then((response: AxiosResponse) => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
@@ -195,66 +231,31 @@ const dataProvider = ({
     },
 
     getMany: async (resource: string, params: GetManyParams) => {
-      // TODO: pk is not always id...
-      const parameters: ParamsArray = [
-        { name: 'filter[id.in]', value: params.ids.join(',') },
-      ]
-      // json:api specific stuff like 'include' or 'fields[Resource]'
-      Object.entries(params.meta?.jsonApiParams ?? {}).forEach(([key, value]) => { parameters.push({ name: key, value: typeof value === 'string' ? value : '' }) })
+      const operationId = `list_${resource}`
+      checkOperationExists(httpClient, operationId)
 
-      const conf = httpClient.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
-      return await httpClient.client.request(conf).then((response) => {
-        const jsonApiDocument = response.data as JsonApiDocument
-        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-        return {
-          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-          ))
-        }
-      })
+      const parameters = buildQueryParams(params)
+      const conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
+      
+      return await handleListRequest(httpClient.client, conf, total)
     },
 
     getManyReference: async (resource: string, params: GetManyReferenceParams) => {
-      const { page, perPage } = params.pagination
-      const { field, order } = params.sort
-      const query: any = {
-        'page[number]': page,
-        'page[size]': perPage,
-        sort: `${order === 'ASC' ? '' : '-'}${field}`
-      }
-      
-      for (const [filterName, filterValue] of Object.entries(params.filter)) {
-        
-        query[`filter[${filterName}]`] = filterValue
-      }
+      const operationId = `list_${resource}`
+      checkOperationExists(httpClient, operationId)
 
-      if (typeof params.id === 'object') {
-        query[`filter[id.in]`] = params.id.id
+      const parameters = buildQueryParams(params)
+      const conf = httpClient.getAxiosConfigForOperation(`list_${resource}`, [parameters, undefined, httpClient.axiosConfigDefaults])
 
-      } else {
-        query[`filter[id.in]`] = params.id
-
-      }
-      const conf = httpClient.getAxiosConfigForOperation(`list_${resource}`, [query, undefined, httpClient.axiosConfigDefaults])
-      return await httpClient.client.request(conf).then((response) => {
-        const jsonApiDocument = response.data as JsonApiDocument
-        const resources = jsonApiDocument.data as JsonApiPrimaryData[]
-        return {
-          data: resources.map((data: JsonApiPrimaryData) => Object.assign(
-            encapsulateJsonApiPrimaryData(jsonApiDocument, data)
-          )),
-          total: getTotal(jsonApiDocument, total)
-        }
-      })
+      return await handleListRequest(httpClient.client, conf, total)
     },
 
     create: async (resource: string, params: CreateParams) => {
       const operationId = `create_${resource}`
-      const operation = httpClient.client.api.getOperation(operationId)
-      if (operation === undefined) {
-        throw new Error('create operation not found')
-      }
-      const conf = httpClient.getAxiosConfigForOperation(`create_${resource}`, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, httpClient.axiosConfigDefaults])
+      const operation = checkOperationExists(httpClient, operationId)
+
+      const conf = httpClient.getAxiosConfigForOperation(operationId, [undefined, { data: capsulateJsonApiPrimaryData(params.data, resource, operation) }, httpClient.axiosConfigDefaults])
+
       return await httpClient.client.request(conf).then((response) => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
