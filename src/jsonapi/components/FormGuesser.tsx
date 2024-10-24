@@ -1,13 +1,16 @@
 import { type ReactElement, useMemo } from 'react';
-import { Create, type CreateProps, Edit, type EditProps, Loading, SaveButton, SimpleForm, Toolbar, useRecordContext, useResourceDefinition } from 'react-admin';
+import { Create, type CreateProps, Edit, type EditProps, Loading, RaRecord, SaveButton, SimpleForm, Toolbar, useRecordContext, useResourceDefinition } from 'react-admin';
 
 import { snakeCase } from 'lodash';
 
 import useOperationSchema from '../hooks/useOperationSchema';
 import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils';
 
+interface EditGuesserProps<RecordType extends RaRecord = any>
+    extends Omit<EditProps<RecordType>, 'children'> {}
+
 export const EditGuesser = (
-  props: EditProps
+  props: EditGuesserProps
 ): ReactElement => {
   const { name, options } = useResourceDefinition()
   const record = useRecordContext()

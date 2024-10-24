@@ -1,11 +1,12 @@
-import { type ReactNode } from 'react';
-import { type Identifier, Layout, type LayoutProps } from 'react-admin';
+import { useRef, useState, type ReactNode } from 'react';
+import { Layout, type Identifier, type LayoutProps } from 'react-admin';
 import { ReadyState } from 'react-use-websocket';
 
 import CircleIcon from '@mui/icons-material/Circle';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import { Grid, IconButton, Paper, styled, Tooltip, Typography } from '@mui/material';
+import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import Card from '@mui/material/Card';
+import useResizeObserver from '@react-hook/resize-observer';
 import { SnackbarProvider } from 'notistack';
 
 import { useHttpClientContext } from '../../context/HttpClientContext';
@@ -23,17 +24,6 @@ declare module 'notistack' {
   }
 }
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-  ...theme.applyStyles('dark', {
-    backgroundColor: '#1A2027',
-  }),
-}));
-
 // Dirty hack to append SnackbarObserver
 const MyLayout = (
   {
@@ -41,8 +31,13 @@ const MyLayout = (
     ...rest
   }: LayoutProps
 ): ReactNode => {
-  const { api, readyState} = useHttpClientContext()
+  const { api, readyState} = useHttpClientContext();
+  const footerRef = useRef(null);
+  const [footerHeight, setFooterHeight] = useState<number>();
+  
+  useResizeObserver(footerRef ?? null, (entry) => setFooterHeight(entry.contentRect.height))
 
+  
   return (
     <SnackbarProvider
       maxSnack={10}
@@ -61,41 +56,46 @@ const MyLayout = (
         sx={{ marginTop: '0', '& .RaLayout-appFrame': { marginTop: '0 !important' } }}
         {...rest}
       >
-        <div style={{ margin: "10px", marginBottom: "20px"}}>
+        <div style={{ margin: "10px", marginBottom: footerHeight}}>
           
           {children}
 
           
           {<SnackbarObserver />}
         </div>
-        <Card style={{
-          position: 'fixed', right: 0, bottom: 0, left: 0, zIndex: 100,
-          textAlign: 'center',
-        }}>
-          <Grid container spacing={2} sx={{ justifyContent: 'space-between' }}>
-          
-            <Grid item>
-             <Typography padding={1}> v.{api?.document.info.version}</Typography>
-            </Grid>
+          <Card style={{
+            position: 'fixed', 
+            right: 0, 
+            bottom: 0, 
+            left: 0, 
+            zIndex: 100,
+            textAlign: 'center',
+          }}>
+            <Grid container spacing={2} sx={{ justifyContent: 'space-between' }} ref={footerRef}>
+            
+              <Grid item>
+              <Typography padding={1}> v.{api?.document.info.version}</Typography>
+              </Grid>
 
-            <Grid item >
-              <IconButton href="https://github.com/mrmap-community" target="_blank">
-                <GitHubIcon />
-              </IconButton>
-            </Grid>
-
-            <Grid item alignItems="center" >
-              <Tooltip title={readyState === ReadyState.OPEN ? 'Backend is connected': 'Connection to backend lost'}>
-                <IconButton padding={1} >
-                  <CircleIcon
-                    color={readyState === ReadyState.OPEN ? 'success': 'error'}
-                  />
+              <Grid item >
+                <IconButton href="https://github.com/mrmap-community" target="_blank">
+                  <GitHubIcon />
                 </IconButton>
-              </Tooltip>
+              </Grid>
+
+              <Grid item alignItems="center" >
+                <Tooltip title={readyState === ReadyState.OPEN ? 'Backend is connected': 'Connection to backend lost'}>
+                  <IconButton padding={1} >
+                    <CircleIcon
+                      color={readyState === ReadyState.OPEN ? 'success': 'error'}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            
             </Grid>
-          
-          </Grid>
-        </Card>
+          </Card>
+       
       </Layout>
     </SnackbarProvider>
 

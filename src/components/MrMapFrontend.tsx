@@ -35,11 +35,12 @@ import CatalogueServiceList from './Lists/CatalogueServiceList';
 import WmsList from './Lists/WmsList';
 import MapViewer from './MapViewer/MapViewer';
 import PortalSearch from './PortalSearch/PortalSearch';
+import { WmsShow } from './Show/WmsShow';
 
 const STORE_VERSION = '1'
 
 const resources: Array<ResourceProps> = [
-  {name: "WebMapService", icon: MapIcon, list: WmsList},
+  {name: "WebMapService", icon: MapIcon, list: WmsList, show: WmsShow},
   {name: "HistoricalWebMapService"},
   {name: "Layer", icon: LayersIcon},
   {name: "WebFeatureService", icon: TravelExploreIcon},
