@@ -8,15 +8,19 @@
             "type": "shell",
             "command": "npm",
             "args": [
+                "--prefix",
+                "${workspaceFolder}/frontend",
                 "run",
                 "dev"
-            ]
+            ],
         },
         {
             "label": "run test",
             "type": "shell",
             "command": "npm",
             "args": [
+                "--prefix",
+                "${workspaceFolder}/frontend",
                 "run",
                 "test"
             ]
@@ -26,6 +30,8 @@
             "type": "shell",
             "command": "npm",
             "args": [
+                "--prefix",
+                "${workspaceFolder}/frontend",
                 "run",
                 "test-coverage",
             ]
@@ -35,6 +41,8 @@
             "type": "shell",
             "command": "npm",
             "args": [
+                "--prefix",
+                "${workspaceFolder}/frontend",
                 "run",
                 "lint",
                 "--fix"

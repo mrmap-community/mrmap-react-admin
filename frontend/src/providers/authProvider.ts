@@ -1,4 +1,6 @@
-import { type AuthProvider, type UserIdentity } from 'ra-core'
+import { type AuthProvider, type UserIdentity } from 'ra-core';
+
+const { VITE_API_SCHEMA, VITE_API_BASE_URL } = import.meta.env;
 
 export interface LoginParams {
   username: string
@@ -13,9 +15,9 @@ export interface AuthToken {
 export const TOKENNAME = 'mrmap.token'
 
 const tokenAuthProvider = (
-    loginUrl = 'http://localhost:8001/api/auth/login',
-    logoutUrl = 'http://localhost:8001/api/auth/logout',
-    identityUrl = 'http://localhost:8001/api/accounts/who-am-i/',
+    loginUrl = `${VITE_API_SCHEMA}://${VITE_API_BASE_URL}/api/auth/login`,
+    logoutUrl = `${VITE_API_SCHEMA}://${VITE_API_BASE_URL}/api/auth/logout`,
+    identityUrl = `${VITE_API_SCHEMA}://${VITE_API_BASE_URL}/api/accounts/who-am-i/`,
     authToken: AuthToken | undefined,
     setAuthToken: (authToken: AuthToken | undefined) => void,
 ): AuthProvider => {

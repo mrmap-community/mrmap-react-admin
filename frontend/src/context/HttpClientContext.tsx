@@ -15,12 +15,16 @@ export interface HttpClientContextType {
   authToken: AuthToken | undefined
   setAuthToken: (authToken: AuthToken | undefined) => void
   readyState: ReadyState
-  getWebSocket: () => WebSocketLike
+  getWebSocket: () => WebSocketLike | null
 }
 
+
+const { VITE_API_SCHEMA, VITE_API_BASE_URL } = import.meta.env;
+
 export const AUTH_TOKEN_LOCAL_STORAGE_NAME = "mrmap.auth.token"
+
 const AXIOS_DEFAULTS = {
-  baseURL: "http://localhost:8001",  
+  baseURL: `${VITE_API_SCHEMA}://${VITE_API_BASE_URL}`,  
   headers: new AxiosHeaders(
     {
       Accept: JsonApiMimeType,
@@ -39,9 +43,8 @@ export const HttpClientBase = ({ children }: any): ReactNode => {
   const [api, setApi] = useState<OpenAPIClientAxios>()
   const [document, setDocument] = useState<OpenAPIV3.Document | OpenAPIV3_1.Document>()
   
-
   const { readyState, getWebSocket } = useWebSocket(
-    `ws://localhost:8001/ws/default/?token=${authToken?.token}`,
+    `${VITE_API_SCHEMA === "https" ? "wss": "ws"}://${VITE_API_BASE_URL}/ws/default/?token=${authToken?.token}`,
     {
       shouldReconnect: () => true,
       reconnectAttempts: 10,
@@ -50,7 +53,6 @@ export const HttpClientBase = ({ children }: any): ReactNode => {
     },
     !!authToken
   );
-
 
   const defaultConf = useMemo<AxiosRequestConfig>(()=>{
     const conf = {...AXIOS_DEFAULTS}
@@ -68,7 +70,7 @@ export const HttpClientBase = ({ children }: any): ReactNode => {
 
   useEffect(() => {
     if (document === undefined) {     
-      const httpClient = new OpenAPIClientAxios({ definition: 'http://localhost:8001/api/schema'})
+      const httpClient = new OpenAPIClientAxios({ definition: `${VITE_API_SCHEMA}://${VITE_API_BASE_URL}/api/schema`})
       httpClient.init().then((client) => {
         setDocument(client.api.document)
       }).catch((error) => { console.error("errror during initialize axios openapi client", error)})
@@ -86,16 +88,13 @@ export const HttpClientBase = ({ children }: any): ReactNode => {
     }
   },[document, defaultConf])
 
-  const value = useMemo(()=>{
-    const v = { 
+  const value = useMemo<HttpClientContextType>(()=>({ 
       api: api, 
       authToken: authToken, 
       setAuthToken: setStoredAuthToken,
       readyState: readyState,
       getWebSocket: getWebSocket
-    }
-    return v
-  }, [api, authToken, setStoredAuthToken, getWebSocket, readyState])
+  }), [api, authToken, setStoredAuthToken, getWebSocket, readyState])
 
   return (
     <HttpClientContext.Provider value={value}>
