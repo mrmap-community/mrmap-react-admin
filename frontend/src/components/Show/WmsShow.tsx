@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
-import { EditButton, RaRecord, Show, SimpleShowLayoutProps, TabbedShowLayout, TextField, TopToolbar, useRecordContext } from 'react-admin';
+import { useCallback, useMemo, useState } from 'react';
+import { EditButton, RaRecord, Show, SimpleShowLayoutProps, TabbedShowLayout, TextField, TopToolbar, useNotify, useRecordContext, useShowContext } from 'react-admin';
 
-import { Grid } from '@mui/material';
+import { Grid, Tooltip } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 
+import CircleIcon from '@mui/icons-material/Circle';
+import VpnLockIcon from '@mui/icons-material/VpnLock';
 import { EditGuesser } from '../../jsonapi/components/FormGuesser';
 import { getChildren } from '../MapViewer/utils';
+
 
 const WmsShowActions = () => (
     <TopToolbar>
@@ -23,6 +26,9 @@ const LayerLabel = ({
 }: LayerLabelProps) => {
     return (
         <div  >
+            {record.isActive ? <Tooltip title="Layer is activated"><CircleIcon color='success'/></Tooltip>: <Tooltip title="Layer is deactivated"><CircleIcon color='warning'/></Tooltip>}
+            {record.isSpatialSecured ? <Tooltip title="Layer spatial secured"><VpnLockIcon color='info'/></Tooltip>: null}
+
             {record.title} 
             
         </div>
@@ -35,16 +41,25 @@ const getSubTree = (nodes: RaRecord[], currentNode?: RaRecord) => {
     const children = node && getChildren(nodes, node)
 
     const subtree = children?.map(child => (
-        <TreeItem key={child.id} itemId={child.id.toString()} label={<LayerLabel record={child}/>}>
+        <TreeItem 
+            key={child.id} 
+            itemId={child.id.toString()} 
+            label={<LayerLabel record={child}/>}
+        >
             {getSubTree(nodes, child)}
         </ TreeItem>
     )) || []
 
     if (currentNode === undefined && node !== undefined){
-        return <TreeItem key={node.id} itemId={node.id.toString()} label={<LayerLabel record={node}/>} >
-            
-            {...subtree}
-        </ TreeItem> 
+        return (
+            <TreeItem 
+                key={node.id} 
+                itemId={node.id.toString()} 
+                label={<LayerLabel record={node}/>} 
+                >
+                {...subtree}
+            </ TreeItem>
+        )
     } else {
         return subtree
     }
@@ -58,6 +73,22 @@ export const WmsLayers = () => {
 
     const [selectedItem, setSelectedItem] = useState<string>(record?.layers.find((layer: RaRecord) => layer.mpttLft === 1).id)
     
+    const { refetch } = useShowContext();
+    const notify = useNotify();
+    
+    const onSuccess = useCallback((record: RaRecord)=>{
+        notify(
+            'ra.notification.updated', 
+            {
+                messageArgs: { smart_count: 1 },
+                undoable: false,
+                type: 'success',
+            }
+    );
+        // refetch the wms if the update was successfully
+        refetch()
+    },[notify, refetch])
+
     return (
         <Grid container spacing={2} sx={{ justifyContent: 'space-between' }} >
             <Grid item xs={4}>
@@ -78,6 +109,9 @@ export const WmsLayers = () => {
                 <EditGuesser
                     id={selectedItem}
                     resource='Layer'
+                    redirect={false}
+                    mutationOptions={{ meta: { type: "Layer" }, onSuccess}}
+
                 />
            
             </Grid>

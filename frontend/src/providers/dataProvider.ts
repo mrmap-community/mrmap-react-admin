@@ -8,6 +8,8 @@ import axios from 'axios'
 import { isEqual } from 'lodash'
 import { type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
+
+
 export interface RelatedResource {
   resource: string
   id: Identifier
@@ -211,8 +213,6 @@ const dataProvider = ({
                 // https://jsonapi.org/format/#error-objects
 
                 const fieldValue = jsonpointer.get(requestBody, jsonApiError.source.pointer)
-                console.log(requestBody,  jsonApiError.source.pointer, fieldValue)
-
                 
                 if (fieldValue === undefined) return // we ingnore the error, cause the pointer is not valid.
                 if (jsonApiError.source.pointer.includes("/data/id")){

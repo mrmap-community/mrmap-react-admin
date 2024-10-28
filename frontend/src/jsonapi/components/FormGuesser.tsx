@@ -11,12 +11,12 @@ interface EditGuesserProps<RecordType extends RaRecord = any>
 export const EditGuesser = (
   props: EditGuesserProps
 ): ReactElement => {
-  const { name, options } = useResourceDefinition()
-  const record = useRecordContext()
+  const { name, options } = useResourceDefinition(props)
+  const record = useRecordContext(props)
 
   const editOperationId = useMemo(() => (name !== undefined) ? `partial_update_${name}` : '', [name])
   const showOperationId = useMemo(() => (name !== undefined) ? `retrieve_${name}` : '', [name])
-  
+
   const { schema: editSchema } = useOperationSchema(editOperationId)
   const { operation: showOperation } = useOperationSchema(showOperationId)
 
@@ -68,7 +68,7 @@ export const EditGuesser = (
           jsonApiParams: { ...jsonApiQuery }
         }
       }}
-      mutationOptions={{ meta: { type: options?.type } }}
+      mutationOptions={{ meta: { type: options?.type }}}
       mutationMode='pessimistic'
       
       {...props}

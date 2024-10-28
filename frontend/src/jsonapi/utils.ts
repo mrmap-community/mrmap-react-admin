@@ -23,7 +23,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type:
   for (const [relationName, resourceLinkageSchema] of Object.entries(jsonApiResourceRelationships ?? {})) {
     if (relationName in attributes) {
       // need to capsulate data of relationship as well
-      const isList = Object.prototype.hasOwnProperty.call(resourceLinkageSchema.properties.data, 'items')
+      const isList = Object.hasOwn(resourceLinkageSchema.properties.data, 'items')
       const relationSchema = isList ? resourceLinkageSchema?.properties?.data?.items as OpenAPIV3.NonArraySchemaObject : resourceLinkageSchema.properties.data as OpenAPIV3.NonArraySchemaObject
       const relationResourceType = relationSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
 
@@ -45,7 +45,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type:
     id,
     type,
     attributes,
-    ...(Object.keys(relationships).length > 0 && relationships)
+    ...(Object.keys(relationships).length > 0 && {relationships: relationships})
   }
   return primaryData
 }
