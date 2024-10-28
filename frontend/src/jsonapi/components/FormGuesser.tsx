@@ -1,7 +1,6 @@
+import { snakeCase } from 'lodash';
 import { type ReactElement, useMemo } from 'react';
 import { Create, type CreateProps, Edit, type EditProps, Loading, RaRecord, SaveButton, SimpleForm, Toolbar, useRecordContext, useResourceDefinition } from 'react-admin';
-
-import { snakeCase } from 'lodash';
 
 import useOperationSchema from '../hooks/useOperationSchema';
 import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils';
@@ -17,7 +16,7 @@ export const EditGuesser = (
 
   const editOperationId = useMemo(() => (name !== undefined) ? `partial_update_${name}` : '', [name])
   const showOperationId = useMemo(() => (name !== undefined) ? `retrieve_${name}` : '', [name])
-
+  
   const { schema: editSchema } = useOperationSchema(editOperationId)
   const { operation: showOperation } = useOperationSchema(showOperationId)
 
@@ -55,11 +54,7 @@ export const EditGuesser = (
     , [sparseFieldsQueryValue, includeQueryValue]
   )
 
-  /* eslint-disable */
-  const onError = (error) => {
-    // TODO: handle jsonapi errors
-  }
-  /* eslint-enable */
+
 
   if (Object.keys(jsonApiQuery).length === 0 || fields.length === 0) {
     return <Loading />
@@ -73,11 +68,15 @@ export const EditGuesser = (
           jsonApiParams: { ...jsonApiQuery }
         }
       }}
-      mutationOptions={{ onError, meta: { type: options?.type } }}
+      mutationOptions={{ meta: { type: options?.type } }}
       mutationMode='pessimistic'
+      
       {...props}
     >
-      <SimpleForm>
+      <SimpleForm
+        
+        sanitizeEmptyValues
+      >
         {fields}
       </SimpleForm>
     </Edit>

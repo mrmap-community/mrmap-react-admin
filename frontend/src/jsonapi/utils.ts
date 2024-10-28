@@ -28,14 +28,11 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type:
       const relationResourceType = relationSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
 
       if (isList) {
-        const newData: ResourceIdentifierObject[] = []
         const relationData: RaRecord[] = attributes[relationName]
-
-        relationData.forEach((record: RaRecord) => newData.push({ id: record.id, type: relationResourceType?.enum?.[0] }))
-        relationships[relationName] = { data: newData }
+        relationships[relationName] = { data: relationData.map((record: RaRecord) => ({ id: record.id, type: relationResourceType?.enum?.[0] })) }
       } else {
         const relationData: RaRecord = attributes[relationName]
-        if (relationData !== undefined) {
+        if (relationData !== undefined && relationData !== null) {
           relationships[relationName] = { data: { id: relationData.id, type: relationResourceType?.enum?.[0] } }
         }
       }
@@ -48,7 +45,7 @@ export const capsulateJsonApiPrimaryData = (data: RaRecord | Partial<any>, type:
     id,
     type,
     attributes,
-    relationships
+    ...(Object.keys(relationships).length > 0 && relationships)
   }
   return primaryData
 }
