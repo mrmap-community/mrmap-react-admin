@@ -2,7 +2,7 @@ import { snakeCase } from 'lodash';
 import { type ReactElement, useMemo } from 'react';
 import { Create, type CreateProps, Edit, type EditProps, Loading, RaRecord, SaveButton, SimpleForm, Toolbar, useRecordContext, useResourceDefinition } from 'react-admin';
 
-import useOperationSchema from '../hooks/useOperationSchema';
+import useOperationResponseSchema from '../hooks/useOperationResponseSchema';
 import { getFieldsForOperation, getIncludeOptions, getSparseFieldOptions } from '../utils';
 
 interface EditGuesserProps<RecordType extends RaRecord = any>
@@ -17,8 +17,8 @@ export const EditGuesser = (
   const editOperationId = useMemo(() => (name !== undefined) ? `partial_update_${name}` : '', [name])
   const showOperationId = useMemo(() => (name !== undefined) ? `retrieve_${name}` : '', [name])
 
-  const { schema: editSchema } = useOperationSchema(editOperationId)
-  const { operation: showOperation } = useOperationSchema(showOperationId)
+  const { schema: editSchema } = useOperationResponseSchema(editOperationId)
+  const { operation: showOperation } = useOperationResponseSchema(showOperationId)
 
   const fields = useMemo(() => (editSchema !== undefined) ? getFieldsForOperation(editSchema, record) : [], [editSchema, record])
   const includeOptions = useMemo(() => (showOperation !== undefined) ? getIncludeOptions(showOperation) : [], [showOperation])
@@ -101,7 +101,7 @@ export const CreateGuesser = (
 
   const { name, options } = useResourceDefinition({ resource: rest.resource })
   const createOperationId = useMemo(() => (name !== undefined) ? `create_${name}` : '', [name])
-  const { schema } = useOperationSchema(createOperationId)
+  const { schema } = useOperationResponseSchema(createOperationId)
   const fields = useMemo(() => (schema !== undefined) ? getFieldsForOperation(schema) : [], [schema])
 
   // be clear that json:api type is always part of mutationOptions so that the dataprovider has all information he needs

@@ -7,7 +7,7 @@ import { AxiosError, type OpenAPIV3, type Operation, type ParameterObject } from
 
 import HistoryList from '../../components/HistoryList'
 import { useHttpClientContext } from '../../context/HttpClientContext'
-import useOperationSchema from '../hooks/useOperationSchema'
+import useOperationResponseSchema from '../hooks/useOperationResponseSchema'
 import inputGuesser from '../openapi/inputGuesser'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import { getIncludeOptions, getSparseFieldOptions } from '../utils'
@@ -101,7 +101,7 @@ const ListGuesser = ({
 
   const { id } = useParams()
   const [operationId, setOperationId] = useState('')
-  const { schema, operation } = useOperationSchema(operationId)
+  const { schema, operation } = useOperationResponseSchema(operationId)
 
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
