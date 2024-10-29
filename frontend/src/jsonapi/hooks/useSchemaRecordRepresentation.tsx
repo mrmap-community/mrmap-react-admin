@@ -3,7 +3,7 @@ import { type RaRecord, type RecordToStringFunction, useResourceDefinition } fro
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
-import useOperationSchema from './useOperationSchema'
+import useOperationResponseSchema from './useOperationResponseSchema'
 
 const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObject): string => {
   let recordRepresentation = 'id'
@@ -28,7 +28,7 @@ const useSchemaRecordRepresentation = (
   operationId?: string
 ): RecordToStringFunction => {
   const { name } = useResourceDefinition()
-  const { schema } = useOperationSchema(operationId ?? `list_${name}`)
+  const { schema } = useOperationResponseSchema(operationId ?? `list_${name}`)
 
   const [representation, setRepresentation] = useState<string>()
   const optionTextFunc = useCallback((record: RaRecord) => {

@@ -80,7 +80,8 @@ const buildQueryParams = (params: GetListParams | GetManyParams | GetManyReferen
   relatedResource && parameters.push({ name: `${relatedResource.resource}Id`, value: relatedResource.id, in: 'path' })
 
   const hasPagination = "pagination" in params
-  const hasSort = "sort" in params
+  const hasSort = "sort" in params && params.sort?.field && params.sort?.field !== ''
+
   const hasFilter = "filter" in params // GetListParams && GetManyReferenceParams specific
   const hasIds = "ids" in params // GetManyParams specific
   const hasId = "id" in params  // GetManyReferenceParams specific
