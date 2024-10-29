@@ -96,7 +96,7 @@ const MrMapFrontend = (): ReactElement => {
         ...(resource.create || createOperation && {create: CreateGuesser, hasCreate: true}),
         ...(resource.list || listOperation && {list: ListGuesser, hasList: true}),
         ...(resource.edit || editOperation && {edit: EditGuesser, hasEdit: true}),
-        
+        // TODO: combine children and related_list_operations paths
         ...(resource.children || related_list_operations && { 
           children: related_list_resources.map((relatedResource) => <Route key={`nested-${relatedResource}-of-${resource.name}`} path={`:id/${relatedResource}`} element={<ListGuesser resource={relatedResource} relatedResource={resource.name}> </ListGuesser>}></Route>)
         }) as ReactElement[],

@@ -36,6 +36,14 @@ export const collectChildren = (node: TreeNode, includeSelf: boolean = false): T
   return children
 }
 
+export const getAnchestors = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
+  return nodes?.filter(
+    node =>
+      node?.mpttLft < currentNode?.mpttLft &&
+            node?.mpttRgt > currentNode?.mpttRgt
+  )
+}
+
 export const getDescendants = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
   return nodes?.filter(
     node =>
