@@ -44,12 +44,16 @@ export const getAnchestors = (nodes: RaRecord[], currentNode: RaRecord): RaRecor
   )
 }
 
-export const getDescendants = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {
-  return nodes?.filter(
+export const getDescendants = (nodes: RaRecord[], currentNode: RaRecord, includeSelf: boolean = false): RaRecord[] => {
+  const descendants = nodes?.filter(
     node =>
       node?.mpttLft > currentNode?.mpttLft &&
             node?.mpttRgt < currentNode?.mpttRgt
   )
+  return [
+    ...(includeSelf ? [currentNode]: []),
+    ...descendants,
+  ]
 }
 
 export const getChildren = (nodes: RaRecord[], currentNode: RaRecord): RaRecord[] => {

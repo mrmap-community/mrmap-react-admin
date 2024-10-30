@@ -4,8 +4,8 @@ import { ComponentType, type ReactElement } from 'react'
 
 import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
+import InputGuesser from './components/InputGuesser'
 import RelationInputGuesser from './components/RelationInputGuesser'
-import inputGuesser from './openapi/inputGuesser'
 import { getEncapsulatedSchema } from './openapi/parser'
 import { type JsonApiDocument, type JsonApiPrimaryData, type ResourceIdentifierObject, type ResourceLinkage } from './types/jsonapi'
 
@@ -124,7 +124,7 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
     const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
     if (jsonApiResourceId !== undefined) {
       // on create operations there is no id
-      fields.push(inputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
+      fields.push(InputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
     }
     const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
 
@@ -132,7 +132,7 @@ export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, re
       const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
       const isReadOnly = (schema.readOnly ?? false)
       if (!isReadOnly || includeReadOnlyFields){
-        fields.push(inputGuesser(name, schema, isRequired, record, inputFieldMap))
+        fields.push(InputGuesser(name, schema, isRequired, record, inputFieldMap))
       }
     })
 

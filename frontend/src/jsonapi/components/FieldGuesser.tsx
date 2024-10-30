@@ -3,7 +3,7 @@ import { BooleanField, DateField, EmailField, NumberField, ReferenceOneField, Ur
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
-import GeoJsonInput from '../../components/GeoJsonInput'
+import GeoJsonInput from '../../components/Input/GeoJsonInput'
 import { ReferenceManyCount } from './ReferenceManyCount'
 import TruncatedTextField from './TruncatedTextField'
 

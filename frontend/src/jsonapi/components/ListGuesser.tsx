@@ -7,11 +7,11 @@ import { AxiosError, type OpenAPIV3, type Operation, type ParameterObject } from
 
 import HistoryList from '../../components/HistoryList'
 import { useHttpClientContext } from '../../context/HttpClientContext'
-import useOperationResponseSchema from '../hooks/useOperationResponseSchema'
-import inputGuesser from '../openapi/inputGuesser'
+import useResourceSchema from '../hooks/useResourceSchema'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import { getIncludeOptions, getSparseFieldOptions } from '../utils'
 import FieldGuesser from './FieldGuesser'
+import InputGuesser from './InputGuesser'
 
 interface FieldWrapperProps {
   children: ReactNode[]
@@ -65,7 +65,7 @@ const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[]
     .filter((filter) => !filter.name.includes(orderMarker))
     .map((filter) => {
       const schema = filter.schema as OpenAPIV3.NonArraySchemaObject
-      return inputGuesser(filter.name.replace('filter[', '').replace(']', '').replace('.', '_filter_lookup_'), schema, filter.required ?? false)
+      return InputGuesser(filter.name.replace('filter[', '').replace(']', '').replace('.', '_filter_lookup_'), schema, filter.required ?? false)
     }) ?? []
 }
 
@@ -101,7 +101,7 @@ const ListGuesser = ({
 
   const { id } = useParams()
   const [operationId, setOperationId] = useState('')
-  const { schema, operation } = useOperationResponseSchema(operationId)
+  const { schema, operation } = useResourceSchema(operationId)
 
   const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
   const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])

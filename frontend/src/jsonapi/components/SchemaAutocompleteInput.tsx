@@ -1,11 +1,11 @@
 import { type ReactElement, useState } from 'react';
-import { AutocompleteArrayInput, AutocompleteInput, type AutocompleteInputProps, Identifier, type RaRecord, useGetList } from 'react-admin';
+import { AutocompleteArrayInput, AutocompleteInput, type AutocompleteInputProps, GetListParams, Identifier, type RaRecord, useGetList } from 'react-admin';
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation';
 export interface SchemaAutocompleteInputProps extends AutocompleteInputProps {
   reference: string
   source: string
-  sort?: string
+  params?: GetListParams
 }
 
 /**
@@ -21,12 +21,13 @@ const SchemaAutocompleteInput = (
     reference,
     source,
     multiple,
+    params,
     ...rest
   }: SchemaAutocompleteInputProps
 ): ReactElement => {
   const [ filter, setFilter] = useState<any>();
   
-  const { data, isPending, isFetching } = useGetList(reference, {filter: filter, sort: {field: '', order: 'DESC'}});
+  const { data, isPending, isFetching } = useGetList(reference, {filter: filter, sort: {field: '', order: 'DESC'}, ...params});
 
   const optionText = useSchemaRecordRepresentation()
   

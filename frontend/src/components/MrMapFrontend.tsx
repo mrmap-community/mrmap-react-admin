@@ -29,6 +29,7 @@ import ListGuesser from '../jsonapi/components/ListGuesser';
 import { getResourceSchema } from '../jsonapi/openapi/parser';
 import authProvider from '../providers/authProvider';
 import jsonApiDataProvider from '../providers/dataProvider';
+import CreateAllowedWebMapServiceOperation from './Create/CreateAllowedWebMapServiceOperation';
 import Dashboard from './Dashboard/Dashboard';
 import MyLayout from './Layout/Layout';
 import CatalogueServiceList from './Lists/CatalogueServiceList';
@@ -52,7 +53,7 @@ const resources: Array<ResourceProps> = [
   {name: "DatasetMetadataRecord", icon: DatasetIcon},
   {name: "ServiceMetadataRecord", icon: DatasetIcon},
   {name: "BackgroundProcess"},
-  {name: "AllowedWebMapServiceOperation"},
+  {name: "AllowedWebMapServiceOperation", create: CreateAllowedWebMapServiceOperation},
   {name: "User", icon: CustomerIcon},
   {name: "Organization", icon: CorporateFareIcon},
 ]

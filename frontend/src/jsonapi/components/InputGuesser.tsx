@@ -3,9 +3,9 @@ import { BooleanInput, DateInput, DateTimeInput, NumberInput, type RaRecord, Tex
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
-import GeoJsonInput from '../../components/GeoJsonInput'
+import GeoJsonInput from '../../components/Input/GeoJsonInput'
 
-const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactElement => {
+const InputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRequired: boolean = false, record?: RaRecord): ReactElement => {
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
   const commonProps = {
     source: name,
@@ -13,7 +13,6 @@ const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRe
     required: isRequired,
     disabled: schema.readOnly ?? false,
     helperText: schema.description,
-    record
   }
 
   if (['integer', 'number'].includes(schema.type ?? '')) {
@@ -41,4 +40,4 @@ const inputGuesser = (name: string, schema: OpenAPIV3.NonArraySchemaObject, isRe
   return <TextInput key={name} {...commonProps} />
 }
 
-export default inputGuesser
+export default InputGuesser

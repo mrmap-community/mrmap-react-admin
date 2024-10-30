@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 
 import { type OpenAPIV3, type Operation } from 'openapi-client-axios'
 
-import { useHttpClientContext } from '../../context/HttpClientContext'
 import { getEncapsulatedSchema } from '../openapi/parser'
 import useOperation from './useOperation'
 
@@ -11,25 +10,23 @@ export interface OperationSchema {
   operation?: Operation
 }
 
-const useOperationResponseSchema = (operationId: string): OperationSchema => {
-  const { api: client } = useHttpClientContext()
+const useResourceSchema = (operationId: string): OperationSchema => {
   const [schema, setSchema] = useState<OpenAPIV3.NonArraySchemaObject>()
 
   const operation = useOperation(operationId)
 
   useEffect(() => {
-    if (operation && client !== undefined) {
-      const _operation = client.client.api.getOperation(operationId)
-      if (_operation === undefined) {
+    if (operation) {
+      if (operation === undefined) {
         setSchema(undefined)
         return
       }
-      const encapsulatedSchema = getEncapsulatedSchema(_operation)
+      const encapsulatedSchema = getEncapsulatedSchema(operation)
       setSchema({ ...encapsulatedSchema })
     }
-  }, [operation, client])
+  }, [operation])
 
   return { schema, operation }
 }
 
-export default useOperationResponseSchema
+export default useResourceSchema
