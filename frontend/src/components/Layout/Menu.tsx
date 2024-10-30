@@ -35,6 +35,8 @@ const Menu = ({ dense = false }: MenuProps) => {
 
     const { name: wmsName, icon: wmsIcon } = useResourceDefinition({ resource: "WebMapService" })
     const { name: layerName, icon: layerIcon } = useResourceDefinition({ resource: "Layer" })
+    const { name: allowedWmsOpName, icon: allowedWmsOpIcon } = useResourceDefinition({ resource: "AllowedWebMapServiceOperation" })
+
     const { name: wfsName, icon: wfsIcon } = useResourceDefinition({ resource: "WebFeatureService" })
     const { name: featureTypeName, icon: featureTypeIcon } = useResourceDefinition({ resource: "FeatureType" })
     const { name: cswName, icon: cswIcon } = useResourceDefinition({ resource: "CatalogueService" })
@@ -78,6 +80,13 @@ const Menu = ({ dense = false }: MenuProps) => {
                     state={{ _scrollToTop: true }}
                     primaryText={layerName}
                     leftIcon={createElementIfDefined(layerIcon)}
+                    dense={dense}
+                />
+                <MenuItemLink
+                    to={`/${allowedWmsOpName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={`Security Rules`}
+                    leftIcon={createElementIfDefined(allowedWmsOpIcon)}
                     dense={dense}
                 />
             </SubMenu>

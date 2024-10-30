@@ -29,12 +29,12 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
   const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ??
                       jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? 
                       false
-    
-    if (jsonApiResourceId !== undefined) {
+
+    if (name === "id" && jsonApiResourceId !== undefined) {
       // on create operations there is no id
       return {
         name: name, 
-        schema: jsonApiResourceAttributes?.[name] as OpenAPIV3.NonArraySchemaObject, 
+        schema: jsonApiResourceId,
         isRequired: schema?.required?.includes('id') ?? false, 
         kind: 'attribute'
       }
@@ -78,7 +78,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
     }
 };
 
-export const getFieldDefinition = (fieldSchema:FieldSchema): FieldDefinition | undefined => {
+export const getFieldDefinition = (fieldSchema: FieldSchema): FieldDefinition | undefined => {
   const commonProps = {
     source: fieldSchema.name,
     label: fieldSchema.schema.title ?? fieldSchema.name,
@@ -90,7 +90,7 @@ export const getFieldDefinition = (fieldSchema:FieldSchema): FieldDefinition | u
 
   if (fieldSchema?.kind === 'attribute'){
     // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
-    
+    console.log(fieldSchema)
     if (['integer', 'number'].includes(fieldSchema.schema.type ?? '')) {
       return {component: NumberInput, props: commonProps}
     } else if (fieldSchema.schema.type === 'boolean') {
@@ -109,6 +109,7 @@ export const getFieldDefinition = (fieldSchema:FieldSchema): FieldDefinition | u
         return {component: TextInput, props: commonProps}
       } 
     } else if (fieldSchema.schema.type === 'object') {
+     
       const typeOfObject = fieldSchema.schema.properties?.type as OpenAPIV3.SchemaObject
       if (typeOfObject?.enum?.[0] === 'MultiPolygon')
       return {component: GeoJsonInput, props: commonProps}

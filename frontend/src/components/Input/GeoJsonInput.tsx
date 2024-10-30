@@ -1,12 +1,14 @@
-import type { GeoJSON as GeoJSONType } from 'geojson'
 
-import { type ReactNode, useEffect, useState } from 'react'
-import { TextInput, type TextInputProps, useInput } from 'react-admin'
-import { MapContainer, TileLayer } from 'react-leaflet'
+import { type ReactNode } from 'react';
+import { TextInput, useInput, type TextInputProps } from 'react-admin';
+import { useFormContext, } from "react-hook-form";
+import { MapContainer, TileLayer } from 'react-leaflet';
 
-import { Box } from '@mui/material'
+import { Box } from '@mui/material';
 
-import FeatureGroupEditor from './FeatureGroupEditor'
+import L from 'leaflet';
+import FeatureGroupEditor from './FeatureGroupEditor';
+
 
 const style = {
   //position: 'absolute' as const,
@@ -23,29 +25,38 @@ const style = {
   // pb: 3,
 }
 
-const GeoJsonInput = (props: TextInputProps): ReactNode => {
+const validateGeoJson = (value, allValues) => {
+  try{
+    L.geoJSON(value)
+  } catch (error){
+    console.log('errorrr')
+    return 'error'
+  }
+  
+  return undefined
+};
 
-  const [geoJson, setGeoJson] = useState<GeoJSONType>()
-  const [geoJsonString, setGeoJsonString] = useState((geoJson != null) ? JSON.stringify(geoJson) : 'huhu')
-  const {
-    field: { onChange }
-  } = useInput(props)
+const GeoJsonInput = ({
+  source,
+  ...props
+}: TextInputProps): ReactNode => {
 
-  useEffect(() => {
-    setGeoJsonString((geoJson != null) ? JSON.stringify(geoJson) : '')
-  }, [geoJson])
-
-  useEffect(() => {
-    onChange(geoJsonString)
-  }, [geoJsonString])
+  const { id, field: {value, onChange}, fieldState: {invalid, error} } = useInput({ source });
+  const {setValue} = useFormContext();
 
   return (
     <div style={{width: '100%'}}>
       <TextInput
+        source={source}
+        parse={(value) => JSON.parse(value)}
+        format={(value) => JSON.stringify(value)}
+        // TODO: validate on every change...
+        validate={[validateGeoJson]}
+        
+        onChange={()=>{console.log('huhu')}}
         {...props}
-        contentEditable={false}
-        onChange={onChange}
       />
+        
 
       <Box sx={{ ...style }}>
         <MapContainer
@@ -53,15 +64,16 @@ const GeoJsonInput = (props: TextInputProps): ReactNode => {
           zoom={2}
           scrollWheelZoom={true}
           style={{ height: '100%', width: '100wh' }}
-
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <FeatureGroupEditor
-            geoJson={geoJson}
-            geoJsonCallback={setGeoJson}
+            // forces rerendering on every value change for example.
+            key={(Math.random() + 1).toString(36).substring(7)}
+            geoJson={value}
+            geoJsonCallback={(multiPolygon ) => setValue(source, multiPolygon)}
           />
         </MapContainer>
 

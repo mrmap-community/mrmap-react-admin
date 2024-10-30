@@ -55,7 +55,6 @@ const TreeSelectInput = ({
           }
 
         }}
-        //onSelectedItemsChange={(event: React.SyntheticEvent, itemIds: string[]) => setValue(source, itemIds.map((v) => ({id: v}))) }
       > 
         {tree}
       </SimpleTreeView> 

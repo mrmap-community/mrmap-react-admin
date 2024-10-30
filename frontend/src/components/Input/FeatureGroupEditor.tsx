@@ -1,4 +1,4 @@
-import type { GeoJSON as GeoJSONType, MultiPolygon, Position } from 'geojson'
+import type { GeoJSON as GeoJSONType, MultiPolygon } from 'geojson'
 
 import { type ReactNode, useCallback, useEffect } from 'react'
 import { FeatureGroup, GeoJSON } from 'react-leaflet'
@@ -26,8 +26,12 @@ const FeatureGroupEditor = ({
 
     context.map.eachLayer((layer) => {
       if (layer instanceof L.Polygon) {
-        const coordinates = layer.toGeoJSON().geometry.coordinates as Position[][]
-        multiPolygon.coordinates.push(coordinates)
+        const geometry = layer.toGeoJSON().geometry
+        if (geometry.type === 'MultiPolygon'){
+          multiPolygon.coordinates.push(...geometry.coordinates)
+        } else {
+          multiPolygon.coordinates.push(geometry.coordinates)
+        }
       }
     })
     geoJsonCallback(multiPolygon)
@@ -38,11 +42,11 @@ const FeatureGroupEditor = ({
       const bounds = L.geoJSON(geoJson).getBounds()
       if (Object.keys(bounds).length > 1) {
         context.map.flyToBounds(bounds, { duration: 0.3 })
-      }
+      }     
     }
-  }, [geoJson])
+  }, [])
 
-  const geoJsonObject = (geoJson != null) ? <GeoJSON data={geoJson} /> : <div></div>
+  const geoJsonObject = (geoJson != null) ? <GeoJSON data={geoJson} /> : null
 
   return (
     <FeatureGroup>

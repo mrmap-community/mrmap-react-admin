@@ -26,5 +26,7 @@ export const useFieldsForOperation = (
   const {schema} = useResourceSchema(operationId)
   const allFields = useMemo(()=> schema && encapsulateFields(schema) || [], [schema])
   const fieldSchemas = useMemo<FieldSchema[]>(()=> schema && allFields.map(name => getFieldSchema(name, schema)).filter(schema => schema !== undefined) || [], [schema, allFields])
-  return fieldSchemas.map(fieldSchema => getFieldDefinition(fieldSchema)).filter(fieldDefinition => fieldDefinition !== undefined)
+  console.log('schema', fieldSchemas)
+
+  return fieldSchemas.map(fieldSchema => fieldSchema && getFieldDefinition(fieldSchema)).filter(fieldDefinition => fieldDefinition !== undefined)
 }
