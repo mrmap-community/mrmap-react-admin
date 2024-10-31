@@ -90,7 +90,6 @@ export const getFieldDefinition = (fieldSchema: FieldSchema): FieldDefinition | 
 
   if (fieldSchema?.kind === 'attribute'){
     // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
-    console.log(fieldSchema)
     if (['integer', 'number'].includes(fieldSchema.schema.type ?? '')) {
       return {component: NumberInput, props: commonProps}
     } else if (fieldSchema.schema.type === 'boolean') {

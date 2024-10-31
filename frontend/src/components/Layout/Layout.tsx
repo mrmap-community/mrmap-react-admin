@@ -53,7 +53,11 @@ const MyLayout = (
         appBar={MrMapAppBar}
         menu={Menu}
 
-        sx={{ marginTop: '0', '& .RaLayout-appFrame': { marginTop: '0 !important' } }}
+        sx={{
+           marginTop: '0', 
+           '& .RaLayout-appFrame': { marginTop: '0 !important' },
+           '& .RaLayout-content': { width: '200px'}, // this width is needed, otherwise the container will not resize dynimcly
+        }}
         {...rest}
       >
         <div style={{ margin: "10px", marginBottom: footerHeight}}>

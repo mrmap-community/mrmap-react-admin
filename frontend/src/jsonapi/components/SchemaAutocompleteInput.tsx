@@ -1,8 +1,8 @@
 import { type ReactElement, useState } from 'react';
-import { AutocompleteArrayInput, AutocompleteInput, type AutocompleteInputProps, GetListParams, Identifier, type RaRecord, useGetList } from 'react-admin';
+import { AutocompleteArrayInput, AutocompleteArrayInputProps, AutocompleteInput, GetListParams, Identifier, type RaRecord, useGetList } from 'react-admin';
 
 import useSchemaRecordRepresentation from '../hooks/useSchemaRecordRepresentation';
-export interface SchemaAutocompleteInputProps extends AutocompleteInputProps {
+export interface SchemaAutocompleteInputProps extends AutocompleteArrayInputProps {
   reference: string
   source: string
   params?: GetListParams
@@ -30,11 +30,11 @@ const SchemaAutocompleteInput = (
   const { data, isPending, isFetching } = useGetList(reference, {filter: filter, sort: {field: '', order: 'DESC'}, ...params});
 
   const optionText = useSchemaRecordRepresentation()
-  
+
   if (multiple){
     return (
         <AutocompleteArrayInput 
-          setFilter={searchText => setFilter({ search: searchText})}
+          setFilter={(searchText: string) => setFilter({ search: searchText})}
           source={source}
           choices={data}
           isPending={isPending}
@@ -42,13 +42,13 @@ const SchemaAutocompleteInput = (
           optionText={optionText}
           parse={(value: Identifier[]) => { return value?.map(identifier => ({id: identifier})) }} // form input value (string) ---> parse ---> form state value
           format={(value: RaRecord[]) => value?.map(record => (record.id))}
-          
+          {...rest}
         />
       )
   } else {
     return (
       <AutocompleteInput 
-        setFilter={searchText => setFilter({ search: searchText})}
+        setFilter={(searchText: string) => setFilter({ search: searchText})}
         source={source}
         choices={data}
         isPending={isPending}
@@ -56,8 +56,8 @@ const SchemaAutocompleteInput = (
         optionText={optionText}
         parse={(value: Identifier) => { return { id: value } }} // form input value (string) ---> parse ---> form state value
         format={(value: RaRecord) => value?.id}
-  
         {...rest}
+
       />
     )
   }

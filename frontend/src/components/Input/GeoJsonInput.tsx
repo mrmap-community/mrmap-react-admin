@@ -1,5 +1,6 @@
 
-import { type ReactNode } from 'react';
+import type { MultiPolygon } from 'geojson';
+import { useCallback, type ReactNode } from 'react';
 import { TextInput, useInput, type TextInputProps } from 'react-admin';
 import { useFormContext, } from "react-hook-form";
 import { MapContainer, TileLayer } from 'react-leaflet';
@@ -36,30 +37,38 @@ const validateGeoJson = (value, allValues) => {
   return undefined
 };
 
+
 const GeoJsonInput = ({
   source,
   ...props
 }: TextInputProps): ReactNode => {
 
-  const { id, field: {value, onChange}, fieldState: {invalid, error} } = useInput({ source });
+  const { id, field: {value, onChange}, fieldState: {invalid, error} } = useInput(
+    { 
+      source
+    }
+  );
   const {setValue} = useFormContext();
+
+  const geoJsonCallback = useCallback((multiPolygon: MultiPolygon)=>{
+    setValue(source, multiPolygon, { shouldDirty: true })
+  },[source])
 
   return (
     <div style={{width: '100%'}}>
       <TextInput
         source={source}
-        parse={(value) => JSON.parse(value)}
-        format={(value) => JSON.stringify(value)}
+        parse={(value) => value === '' ? null : JSON.parse(value)}
+        format={(value) => value === null ? '' : JSON.stringify(value)}
         // TODO: validate on every change...
-        validate={[validateGeoJson]}
-        
-        onChange={()=>{console.log('huhu')}}
-        {...props}
+       // validate={[validateGeoJson]}
+        multiline
+        type={'json'}
+        //{...props}
       />
-        
-
       <Box sx={{ ...style }}>
         <MapContainer
+          id={`${id}-mapcontainer`}
           center={[51.505, -0.09]}
           zoom={2}
           scrollWheelZoom={true}
@@ -73,7 +82,7 @@ const GeoJsonInput = ({
             // forces rerendering on every value change for example.
             key={(Math.random() + 1).toString(36).substring(7)}
             geoJson={value}
-            geoJsonCallback={(multiPolygon ) => setValue(source, multiPolygon)}
+            geoJsonCallback={geoJsonCallback}
           />
         </MapContainer>
 

@@ -6,21 +6,10 @@ import {
   Loading,
   localStorageStore,
   Resource,
-  ResourceProps,
   type RaThemeOptions
 } from 'react-admin';
 import { Route } from 'react-router-dom';
 
-import AgricultureIcon from '@mui/icons-material/Agriculture';
-import CorporateFareIcon from '@mui/icons-material/CorporateFare';
-import DatasetIcon from '@mui/icons-material/Dataset';
-import LayersIcon from '@mui/icons-material/Layers';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import MapIcon from '@mui/icons-material/Map';
-import NotListedLocationIcon from '@mui/icons-material/NotListedLocation';
-import CustomerIcon from '@mui/icons-material/Person';
-import PlagiarismIcon from '@mui/icons-material/Plagiarism';
-import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import { type Operation as AxiosOperation, type OpenAPIV3 } from 'openapi-client-axios';
 
 import { useHttpClientContext } from '../context/HttpClientContext';
@@ -29,35 +18,13 @@ import ListGuesser from '../jsonapi/components/ListGuesser';
 import { getResourceSchema } from '../jsonapi/openapi/parser';
 import authProvider from '../providers/authProvider';
 import jsonApiDataProvider from '../providers/dataProvider';
-import CreateAllowedWebMapServiceOperation from './Create/CreateAllowedWebMapServiceOperation';
 import Dashboard from './Dashboard/Dashboard';
 import MyLayout from './Layout/Layout';
-import CatalogueServiceList from './Lists/CatalogueServiceList';
-import WmsList from './Lists/WmsList';
 import MapViewer from './MapViewer/MapViewer';
 import PortalSearch from './PortalSearch/PortalSearch';
-import { WmsShow } from './Show/WmsShow';
+import RESOURCES from './Resource/Definition';
 
 const STORE_VERSION = '1'
-
-const resources: Array<ResourceProps> = [
-  {name: "WebMapService", icon: MapIcon, list: WmsList, show: WmsShow},
-  {name: "HistoricalWebMapService"},
-  {name: "Layer", icon: LayersIcon},
-  {name: "WebFeatureService", icon: TravelExploreIcon},
-  {name: "FeatureType", icon: NotListedLocationIcon},
-  {name: "CatalogueService", icon: PlagiarismIcon, list: CatalogueServiceList},
-  {name: "HarvestingJob", icon: AgricultureIcon},
-
-  {name: "Keyword", icon: LocalOfferIcon},
-  {name: "DatasetMetadataRecord", icon: DatasetIcon},
-  {name: "ServiceMetadataRecord", icon: DatasetIcon},
-  {name: "BackgroundProcess"},
-  {name: "AllowedWebMapServiceOperation", create: CreateAllowedWebMapServiceOperation},
-  {name: "User", icon: CustomerIcon},
-  {name: "Organization", icon: CorporateFareIcon},
-]
-
 
 
 const MrMapFrontend = (): ReactElement => {
@@ -77,7 +44,7 @@ const MrMapFrontend = (): ReactElement => {
   }, [api, readyState])
   
   const resourceDefinitions = useMemo(() => {
-    return resources.map((resource)=> {
+    return RESOURCES.map((resource)=> {
       const createOperation = api?.getOperation(`create_${resource.name}`)
       const editOperation = api?.getOperation(`partial_update_${resource.name}`)
       const listOperation = api?.getOperation(`list_${resource.name}`)

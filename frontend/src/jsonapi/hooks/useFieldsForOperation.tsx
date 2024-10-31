@@ -22,11 +22,11 @@ const encapsulateFields = (schema: OpenAPIV3.NonArraySchemaObject) => {
 
 export const useFieldsForOperation = (
   operationId: string,
+  ignore_id = true,
 ): FieldDefinition[] => {
   const {schema} = useResourceSchema(operationId)
-  const allFields = useMemo(()=> schema && encapsulateFields(schema) || [], [schema])
+  const allFields = useMemo(()=> schema && (ignore_id ? encapsulateFields(schema).filter(name => name !== 'id'): encapsulateFields(schema)) || [], [schema])
   const fieldSchemas = useMemo<FieldSchema[]>(()=> schema && allFields.map(name => getFieldSchema(name, schema)).filter(schema => schema !== undefined) || [], [schema, allFields])
-  console.log('schema', fieldSchemas)
 
   return fieldSchemas.map(fieldSchema => fieldSchema && getFieldDefinition(fieldSchema)).filter(fieldDefinition => fieldDefinition !== undefined)
 }

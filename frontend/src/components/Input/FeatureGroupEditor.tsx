@@ -1,6 +1,6 @@
 import type { GeoJSON as GeoJSONType, MultiPolygon } from 'geojson'
 
-import { type ReactNode, useCallback, useEffect } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo } from 'react'
 import { FeatureGroup, GeoJSON } from 'react-leaflet'
 import { EditControl } from 'react-leaflet-draw'
 
@@ -38,18 +38,36 @@ const FeatureGroupEditor = ({
   }, [])
 
   useEffect(() => {
-    if (geoJson != null) {
-      const bounds = L.geoJSON(geoJson).getBounds()
-      if (Object.keys(bounds).length > 1) {
-        context.map.flyToBounds(bounds, { duration: 0.3 })
-      }     
+    if (geoJson !== null && geoJson !== undefined) {
+      try {
+        const bounds = L.geoJSON(geoJson).getBounds()
+        if (Object.keys(bounds).length > 1) {
+          context.map.flyToBounds(bounds, { duration: 0.3 })
+        }
+      } catch (error){
+
+      }    
+
     }
   }, [])
 
-  const geoJsonObject = (geoJson != null) ? <GeoJSON data={geoJson} /> : null
+  const geoJsonObject = useMemo(() => {
+    if (geoJson !== null && geoJson !== undefined) {
+      try {
+        const component = <GeoJSON data={geoJson} />
+        return component
+      } catch (error){
+        
+      }
+    }
+    
+    return null
+
+  }, [geoJson])
 
   return (
-    <FeatureGroup>
+    <FeatureGroup
+    >
       {geoJsonObject}
       <EditControl
         position='topright'
