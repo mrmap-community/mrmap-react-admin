@@ -41,8 +41,11 @@ const Menu = ({ dense = false }: MenuProps) => {
     const { name: featureTypeName, icon: featureTypeIcon } = useResourceDefinition({ resource: "FeatureType" })
     const { name: cswName, icon: cswIcon } = useResourceDefinition({ resource: "CatalogueService" })
     const { name: harvestingJobName, icon: harvestingJobIcon } = useResourceDefinition({ resource: "HarvestingJob" })
+
     const { name: datasetName, icon: datasetIcon } = useResourceDefinition({ resource: "DatasetMetadataRecord" })
     const { name: serviceMetadataName, icon: serviceMetadataIcon } = useResourceDefinition({ resource: "ServiceMetadataRecord" })
+    const { name: keywordName, icon: keywordIcon } = useResourceDefinition({ resource: "Keyword" })
+
 
     const { name: userName, icon: userIcon } = useResourceDefinition({ resource: "User" })
     const { name: organizationName, icon: organizationIcon } = useResourceDefinition({ resource: "Organization" })    
@@ -148,6 +151,13 @@ const Menu = ({ dense = false }: MenuProps) => {
                     state={{ _scrollToTop: true }}
                     primaryText={datasetName}
                     leftIcon={createElementIfDefined(datasetIcon)}
+                    dense={dense}
+                />
+                <MenuItemLink
+                    to={`/${keywordName}`}
+                    state={{ _scrollToTop: true }}
+                    primaryText={keywordName}
+                    leftIcon={createElementIfDefined(keywordIcon)}
                     dense={dense}
                 />
                 <MenuItemLink

@@ -1,17 +1,17 @@
-import { type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { type ConfigurableDatagridColumn, CreateButton, DatagridConfigurable, EditButton, ExportButton, FilterButton, List, type ListProps, type RaRecord, SelectColumnsButton, ShowButton, TopToolbar, useResourceDefinition, useSidebarState, useStore } from 'react-admin'
 import { useParams, useSearchParams } from 'react-router-dom'
 
+import axios from 'axios'
 import { snakeCase } from 'lodash'
-import { AxiosError, type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 
 import HistoryList from '../../components/HistoryList'
 import { useHttpClientContext } from '../../context/HttpClientContext'
+import { useFieldsForOperation } from '../hooks/useFieldsForOperation'
+import { useFilterInputForOperation } from '../hooks/useFilterInputForOperation'
 import useResourceSchema from '../hooks/useResourceSchema'
 import { type JsonApiDocument, type JsonApiErrorObject } from '../types/jsonapi'
 import { getIncludeOptions, getSparseFieldOptions } from '../utils'
-import FieldGuesser from './FieldGuesser'
-import InputGuesser from './InputGuesser'
 
 interface FieldWrapperProps {
   children: ReactNode[]
@@ -29,6 +29,7 @@ interface ListGuesserProps extends Partial<ListProps> {
   onRowClick?: (clickedRecord: RaRecord) => void
 }
 
+
 const FieldWrapper = ({ children }: FieldWrapperProps): ReactNode => children
 
 const isInvalidSort = (error: JsonApiErrorObject): boolean => {
@@ -36,37 +37,6 @@ const isInvalidSort = (error: JsonApiErrorObject): boolean => {
     return true
   }
   return false
-}
-
-const getFieldsForSchema = (currentResource: string, schema: OpenAPIV3.NonArraySchemaObject, operation: Operation): ReactNode[] => {
-  const fields: ReactNode[] = []
-  if (schema !== undefined && operation !== undefined) {
-    const parameters = operation?.parameters as ParameterObject[]
-    const sortParameterSchema = parameters?.find((parameter) => parameter.name === 'sort')?.schema as OpenAPIV3.ArraySchemaObject
-    const sortParameterItemsSchema = sortParameterSchema?.items as OpenAPIV3.SchemaObject
-    const sortParameterValues = sortParameterItemsSchema?.enum?.filter((value) => value.includes('-') === false) ||  []
-
-    const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-    const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties as OpenAPIV3.NonArraySchemaObject
-    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-
-    Object.entries({ id: jsonApiPrimaryDataProperties?.id, ...jsonApiResourceAttributes ?? {}, ...jsonApiResourceRelationships ?? {} }).forEach(([name, schema]) => {
-      const isSortable = sortParameterValues.includes(name)
-      fields.push(FieldGuesser(name, schema, isSortable, currentResource))
-    })
-  }
-  return fields
-}
-
-const getFilters = (operation: Operation, orderMarker = 'order'): ReactElement[] => {
-  const parameters = operation?.parameters as OpenAPIV3.ParameterObject[]
-  return parameters?.filter((parameter) => parameter.name.includes('filter'))
-
-    .filter((filter) => !filter.name.includes(orderMarker))
-    .map((filter) => {
-      const schema = filter.schema as OpenAPIV3.NonArraySchemaObject
-      return InputGuesser(filter.name.replace('filter[', '').replace(']', '').replace('.', '_filter_lookup_'), schema, filter.required ?? false)
-    }) ?? []
 }
 
 const ListActions = (
@@ -100,11 +70,16 @@ const ListGuesser = ({
   const [selectedRecord, setSelectedRecord] = useState<RaRecord>()
 
   const { id } = useParams()
-  const [operationId, setOperationId] = useState('')
-  const { schema, operation } = useResourceSchema(operationId)
+  const operationId = useMemo(()=> relatedResource !== undefined && relatedResource !== '' ?`list_related_${name}_of_${relatedResource}`: `list_${name}`, [relatedResource, name])
 
-  const fields = useMemo(() => (schema !== undefined && operation !== undefined) ? getFieldsForSchema(name, schema, operation) : [], [schema, operation])
-  const filters = useMemo(() => (operation !== undefined) ? getFilters(operation) : [], [operation])
+  const { operation } = useResourceSchema(operationId)
+
+  const fieldDefinitions = useFieldsForOperation(operationId, false, false)
+  const fields = useMemo(()=>fieldDefinitions.map(def => createElement(def.component, def.props)),[fieldDefinitions])
+  
+  const fieldSchemas = useFilterInputForOperation(operationId)
+  const filters = useMemo(() => fieldSchemas.map(def => createElement(def.component, def.props)), [fieldSchemas])
+  
   const includeOptions = useMemo(() => (operation !== undefined) ? getIncludeOptions(operation) : [], [operation])
   const sparseFieldOptions = useMemo(() => (operation !== undefined) ? getSparseFieldOptions(operation) : [], [operation])
 
@@ -158,18 +133,7 @@ const ListGuesser = ({
     , [sparseFieldsQueryValue, includeQueryValue]
   )
 
-
-  useEffect(() => {
-    if (name !== undefined) {
-      if (relatedResource !== undefined && relatedResource !== '') {
-        setOperationId(`list_related_${name}_of_${relatedResource}`)
-      } else {
-        setOperationId(`list_${name}`)
-      }
-    }
-  }, [name])
-
-  const onError = useCallback((error: AxiosError): void => {
+  const onError = useCallback((error: Error): void => {
     /** Custom error handler for jsonApi bad request response
      *
      * possible if:
@@ -179,23 +143,25 @@ const ListGuesser = ({
      *   - wrong include option
      *
     */
-    if (error?.status === 400) {
-      const jsonApiDocument = error.response?.data as JsonApiDocument
+    if (axios.isAxiosError(error)) {
+      if (error?.status === 400) {
+        const jsonApiDocument = error.response?.data as JsonApiDocument
 
-      jsonApiDocument?.errors?.forEach((apiError: JsonApiErrorObject) => {
-        if (isInvalidSort(apiError)) {
-          // remove sort from storage
-          setListParams({...listParams, sort: ''})
+        jsonApiDocument?.errors?.forEach((apiError: JsonApiErrorObject) => {
+          if (isInvalidSort(apiError)) {
+            // remove sort from storage
+            setListParams({...listParams, sort: ''})
 
-          // remove sort from current location
-          searchParams.delete('sort')
-          setSearchParams(searchParams)
-        }
-      })
-    } else if (error.status === 401) {
-      // TODO
-    } else if (error.status === 403) {
-      // TODO
+            // remove sort from current location
+            searchParams.delete('sort')
+            setSearchParams(searchParams)
+          }
+        })
+      } else if (error.status === 401) {
+        // TODO
+      } else if (error.status === 403) {
+        // TODO
+      }
     }
   }, [])
 

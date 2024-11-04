@@ -9,12 +9,14 @@ import L from 'leaflet'
 
 export interface GeoEditorProps {
   geoJson?: GeoJSONType
-  geoJsonCallback: (multiPolygon: MultiPolygon) => void
+  geoJsonCallback?: (multiPolygon: MultiPolygon) => void
+  editable?: boolean
 }
 
 const FeatureGroupEditor = ({
   geoJson,
-  geoJsonCallback
+  geoJsonCallback,
+  editable = true,
 }: GeoEditorProps): ReactNode => {
   const context = useLeafletContext()
 
@@ -34,7 +36,7 @@ const FeatureGroupEditor = ({
         }
       }
     })
-    geoJsonCallback(multiPolygon)
+    geoJsonCallback && geoJsonCallback(multiPolygon)
   }, [])
 
   useEffect(() => {
@@ -69,18 +71,21 @@ const FeatureGroupEditor = ({
     <FeatureGroup
     >
       {geoJsonObject}
-      <EditControl
-        position='topright'
-        onEdited={updateGeoJson}
-        onCreated={updateGeoJson}
-        onDeleted={updateGeoJson}
-        // onDrawStop={onEdit}
-        draw={{
-          marker: false,
-          circlemarker: false,
-          circle: false
-        }}
-      />
+      {editable ? 
+        <EditControl
+          position='topright'
+          onEdited={updateGeoJson}
+          onCreated={updateGeoJson}
+          onDeleted={updateGeoJson}
+          // onDrawStop={onEdit}
+          draw={{
+            marker: false,
+            circlemarker: false,
+            circle: false
+          }}
+        />: 
+        null
+    }
     </FeatureGroup>
   )
 }

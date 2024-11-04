@@ -1,15 +1,19 @@
 import { ComponentType, useMemo } from 'react'
-import { BooleanInput, DateInput, DateTimeInput, NumberInput, TextInput, TimeInput } from 'react-admin'
+import { BooleanField, BooleanInput, DateField, DateInput, DateTimeInput, email, EmailField, NumberField, NumberInput, ReferenceOneField, TextInput, TimeInput, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
+import GeoJsonField from '../../components/Field/GeoJsonField'
+import TruncatedTextField from '../../components/Field/TruncatedTextField'
 import GeoJsonInput from '../../components/Input/GeoJsonInput'
+import ReferenceArrayField from '../components/ReferenceArrayField'
 import SchemaAutocompleteInput from '../components/SchemaAutocompleteInput'
 import useResourceSchema from './useResourceSchema'
 
 export interface FieldSchema {
   name: string
   reference?: string
+  resource: string
   schema: OpenAPIV3.SchemaObject
   isRequired: boolean
   kind: 'attribute' | 'relationship' |'array-relationship'
@@ -24,7 +28,9 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
   const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
   const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties 
   const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties
-  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
+  const jsonApiResourceTypeRef = jsonApiPrimaryDataProperties?.type?.allOf as OpenAPIV3.ArraySchemaObject[]
+  const jsonApiResourceType = jsonApiResourceTypeRef?.[0].enum?.[0]
+  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id
 
   const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ??
                       jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? 
@@ -34,6 +40,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
       // on create operations there is no id
       return {
         name: name, 
+        resource: jsonApiResourceType,
         schema: jsonApiResourceId,
         isRequired: schema?.required?.includes('id') ?? false, 
         kind: 'attribute'
@@ -43,6 +50,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
     if (jsonApiResourceAttributes && Object.hasOwn(jsonApiResourceAttributes, name)) {
       return {
         name: name, 
+        resource: jsonApiResourceType,
         schema: jsonApiResourceAttributes?.[name] as OpenAPIV3.NonArraySchemaObject, 
         isRequired: isRequired, 
         kind: 'attribute'
@@ -59,6 +67,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
         return {
           name: name, 
           reference: type?.enum?.[0],
+          resource: jsonApiResourceType,
           schema: _relationSchema,
           isRequired: isRequired, 
           kind: 'array-relationship'
@@ -69,6 +78,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
         return {
           name: name, 
           reference: type?.enum?.[0],
+          resource: jsonApiResourceType,
           schema: relationSchema as OpenAPIV3.NonArraySchemaObject,
           isRequired: isRequired, 
           kind: 'relationship'
@@ -78,54 +88,61 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
     }
 };
 
-export const getFieldDefinition = (fieldSchema: FieldSchema): FieldDefinition | undefined => {
+export const getFieldDefinition = (fieldSchema: FieldSchema, forInput: boolean = true): FieldDefinition | undefined => {
   const commonProps = {
     source: fieldSchema.name,
     label: fieldSchema.schema.title ?? fieldSchema.name,
-    required: fieldSchema.isRequired,
     disabled: fieldSchema.schema.readOnly ?? false,
-    helperText: fieldSchema.schema.description,
+    ...(forInput && {required: fieldSchema.isRequired, helperText: fieldSchema.schema.description}),
     ...(fieldSchema.reference && {reference: fieldSchema.reference})
   }
 
   if (fieldSchema?.kind === 'attribute'){
     // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
     if (['integer', 'number'].includes(fieldSchema.schema.type ?? '')) {
-      return {component: NumberInput, props: commonProps}
+      return {component: forInput ? NumberInput: NumberField, props: commonProps}
     } else if (fieldSchema.schema.type === 'boolean') {
-      return {component: BooleanInput, props: {...commonProps, defaultValue: fieldSchema.schema.default ?? false}}
+      return {component: forInput ? BooleanInput: BooleanField, props: {...commonProps, defaultValue: fieldSchema.schema.default ?? false}}
     } else if (fieldSchema.schema.type === 'string') {
       // Time specific fields
       if (fieldSchema.schema.format === 'date-time') {
-        return {component: DateTimeInput, props: commonProps}
+        return {component: forInput ? DateTimeInput: DateField, props: {showTime: true, ...commonProps}}
       } else if (fieldSchema.schema.format === 'date') {
-        return {component: DateInput, props: commonProps}
+        return {component: forInput ? DateInput: DateField, props: commonProps}
       } else if (fieldSchema.schema.format === 'time') {
-        return {component: TimeInput, props: commonProps}
+        return {component: forInput ? TimeInput: DateField, props: {showTime: true, ...commonProps}}
       } else if (fieldSchema.schema.format === 'duration') {
         // TODO: is there a durationinput?
         // https://mui.com/x/react-date-pickers/
         return {component: TextInput, props: commonProps}
-      } 
-    } else if (fieldSchema.schema.type === 'object') {
-     
-      const typeOfObject = fieldSchema.schema.properties?.type as OpenAPIV3.SchemaObject
-      if (typeOfObject?.enum?.[0] === 'MultiPolygon')
-      return {component: GeoJsonInput, props: commonProps}
-    }
-    // default fallback
-    return {component: TextInput, props: commonProps}
+      } else if (fieldSchema.schema.format === 'uri'){
+        // TODO: pass in regex validation for uri
+        return {component: forInput ? TextInput: UrlField, props: commonProps}
+      } else if (fieldSchema.schema.format === 'email'){
+        return {component: forInput ? TextInput: EmailField, props: {...(forInput && {validate: [email]}),...commonProps}}
+      } else if (fieldSchema.schema.format === 'geojson'){
+        return {component: forInput ? GeoJsonInput: GeoJsonField, props: {...commonProps}}
+      }
+    } 
+    
   } else if (fieldSchema?.kind === 'relationship' ) {
     return {
-      component: SchemaAutocompleteInput, 
-      props: commonProps
+      component: forInput ? SchemaAutocompleteInput: ReferenceOneField, 
+      props: {...commonProps, target: fieldSchema.name, link: 'edit'}
     }
     
   } else if (fieldSchema?.kind === 'array-relationship') {
+    const props = {...commonProps, ...(forInput ? {multiple: true}: {reference: fieldSchema.reference, target: fieldSchema.resource,})}
     return {
-      component: SchemaAutocompleteInput, 
-      props: {...commonProps, multiple: true}
+      component: forInput ? SchemaAutocompleteInput: ReferenceArrayField, 
+      props: props
     }
+  }
+
+  // default fallback
+  return {
+    component: forInput ? TextInput: TruncatedTextField, 
+    props: {textOverflow: 'ellipsis', ...commonProps}
   }
 }
 

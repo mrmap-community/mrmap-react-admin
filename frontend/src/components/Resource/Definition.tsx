@@ -28,7 +28,7 @@ const RESOURCES: Array<ResourceProps> = [
   {name: "CatalogueService", icon: PlagiarismIcon, list: CatalogueServiceList},
   {name: "HarvestingJob", icon: AgricultureIcon},
 
-  {name: "Keyword", icon: LocalOfferIcon},
+  {name: "Keyword", icon: LocalOfferIcon, recordRepresentation: "keyword"},
   {name: "DatasetMetadataRecord", icon: DatasetIcon},
   {name: "ServiceMetadataRecord", icon: DatasetIcon},
   {name: "BackgroundProcess"},

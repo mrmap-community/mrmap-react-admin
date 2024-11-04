@@ -4,12 +4,8 @@ import { RaRecord, useNotify, useShowContext } from 'react-admin';
 import { Grid } from '@mui/material';
 
 import { useParams } from 'react-router-dom';
-import { EditGuesser } from '../../jsonapi/components/FormGuesser';
+import EditGuesser from '../../jsonapi/components/EditGuesser';
 import WmsTreeView from './WmsTreeView';
-
-
-
-
 
 
 export const WmsLayers = () => {

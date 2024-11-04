@@ -1,11 +1,6 @@
+import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 import type { RaRecord } from 'react-admin'
 
-import { ComponentType, type ReactElement } from 'react'
-
-import { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
-
-import InputGuesser from './components/InputGuesser'
-import RelationInputGuesser from './components/RelationInputGuesser'
 import { getEncapsulatedSchema } from './openapi/parser'
 import { type JsonApiDocument, type JsonApiPrimaryData, type ResourceIdentifierObject, type ResourceLinkage } from './types/jsonapi'
 
@@ -113,39 +108,6 @@ export const getSparseFieldOptions = (operation: Operation): string[] => {
     return includeParameterArraySchema.enum ?? []
   }
   return []
-}
-
-export const getFieldsForOperation = (schema: OpenAPIV3.NonArraySchemaObject, record?: RaRecord, includeReadOnlyFields: boolean = false, inputFieldMap?: {[key: string]: ComponentType<any>;}): ReactElement[] => {
-  const fields: ReactElement[] = []
-  if (schema !== undefined) {
-    const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-
-    const requiredFields = schema?.required ?? []
-    const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-    if (jsonApiResourceId !== undefined) {
-      // on create operations there is no id
-      fields.push(InputGuesser('id', jsonApiResourceId, requiredFields.includes('id') ?? false, record))
-    }
-    const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties as OpenAPIV3.NonArraySchemaObject
-
-    Object.entries(jsonApiResourceAttributes ?? {}).forEach(([name, schema]) => {
-      const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ?? false
-      const isReadOnly = (schema.readOnly ?? false)
-      if (!isReadOnly || includeReadOnlyFields){
-        fields.push(InputGuesser(name, schema, isRequired, record, inputFieldMap))
-      }
-    })
-
-    const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties as OpenAPIV3.NonArraySchemaObject
-    Object.entries(jsonApiResourceRelationships ?? {}).forEach(([name, schema]) => {
-      const isRequired = jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? false
-      const isReadOnly = (schema.readOnly ?? false)
-      if (!isReadOnly || includeReadOnlyFields){
-        fields.push(RelationInputGuesser(name, schema, isRequired, inputFieldMap))
-      }
-    })
-  }
-  return fields
 }
 
 export const hasIncludedData = (record: RaRecord): boolean => (Object.entries(record).find(([name, schema]) => name !== 'id') != null)

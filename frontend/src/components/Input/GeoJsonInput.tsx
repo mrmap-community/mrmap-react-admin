@@ -42,7 +42,6 @@ const GeoJsonInput = ({
   source,
   ...props
 }: TextInputProps): ReactNode => {
-
   const { id, field: {value, onChange}, fieldState: {invalid, error} } = useInput(
     { 
       source
@@ -64,7 +63,7 @@ const GeoJsonInput = ({
        // validate={[validateGeoJson]}
         multiline
         type={'json'}
-        //{...props}
+        {...props}
       />
       <Box sx={{ ...style }}>
         <MapContainer
@@ -83,6 +82,7 @@ const GeoJsonInput = ({
             key={(Math.random() + 1).toString(36).substring(7)}
             geoJson={value}
             geoJsonCallback={geoJsonCallback}
+            editable={!props.disabled}
           />
         </MapContainer>
 

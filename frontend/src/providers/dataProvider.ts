@@ -94,6 +94,9 @@ const buildQueryParams = (params: GetListParams | GetManyParams | GetManyReferen
     const _filterName = filterName.includes('_filter_lookup_') ? filterName.replace('_filter_lookup_', '.') : filterName
     if (Array.isArray(filterValue)){
       parameters.push({ name: `filter[${_filterName}.in]`, value: filterValue.map((f: RaRecord) => f.id).join(',') })
+    } else if (typeof filterValue === 'object'){
+      // in case of geojson filter possible...
+      parameters.push({ name: `filter[${_filterName}]`, value: JSON.stringify(filterValue) })
     } else {
       parameters.push({ name: `filter[${_filterName}]`, value: filterValue as string})
     }
@@ -105,7 +108,10 @@ const buildQueryParams = (params: GetListParams | GetManyParams | GetManyReferen
   })
 
   // GetMany request with list of ids as a filter
-  hasIds && parameters.push({ name: 'filter[id.in]', value: params.ids.join(',') })
+  if (hasIds) {
+    const ids = params.ids.map(value => typeof value === 'object' ? value.id : value)
+    parameters.push({ name: 'filter[id.in]', value: ids.join(',') })
+  } 
 
   if (hasId) { 
     typeof params.id === 'object' ? parameters.push({name: 'filter[id.in]', value: params.id.id}): parameters.push({name: 'filter[id.in]', value: params.id})

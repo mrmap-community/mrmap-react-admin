@@ -13,7 +13,8 @@ import { Route } from 'react-router-dom';
 import { type Operation as AxiosOperation, type OpenAPIV3 } from 'openapi-client-axios';
 
 import { useHttpClientContext } from '../context/HttpClientContext';
-import { CreateGuesser, EditGuesser } from '../jsonapi/components/FormGuesser';
+import CreateGuesser from '../jsonapi/components/CreateGuesser';
+import EditGuesser from '../jsonapi/components/EditGuesser';
 import ListGuesser from '../jsonapi/components/ListGuesser';
 import { getResourceSchema } from '../jsonapi/openapi/parser';
 import authProvider from '../providers/authProvider';
