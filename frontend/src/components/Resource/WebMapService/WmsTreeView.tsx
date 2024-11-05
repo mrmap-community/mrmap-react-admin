@@ -7,8 +7,9 @@ import { SimpleTreeView, SimpleTreeViewProps } from '@mui/x-tree-view/SimpleTree
 import CircleIcon from '@mui/icons-material/Circle';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { getAnchestors } from '../MapViewer/utils';
-import { getSubTree } from '../utils';
+import { getAnchestors } from '../../MapViewer/utils';
+import { getSubTree } from '../../utils';
+
 
 
 interface LayerLabelProps {

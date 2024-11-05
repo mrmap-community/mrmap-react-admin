@@ -14,10 +14,9 @@ const EditGuesser = (
   const record = useRecordContext(props)
 
   const fieldDefinitions = useFieldsForOperation(`partial_update_${name}`)
-
   const fields = useMemo(
     ()=> 
-      fieldDefinitions.map(
+      fieldDefinitions.filter(fieldDefinition => !fieldDefinition.props.disabled ).map(
         fieldDefinition => 
           createElement(
             fieldDefinition.component, 

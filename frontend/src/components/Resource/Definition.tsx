@@ -15,9 +15,11 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import CatalogueServiceList from '../Lists/CatalogueServiceList';
 import WmsList from '../Lists/WmsList';
-import { WmsShow } from '../Show/WmsShow';
 import CreateAllowedWebMapServiceOperation from './AllowedWebMapServiceOperation/CreateAllowedWebMapServiceOperation';
 import EditAllowedWebMapServiceOperation from './AllowedWebMapServiceOperation/EditAllowedWebMapServiceOperation';
+import { WmsShow } from './WebMapService/WmsShow';
+
+import MultipleStopIcon from '@mui/icons-material/MultipleStop';
 
 const RESOURCES: Array<ResourceProps> = [
   {name: "WebMapService", icon: MapIcon, list: WmsList, show: WmsShow},
@@ -32,7 +34,10 @@ const RESOURCES: Array<ResourceProps> = [
   {name: "DatasetMetadataRecord", icon: DatasetIcon},
   {name: "ServiceMetadataRecord", icon: DatasetIcon},
   {name: "BackgroundProcess"},
+
   {name: "AllowedWebMapServiceOperation", icon: VpnLockIcon, create: CreateAllowedWebMapServiceOperation, edit: EditAllowedWebMapServiceOperation},
+  {name: "WebMapServiceProxySetting", icon: MultipleStopIcon},
+  
   {name: "User", icon: CustomerIcon},
   {name: "Organization", icon: CorporateFareIcon },
   {name: "Group", icon: CorporateFareIcon },

@@ -1,5 +1,5 @@
 import { ComponentType, useMemo } from 'react'
-import { BooleanField, BooleanInput, DateField, DateInput, DateTimeInput, email, EmailField, NumberField, NumberInput, ReferenceOneField, TextInput, TimeInput, UrlField } from 'react-admin'
+import { BooleanField, BooleanInput, DateField, DateInput, DateTimeInput, email, EmailField, NumberField, NumberInput, TextInput, TimeInput, UrlField } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
@@ -7,6 +7,7 @@ import GeoJsonField from '../../components/Field/GeoJsonField'
 import TruncatedTextField from '../../components/Field/TruncatedTextField'
 import GeoJsonInput from '../../components/Input/GeoJsonInput'
 import ReferenceArrayField from '../components/ReferenceArrayField'
+import ReferenceField from '../components/ReferenceField'
 import SchemaAutocompleteInput from '../components/SchemaAutocompleteInput'
 import useResourceSchema from './useResourceSchema'
 
@@ -127,8 +128,8 @@ export const getFieldDefinition = (fieldSchema: FieldSchema, forInput: boolean =
     
   } else if (fieldSchema?.kind === 'relationship' ) {
     return {
-      component: forInput ? SchemaAutocompleteInput: ReferenceOneField, 
-      props: {...commonProps, target: fieldSchema.name, link: 'edit'}
+      component: forInput ? SchemaAutocompleteInput: ReferenceField, 
+      props: {...commonProps, ...(forInput ? {target: fieldSchema.name, link: 'edit'}: {reference: fieldSchema.reference, target: fieldSchema.resource,})}
     }
     
   } else if (fieldSchema?.kind === 'array-relationship') {

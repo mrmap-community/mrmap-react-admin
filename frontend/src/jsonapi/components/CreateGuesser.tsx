@@ -1,5 +1,5 @@
 import { createElement, type ReactElement, useMemo } from 'react';
-import { Create, type CreateProps, SaveButton, SimpleForm, Toolbar, useResourceDefinition } from 'react-admin';
+import { Create, type CreateProps, RaRecord, SaveButton, SimpleForm, Toolbar, useResourceDefinition } from 'react-admin';
 
 import { useFieldsForOperation } from '../hooks/useFieldsForOperation';
 
@@ -12,20 +12,25 @@ export const CreateToolbar = () => (
   </Toolbar>
 );
 
+export interface CreateGuesserProps<RecordType extends RaRecord = any>
+    extends Omit<CreateProps<RecordType>, 'children'> {
+  defaultValues?: any
+}
+
 
 const CreateGuesser = (
   {
     mutationOptions,
+    defaultValues,
     ...rest
-  }: CreateProps
+  }: CreateGuesserProps
 ): ReactElement => {
-
   const { name, options } = useResourceDefinition({ resource: rest.resource })
 
   const fieldDefinitions = useFieldsForOperation(`create_${name}`)
   const fields = useMemo(
     ()=> 
-      fieldDefinitions.map(
+      fieldDefinitions.filter(fieldDefinition => !fieldDefinition.props.disabled ).map(
         fieldDefinition => 
           createElement(
             fieldDefinition.component, 
@@ -51,7 +56,9 @@ const CreateGuesser = (
       {...rest}
     >
       <SimpleForm
-      toolbar={<CreateToolbar/>}>
+        toolbar={<CreateToolbar/>}
+        defaultValues={defaultValues}
+      >
         {fields}
       </SimpleForm>
     </Create>

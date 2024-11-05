@@ -1,6 +1,7 @@
 import { EditButton, Show, SimpleShowLayoutProps, TabbedShowLayout, TextField, TopToolbar } from 'react-admin';
 
 
+import ProxySettingsTab from './ProxySettings';
 import SpatialSecureTab from './SpatialSecureTab';
 import WmsLayers from './WmsLayerTab';
 
@@ -29,6 +30,10 @@ export const WmsShow = (props: SimpleShowLayoutProps) => {
                 <TabbedShowLayout.Tab label="layers" path='layers/:layerId'>
                     <WmsLayers/>
                 </TabbedShowLayout.Tab>
+                <TabbedShowLayout.Tab label="proxy settings" path='proxy-settings'>
+                    <ProxySettingsTab/>
+                </TabbedShowLayout.Tab>
+                
                 <TabbedShowLayout.Tab label="spatial secure" path='spatial-secure'>
                     <SpatialSecureTab/>
                 </TabbedShowLayout.Tab>
