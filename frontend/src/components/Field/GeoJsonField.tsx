@@ -6,6 +6,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import { Box, Typography } from '@mui/material';
 
 import FeatureGroupEditor from '../Input/FeatureGroupEditor';
+import AutoResizeMapContainer from '../MapContainer/ResizeAbleMapContainer';
 
 
 const style = {
@@ -46,6 +47,7 @@ const GeoJsonField = ({
           scrollWheelZoom={true}
           style={{ height: '100%', width: '100wh' }}
         >
+          <AutoResizeMapContainer/>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

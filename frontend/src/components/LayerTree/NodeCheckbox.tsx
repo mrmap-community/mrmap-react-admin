@@ -21,7 +21,7 @@ const TreeNodeCheckbox = ({
   const handleChange = useCallback((event: ChangeEvent | MouseEvent, checked?: boolean) => {
     event.stopPropagation()
     if (feature === undefined) return
-    setFeatureActive(feature, checked ?? !feature.properties.active)
+    setFeatureActive(feature, (checked ?? !feature.properties.active) || true)
   }, [feature, setFeatureActive])
 
 
