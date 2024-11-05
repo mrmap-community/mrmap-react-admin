@@ -28,13 +28,14 @@ const RESOURCES: Array<ResourceProps> = [
   {name: "CatalogueService", icon: PlagiarismIcon, list: CatalogueServiceList},
   {name: "HarvestingJob", icon: AgricultureIcon},
 
-  {name: "Keyword", icon: LocalOfferIcon, recordRepresentation: "keyword"},
+  {name: "Keyword", icon: LocalOfferIcon},
   {name: "DatasetMetadataRecord", icon: DatasetIcon},
   {name: "ServiceMetadataRecord", icon: DatasetIcon},
   {name: "BackgroundProcess"},
   {name: "AllowedWebMapServiceOperation", icon: VpnLockIcon, create: CreateAllowedWebMapServiceOperation, edit: EditAllowedWebMapServiceOperation},
   {name: "User", icon: CustomerIcon},
-  {name: "Organization", icon: CorporateFareIcon},
+  {name: "Organization", icon: CorporateFareIcon },
+  {name: "Group", icon: CorporateFareIcon },
 ];
 
 export default RESOURCES;

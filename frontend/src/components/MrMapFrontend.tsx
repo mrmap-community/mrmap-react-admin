@@ -23,6 +23,7 @@ import Dashboard from './Dashboard/Dashboard';
 import MyLayout from './Layout/Layout';
 import MapViewer from './MapViewer/MapViewer';
 import PortalSearch from './PortalSearch/PortalSearch';
+import defaultRecordRepresentation from './Resource/defaultRecordRepresentation';
 import RESOURCES from './Resource/Definition';
 
 const STORE_VERSION = '1'
@@ -69,6 +70,7 @@ const MrMapFrontend = (): ReactElement => {
         ...(resource.children || related_list_operations && { 
           children: related_list_resources.map((relatedResource) => <Route key={`nested-${relatedResource}-of-${resource.name}`} path={`:id/${relatedResource}`} element={<ListGuesser resource={relatedResource} relatedResource={resource.name}> </ListGuesser>}></Route>)
         }) as ReactElement[],
+        ...(resource.recordRepresentation ? {recordRepresentation: resource.recordRepresentation}: {recordRepresentation: defaultRecordRepresentation}),
         ...resource,
       }
     })
