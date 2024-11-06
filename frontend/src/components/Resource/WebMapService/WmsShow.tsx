@@ -15,7 +15,6 @@ const WmsShowActions = () => (
 
 export const WmsShow = (props: SimpleShowLayoutProps) => {
 
-    
     return (
         <Show 
             queryOptions={{meta: {jsonApiParams:{include: 'layers'}}}}
@@ -30,7 +29,7 @@ export const WmsShow = (props: SimpleShowLayoutProps) => {
                 <TabbedShowLayout.Tab label="layers" path='layers/:layerId'>
                     <WmsLayers/>
                 </TabbedShowLayout.Tab>
-                <TabbedShowLayout.Tab label="proxy settings" path='proxy-settings'>
+                <TabbedShowLayout.Tab label="proxy settings" path='ProxySetting'>
                     <ProxySettingsTab/>
                 </TabbedShowLayout.Tab>
                 

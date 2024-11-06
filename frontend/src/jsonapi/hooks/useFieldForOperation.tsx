@@ -22,7 +22,10 @@ export interface FieldSchema {
 
 export interface FieldDefinition {
   component: ComponentType<any>,
-  props: any
+  props: {
+    source: string
+    [key: string]: any
+  }
 }
 
 export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObject): FieldSchema | undefined => {

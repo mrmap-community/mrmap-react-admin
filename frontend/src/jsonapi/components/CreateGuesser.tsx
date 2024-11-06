@@ -1,6 +1,7 @@
 import { createElement, type ReactElement, useMemo } from 'react';
 import { Create, type CreateProps, RaRecord, SaveButton, SimpleForm, Toolbar, useResourceDefinition } from 'react-admin';
 
+import { FieldDefinition } from '../hooks/useFieldForOperation';
 import { useFieldsForOperation } from '../hooks/useFieldsForOperation';
 
 
@@ -15,13 +16,18 @@ export const CreateToolbar = () => (
 export interface CreateGuesserProps<RecordType extends RaRecord = any>
     extends Omit<CreateProps<RecordType>, 'children'> {
   defaultValues?: any
+  toolbar?: ReactElement | false;
+  updateFieldDefinitions?: FieldDefinition[];
+
 }
 
 
 const CreateGuesser = (
   {
     mutationOptions,
+    toolbar,
     defaultValues,
+    updateFieldDefinitions,
     ...rest
   }: CreateGuesserProps
 ): ReactElement => {
@@ -31,15 +37,18 @@ const CreateGuesser = (
   const fields = useMemo(
     ()=> 
       fieldDefinitions.filter(fieldDefinition => !fieldDefinition.props.disabled ).map(
-        fieldDefinition => 
-          createElement(
-            fieldDefinition.component, 
+        fieldDefinition => {
+          const update = updateFieldDefinitions?.find(def => def.props.source === fieldDefinition.props.source)
+
+          return createElement(
+            update?.component || fieldDefinition.component, 
             {
               ...fieldDefinition.props, 
               key: fieldDefinition.props.source,
+              ...update?.props
             }
           )
-        )
+        })
     ,[fieldDefinitions]
   )
 
@@ -56,7 +65,7 @@ const CreateGuesser = (
       {...rest}
     >
       <SimpleForm
-        toolbar={<CreateToolbar/>}
+        toolbar={toolbar ||<CreateToolbar/>}
         defaultValues={defaultValues}
       >
         {fields}

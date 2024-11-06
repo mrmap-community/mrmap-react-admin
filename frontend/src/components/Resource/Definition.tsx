@@ -24,6 +24,7 @@ import MultipleStopIcon from '@mui/icons-material/MultipleStop';
 const RESOURCES: Array<ResourceProps> = [
   {name: "WebMapService", icon: MapIcon, list: WmsList, show: WmsShow},
   {name: "HistoricalWebMapService"},
+  
   {name: "Layer", icon: LayersIcon},
   {name: "WebFeatureService", icon: TravelExploreIcon},
   {name: "FeatureType", icon: NotListedLocationIcon},

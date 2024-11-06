@@ -190,6 +190,7 @@ const ListGuesser = ({
             jsonApiParams: { ...jsonApiQuery }
           }
       }}
+      
       sx={
         {
           '& .RaList-main': {
@@ -228,6 +229,7 @@ const ListGuesser = ({
 
     >
       <DatagridConfigurable
+        bulkActionButtons={false}
         rowClick={(id, resource, record) => {
           if (onRowClick !== undefined) {
             onRowClick(record)
