@@ -1,7 +1,11 @@
-import { Grid } from '@mui/material';
-import { ReactNode } from 'react';
-
-import { CreateButton, List, SimpleList, useRecordContext } from 'react-admin';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import { ReactNode, useCallback, useState } from 'react';
+import { CreateButton, DeleteButton, Edit, Form, RaRecord, RecordRepresentation, SaveButton, Toolbar, useNotify, useRecordContext, useTranslate } from 'react-admin';
+import ListGuesser from '../../../jsonapi/components/ListGuesser';
+import AllowedWebMapServiceOperationFields from '../AllowedWebMapServiceOperation/AllowedWebMapServiceOperationFields';
 
 const CreateAllowedWebMapServiceOperation = (): ReactNode => {
   const record = useRecordContext()
@@ -15,37 +19,103 @@ const CreateAllowedWebMapServiceOperation = (): ReactNode => {
 }
 
 const AllowedWebMapServiceOperationOverview = () => {
-  // this is the wms service record with all includes layers which are fetched in the parent component.
-  const record = useRecordContext();
+  
+  const translate = useTranslate();
+  const notify = useNotify();
+
+  const [clickedRow, setClickedRow] = useState<RaRecord>()
+  const onEditSuccess = useCallback(()=>{
+    setClickedRow(undefined)
+    notify(`resources.AllowedWebMapServiceOperation.notifications.updated`, {
+      type: 'info',
+      messageArgs: {
+          smart_count: 1,
+          _: translate('ra.notification.updated', {
+              smart_count: 1,
+          })
+      },
+      undoable: false,
+  });
+  },[])
+
+  const onDeleteSuccess = useCallback(()=>{
+    setClickedRow(undefined)
+    notify(`resources.AllowedWebMapServiceOperation.notifications.deleted`, {
+      type: 'info',
+      messageArgs: {
+          smart_count: 1,
+          _: translate('ra.notification.deleted', {
+              smart_count: 1,
+          })
+      },
+      undoable: false,
+  });
+  },[])
+
   return (
-    <List
-      resource='AllowedWebMapServiceOperation'
-      queryOptions={{meta: {relatedResource: {resource: 'WebMapService', id: record?.id}}}}
-      actions={<CreateAllowedWebMapServiceOperation/>}
-    >
-        <SimpleList
-            primaryText={record => record.title}
-            secondaryText={record => `${record.views} views`}
-            tertiaryText={record => new Date(record.published_at).toLocaleDateString()}
-            linkType={record => record.canEdit ? "edit" : "show"}
-            rowSx={record => ({ backgroundColor: record.nb_views >= 500 ? '#efe' : 'white' })}
-        />
-    </List>
+    <>
+      <ListGuesser 
+        resource='AllowedWebMapServiceOperation'
+        rowActions={<></>}
+        onRowClick={(record) => setClickedRow(record)}
+      />
+      {
+      // only render Edit if clickedRow is defined. Otherwise the Edit compononent will get the id from the url path, which causes in wron id of wrong resources.
+      clickedRow ?
+      /* Edit and Form component needed to be outside the Dialog component. 
+        Otherwise the scroll feature is broken.
+        See: https://github.com/mui/material-ui/issues/13253 
+      */
+      <Edit
+        mutationMode='pessimistic'
+        resource="AllowedWebMapServiceOperation"
+        id={clickedRow?.id}
+        record={clickedRow}
+        redirect={false}
+        mutationOptions={{onSuccess: onEditSuccess}}
+        sx={{
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Form>
+          <Dialog 
+            open={!!clickedRow}
+            onClose={()=>setClickedRow(undefined)}
+            scroll={'paper'}
+            aria-labelledby="scroll-dialog-title"
+            aria-describedby="scroll-dialog-description"
+          >
+            <DialogTitle id="scroll-dialog-title">
+              <RecordRepresentation record={clickedRow}/>
+            </DialogTitle>
+
+            <DialogContent 
+              dividers={true} 
+              id="scroll-dialog-description"
+            >
+              <AllowedWebMapServiceOperationFields />  
+            </DialogContent>
+            <DialogActions>
+              <Toolbar>
+                <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}}/>
+                <DeleteButton redirect={false} mutationOptions={{onSuccess: onDeleteSuccess}}/>
+              </Toolbar>
+            </DialogActions>
+          
+          </Dialog>
+        </Form>
+      </Edit>
+    : null} 
+    </>
   )
 }
 
 
 export const SpatialSecureTab = () => {
-
-    
   return (
-      <Grid container spacing={2} sx={{ justifyContent: 'space-between' }} >
-          <Grid item>
-            
-              <AllowedWebMapServiceOperationOverview />          
-          </Grid>
-         
-      </Grid>
+    <AllowedWebMapServiceOperationOverview />          
   )
 }
 

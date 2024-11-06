@@ -1,17 +1,24 @@
-import { CreateProps, Edit, SimpleForm } from 'react-admin';
+import { Edit, EditProps, SimpleForm } from 'react-admin';
 import AllowedWebMapServiceOperationFields from './AllowedWebMapServiceOperationFields';
 
 
+export interface EditAllowedWebMapServiceOperationProps extends Partial<EditProps> {
+
+}
+
+
 const EditAllowedWebMapServiceOperation = ({
+  
   ...rest
-}: CreateProps) => {
+}: EditAllowedWebMapServiceOperationProps) => {
   
     return (
       <Edit
         mutationMode='pessimistic'
         {...rest}
       >
-        <SimpleForm>
+        <SimpleForm
+        >
           <AllowedWebMapServiceOperationFields/>
         </SimpleForm>
       </Edit>

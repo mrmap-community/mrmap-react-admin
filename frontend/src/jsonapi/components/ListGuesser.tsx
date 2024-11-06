@@ -23,9 +23,9 @@ interface ListActionsProps {
 
 interface ListGuesserProps extends Partial<ListProps> {
   relatedResource?: string
+  rowActions?: ReactNode
   additionalActions?: ReactNode
   defaultOmit?: string[]
-  onRowSelect?: (selectedRecord: RaRecord) => void
   onRowClick?: (clickedRecord: RaRecord) => void
 }
 
@@ -55,8 +55,8 @@ const ListActions = (
 
 const ListGuesser = ({
   relatedResource = '',
+  rowActions = undefined,
   additionalActions = undefined,
-  onRowSelect = () => { },
   onRowClick = undefined,
   defaultOmit = [],
   ...props
@@ -92,7 +92,7 @@ const ListGuesser = ({
   const [selectedColumnsIdxs] = useStore<string[]>(`preferences.${name}.datagrid.columns`, [])
 
   useEffect(()=>{
-    const defaultShowColumns = ["stringRepresentation", "title", "abstract", "username", "actions"]
+    const defaultShowColumns = ["stringRepresentation", "title", "abstract", "username", ...[rowActions && "actions"]]
     const wellDefinedColumns = availableColumns.map(col => col.source).filter(source => source !== undefined)    
     setOmit(wellDefinedColumns.filter(source => !defaultShowColumns.includes(source)))
   },[availableColumns])
@@ -207,7 +207,7 @@ const ListGuesser = ({
           }
         }
       }
-      // TODO: only add if historical endpoint is provided!!
+      
       aside={
         hasHistoricalEndpoint ?
         <HistoryList
@@ -231,24 +231,22 @@ const ListGuesser = ({
       <DatagridConfigurable
         bulkActionButtons={false}
         rowClick={(id, resource, record) => {
-          if (onRowClick !== undefined) {
-            onRowClick(record)
-          } else {
-            onRowSelect(record)
-            if (selectedRecord !== record) {
-              setSelectedRecord(record)
-            }
+          onRowClick && onRowClick(record)
+          if (selectedRecord !== record) {
+            setSelectedRecord(record)
           }
           return false
         }}
       >
         {...fields}
         {/**TODO: label should be translated */}
-        <FieldWrapper label="Actions" >
-          {hasShow && <ShowButton />}
-          {hasEdit && <EditButton />}
-          {additionalActions}
-        </FieldWrapper >
+        {
+          rowActions || <FieldWrapper label="Actions" >
+              {hasShow && <ShowButton />}
+              {hasEdit && <EditButton />}
+              {additionalActions}
+            </FieldWrapper >
+        }
       </DatagridConfigurable >
 
     </List >
