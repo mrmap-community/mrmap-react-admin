@@ -89,7 +89,7 @@ const AllowedWebMapServiceOperationOverview = () => {
             </DialogContent>
 
             <DialogActions style={{ justifyContent: "space-between" }}>
-                  <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}}/>
+                  <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}} type='button'/>
                   <DeleteButton redirect={false} mutationOptions={{onSuccess: onDeleteSuccess}}/>
             </DialogActions>
           
