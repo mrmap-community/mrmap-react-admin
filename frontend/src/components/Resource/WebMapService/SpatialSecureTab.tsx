@@ -1,3 +1,5 @@
+import CloseIcon from '@mui/icons-material/Close';
+import { Box, IconButton } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -6,7 +8,6 @@ import { useCallback, useState } from 'react';
 import { DeleteButton, Edit, Form, RaRecord, RecordRepresentation, SaveButton, useNotify, useTranslate } from 'react-admin';
 import ListGuesser from '../../../jsonapi/components/ListGuesser';
 import AllowedWebMapServiceOperationFields from '../AllowedWebMapServiceOperation/AllowedWebMapServiceOperationFields';
-
 
 const AllowedWebMapServiceOperationOverview = () => {
   
@@ -72,13 +73,23 @@ const AllowedWebMapServiceOperationOverview = () => {
         <Form>
           <Dialog 
             open={!!clickedRow}
-            onClose={()=>setClickedRow(undefined)}
+            onClose={() => setClickedRow(undefined)}
             scroll={'paper'}
             aria-labelledby="scroll-dialog-title"
             aria-describedby="scroll-dialog-description"
           >
             <DialogTitle id="scroll-dialog-title">
-              <RecordRepresentation record={clickedRow}/>
+              <Box display="flex" alignItems="center">
+                <Box flexGrow={1} >
+                  <RecordRepresentation record={clickedRow}/>
+                </Box>
+                <Box>
+                  <IconButton onClick={() => setClickedRow(undefined)}>
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+              
             </DialogTitle>
 
             <DialogContent 
@@ -89,7 +100,7 @@ const AllowedWebMapServiceOperationOverview = () => {
             </DialogContent>
 
             <DialogActions style={{ justifyContent: "space-between" }}>
-                  <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}} type='button'/>
+                  <SaveButton mutationOptions={{onSuccess: onEditSuccess}} type='button'/>
                   <DeleteButton redirect={false} mutationOptions={{onSuccess: onDeleteSuccess}}/>
             </DialogActions>
           
