@@ -2,21 +2,11 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { ReactNode, useCallback, useState } from 'react';
-import { CreateButton, DeleteButton, Edit, Form, RaRecord, RecordRepresentation, SaveButton, Toolbar, useNotify, useRecordContext, useTranslate } from 'react-admin';
+import { useCallback, useState } from 'react';
+import { DeleteButton, Edit, Form, RaRecord, RecordRepresentation, SaveButton, useNotify, useTranslate } from 'react-admin';
 import ListGuesser from '../../../jsonapi/components/ListGuesser';
 import AllowedWebMapServiceOperationFields from '../AllowedWebMapServiceOperation/AllowedWebMapServiceOperationFields';
 
-const CreateAllowedWebMapServiceOperation = (): ReactNode => {
-  const record = useRecordContext()
-  
-  return (
-    <CreateButton
-      resource='AllowedWebMapServiceOperation'  
-      state={{ record: { securedService: record, }}}
-    />
-  )
-}
 
 const AllowedWebMapServiceOperationOverview = () => {
   
@@ -97,11 +87,10 @@ const AllowedWebMapServiceOperationOverview = () => {
             >
               <AllowedWebMapServiceOperationFields />  
             </DialogContent>
-            <DialogActions>
-              <Toolbar>
-                <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}}/>
-                <DeleteButton redirect={false} mutationOptions={{onSuccess: onDeleteSuccess}}/>
-              </Toolbar>
+
+            <DialogActions style={{ justifyContent: "space-between" }}>
+                  <SaveButton onClick={()=>console.log('huhu')} mutationOptions={{onSuccess: onEditSuccess}}/>
+                  <DeleteButton redirect={false} mutationOptions={{onSuccess: onDeleteSuccess}}/>
             </DialogActions>
           
           </Dialog>
