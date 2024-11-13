@@ -27,7 +27,7 @@ test('wmsToOWSContext', () => {
         operationUrls: {
             getCapabilities: {
                 mimeTypes: ['application/xml'],
-                get: 'http://example.com/?SERVICE=wms&REQUEST=GetCapabilitites'
+                get: 'http://example.com/?SERVICE=wms&REQUEST=GetCapabilities'
             },
             getMap: {
                 mimeTypes: ['image/png'],

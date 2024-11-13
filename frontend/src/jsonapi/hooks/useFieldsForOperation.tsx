@@ -8,7 +8,7 @@ import useResourceSchema from './useResourceSchema';
 const encapsulateFields = (schema: OpenAPIV3.NonArraySchemaObject) => {
 
   const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties 
+  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties 
   const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties
   const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
 

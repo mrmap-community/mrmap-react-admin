@@ -12,7 +12,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilities",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -39,7 +39,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -73,7 +73,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -107,7 +107,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -141,7 +141,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -175,7 +175,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -209,7 +209,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -243,7 +243,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -277,7 +277,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -311,7 +311,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -345,7 +345,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -379,7 +379,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -413,7 +413,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -447,7 +447,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -481,7 +481,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -515,7 +515,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -549,7 +549,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -583,7 +583,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -617,7 +617,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -651,7 +651,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -685,7 +685,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -719,7 +719,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -753,7 +753,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -787,7 +787,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -821,7 +821,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -855,7 +855,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -889,7 +889,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -923,7 +923,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -957,7 +957,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -991,7 +991,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1025,7 +1025,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1059,7 +1059,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1093,7 +1093,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1127,7 +1127,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1161,7 +1161,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1195,7 +1195,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1229,7 +1229,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1263,7 +1263,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1297,7 +1297,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1331,7 +1331,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1358,7 +1358,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1392,7 +1392,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1426,7 +1426,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1460,7 +1460,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1494,7 +1494,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1528,7 +1528,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1562,7 +1562,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1596,7 +1596,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1630,7 +1630,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1664,7 +1664,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1698,7 +1698,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1732,7 +1732,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1766,7 +1766,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1800,7 +1800,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1834,7 +1834,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1868,7 +1868,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1902,7 +1902,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1936,7 +1936,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -1970,7 +1970,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2004,7 +2004,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2038,7 +2038,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2072,7 +2072,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2106,7 +2106,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2140,7 +2140,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2174,7 +2174,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2208,7 +2208,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2242,7 +2242,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2276,7 +2276,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2310,7 +2310,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2344,7 +2344,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2378,7 +2378,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2412,7 +2412,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2446,7 +2446,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2480,7 +2480,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2514,7 +2514,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2548,7 +2548,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2582,7 +2582,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2616,7 +2616,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2650,7 +2650,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2684,7 +2684,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2718,7 +2718,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2752,7 +2752,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2786,7 +2786,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2820,7 +2820,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2854,7 +2854,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2888,7 +2888,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2922,7 +2922,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2956,7 +2956,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -2990,7 +2990,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3024,7 +3024,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3058,7 +3058,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3092,7 +3092,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3126,7 +3126,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3160,7 +3160,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3194,7 +3194,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3228,7 +3228,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3262,7 +3262,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3296,7 +3296,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3330,7 +3330,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3364,7 +3364,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3398,7 +3398,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3432,7 +3432,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3466,7 +3466,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3500,7 +3500,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3534,7 +3534,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3568,7 +3568,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3602,7 +3602,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3636,7 +3636,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3670,7 +3670,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3704,7 +3704,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3738,7 +3738,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3772,7 +3772,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3806,7 +3806,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3840,7 +3840,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"
@@ -3874,7 +3874,7 @@ export const karteRpFeatures: OWSResource[] = [
                   "code": "http://www.opengis.net/spec/owc/1.0/req/wms",
                   "operations": [
                       {
-                          "code": "GetCapabilitites",
+                          "code": "GetCapabilitiess",
                           "href": "https://geo5.service24.rlp.de/wms/karte_rp.fcgi?",
                           "method": "GET",
                           "type": "application/xml"

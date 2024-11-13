@@ -26,12 +26,12 @@ const OwsContextControl = () => {
     if (pendingWms !== undefined && pendingWms?.length > 0){
       pendingWms.forEach(
         wms => {
-          const getCapabilititesUrl = wms.operationUrls.find(
+          const getCapabilitiesUrl = wms.operationUrls.find(
             (opUrl: RaRecord) => {
               return opUrl.method === "Get" && opUrl.operation === "GetCapabilities"
             })?.url
-          if (getCapabilititesUrl !== undefined){
-            const url = new URL(getCapabilititesUrl)
+          if (getCapabilitiesUrl !== undefined){
+            const url = new URL(getCapabilitiesUrl)
             const params = url.searchParams
             updateOrAppendSearchParam(params, 'SERVICE', 'wms')
             updateOrAppendSearchParam(params, 'VERSION', wms.version)

@@ -12,7 +12,6 @@ const ReferenceField = ({
   reference
 }: ReferenceFieldProps) => {
   const record = useRecordContext()
-  console.log(record)
   if (record?.[source] === undefined) {
     return null
   }

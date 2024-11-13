@@ -45,7 +45,7 @@ export class OWSResource implements IOWSResource {
     }
   }
 
-  getWmsGetCapabilititesOperation() {
+  getWmsGetCapabilitiesOperation() {
     const wmsOffering = this.getWmsOffering()
     if (wmsOffering !== undefined) {
       return wmsOffering.operations?.find(operation => operation.code === "GetCapabilities")
@@ -514,7 +514,7 @@ export class OWSContext implements IOWSContext {
     }
 
     const capabilitityFeatureMap = this.features.map((feature) => {
-      const getCapabilitiesOp = feature.getWmsGetCapabilititesOperation()
+      const getCapabilitiesOp = feature.getWmsGetCapabilitiesOperation()
       return {
         features: [feature],
         href: getCapabilitiesOp?.href ?? ''
@@ -555,7 +555,7 @@ export class OWSContext implements IOWSContext {
 
   getInheritedCrs(target: OWSResource) {
     const wmsGetMapOp = target.getWmsGetMapOperation()
-    const getCapabilitiesOp = target.getWmsGetCapabilititesOperation()
+    const getCapabilitiesOp = target.getWmsGetCapabilitiesOperation()
     const referenceSystems: string[] = []
     if (getCapabilitiesOp !== undefined &&
       getCapabilitiesOp.href in this.capabilititesMap &&

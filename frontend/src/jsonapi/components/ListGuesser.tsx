@@ -27,6 +27,7 @@ interface ListGuesserProps extends Partial<ListProps> {
   additionalActions?: ReactNode
   defaultOmit?: string[]
   onRowClick?: (clickedRecord: RaRecord) => void
+  
 }
 
 

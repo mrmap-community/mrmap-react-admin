@@ -17,6 +17,7 @@ export interface FieldSchema {
   resource: string
   schema: OpenAPIV3.SchemaObject
   isRequired: boolean
+  isReadOnly: boolean
   kind: 'attribute' | 'relationship' |'array-relationship'
 }
 
@@ -30,7 +31,7 @@ export interface FieldDefinition {
 
 export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObject): FieldSchema | undefined => {
   const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes.properties 
+  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties 
   const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties
   const jsonApiResourceTypeRef = jsonApiPrimaryDataProperties?.type?.allOf as OpenAPIV3.ArraySchemaObject[]
   const jsonApiResourceType = jsonApiResourceTypeRef?.[0].enum?.[0]
@@ -39,6 +40,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
   const isRequired = jsonApiPrimaryDataProperties?.attributes?.required?.includes(name) ??
                       jsonApiPrimaryDataProperties?.relationships?.required?.includes(name) ?? 
                       false
+  
 
     if (name === "id" && jsonApiResourceId !== undefined) {
       // on create operations there is no id
@@ -47,16 +49,19 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
         resource: jsonApiResourceType,
         schema: jsonApiResourceId,
         isRequired: schema?.required?.includes('id') ?? false, 
+        isReadOnly: jsonApiResourceId.readOnly ?? false,
         kind: 'attribute'
       }
     }
 
     if (jsonApiResourceAttributes && Object.hasOwn(jsonApiResourceAttributes, name)) {
+      const s = jsonApiResourceAttributes?.[name] as OpenAPIV3.NonArraySchemaObject
       return {
         name: name, 
         resource: jsonApiResourceType,
-        schema: jsonApiResourceAttributes?.[name] as OpenAPIV3.NonArraySchemaObject, 
-        isRequired: isRequired, 
+        schema: s, 
+        isRequired: isRequired,
+        isReadOnly: s?.readOnly ?? false,
         kind: 'attribute'
       }
     }
@@ -64,7 +69,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
     if (jsonApiResourceRelationships && Object.hasOwn(jsonApiResourceRelationships, name)) {
       const relationSchema = jsonApiResourceRelationships?.[name] as OpenAPIV3.SchemaObject
       const relationDataSchema = relationSchema?.properties?.data as OpenAPIV3.SchemaObject
-
+      
       if (relationDataSchema?.type === 'array') {
         const _relationSchema = relationDataSchema.items as OpenAPIV3.NonArraySchemaObject
         const type = _relationSchema?.properties?.type as OpenAPIV3.NonArraySchemaObject
@@ -73,7 +78,8 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
           reference: type?.enum?.[0],
           resource: jsonApiResourceType,
           schema: _relationSchema,
-          isRequired: isRequired, 
+          isRequired: isRequired,
+          isReadOnly: relationSchema.readOnly ?? false,
           kind: 'array-relationship'
         }
       } else {
@@ -85,6 +91,7 @@ export const getFieldSchema = (name: string, schema: OpenAPIV3.NonArraySchemaObj
           resource: jsonApiResourceType,
           schema: relationSchema as OpenAPIV3.NonArraySchemaObject,
           isRequired: isRequired, 
+          isReadOnly: _relationSchema.readOnly ?? false,
           kind: 'relationship'
         }
       }
@@ -96,7 +103,7 @@ export const getFieldDefinition = (fieldSchema: FieldSchema, forInput: boolean =
   const commonProps = {
     source: fieldSchema.name,
     label: fieldSchema.schema.title ?? fieldSchema.name,
-    disabled: fieldSchema.schema.readOnly ?? false,
+    disabled: fieldSchema.isReadOnly?? false,
     ...(forInput && {required: fieldSchema.isRequired, helperText: fieldSchema.schema.description}),
     ...(fieldSchema.reference && {reference: fieldSchema.reference})
   }

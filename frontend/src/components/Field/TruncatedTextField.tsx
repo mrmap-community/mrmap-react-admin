@@ -21,7 +21,7 @@ const TruncatedTextField = (
 ): ReactElement => {
   const value = useFieldValue(rest);
 
-  if (value.length > 100) {
+  if (value?.length > 100) {
     return (
     <div>
       <Typography>{value.slice(0, 100)}</Typography>

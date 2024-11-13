@@ -62,7 +62,7 @@ export const layerToFeature = (capabilities: WmsCapabilitites, node: WmsLayer, f
                     code: "http://www.opengis.net/spec/owc/1.0/req/wms",
                     operations: [
                         {
-                            code: "GetCapabilitites",
+                            code: "GetCapabilities",
                             href: capabilities.operationUrls.getCapabilities.get,
                             method: "GET",
                             type: "application/xml"
