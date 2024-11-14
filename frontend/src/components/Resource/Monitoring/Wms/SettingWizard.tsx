@@ -14,7 +14,9 @@ import { Link, useParams } from 'react-router-dom';
 import CreateGuesser from '../../../../jsonapi/components/CreateGuesser';
 import EditGuesser from '../../../../jsonapi/components/EditGuesser';
 import ListGuesser from '../../../../jsonapi/components/ListGuesser';
+import SchemaAutocompleteInput from '../../../../jsonapi/components/SchemaAutocompleteInput';
 import CreateDialog from '../../../Dialog/CreateDialog';
+import CreateSuggestionDialog from '../../../Dialog/CreateSuggestionDialog';
 
 const Steps = (
   {
@@ -45,6 +47,7 @@ export const SettingWizardStep1 = () => {
   // id of the WebMapServiceMonitoringSetting record
   const { id: settingId } = useParams()
 
+
   const redirect = useCallback((
       resource?: string,
       id?: Identifier,
@@ -63,12 +66,23 @@ export const SettingWizardStep1 = () => {
         <CreateGuesser
           resource='WebMapServiceMonitoringSetting'
           redirect={redirect}
+          updateFieldDefinitions={[
+            {
+              component: SchemaAutocompleteInput, 
+              props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true} />}
+            }
+          ]}
         />: 
         <EditGuesser 
           resource='WebMapServiceMonitoringSetting'
           id={settingId}
           redirect={redirect}
-          toolbar={
+          updateFieldDefinitions={[
+            {
+              component: SchemaAutocompleteInput, 
+              props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true}/>}
+            }
+          ]}          toolbar={
             <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <SaveButton alwaysEnable/>
                 <DeleteButton/>
@@ -146,6 +160,12 @@ export const SettingWizardStep2 = () => {
         isOpen={createDialogOpen}
         setIsOpen={setCreateDialogOpen}
         record={{setting: {id: settingId , type: "WebMapServiceMonitoringSetting"}}}
+        updateFieldDefinitions={[
+            {
+              component: SchemaAutocompleteInput, 
+              props: {source: 'setting', hidden: true}
+            }
+          ]}   
       />
 
 

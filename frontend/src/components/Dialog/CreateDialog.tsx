@@ -5,13 +5,18 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { createElement, useCallback, useMemo } from 'react';
-import { Create, CreateProps, Form, RecordRepresentation, SaveButton, useNotify, useTranslate } from 'react-admin';
+import { Create, CreateProps, Form, RaRecord, SaveButton, useNotify, useTranslate } from 'react-admin';
+import { FieldDefinition } from '../../jsonapi/hooks/useFieldForOperation';
 import { useFieldsForOperation } from '../../jsonapi/hooks/useFieldsForOperation';
 
 export interface CreateDialogProps extends Partial<CreateProps>{
   isOpen?: boolean
   setIsOpen?: (open: boolean) => void
   onClose?: () => void
+  onCreate?: (data: any) => void
+  onCancel?: () => void
+  updateFieldDefinitions?: FieldDefinition[];
+
 }
 
 const CreateDialog = (
@@ -20,6 +25,9 @@ const CreateDialog = (
   isOpen=false,
   setIsOpen,
   onClose,
+  onCreate,
+  onCancel,
+  updateFieldDefinitions,
   ...rest
  }: CreateDialogProps
 ) => {
@@ -28,9 +36,26 @@ const CreateDialog = (
   const notify = useNotify();
 
   const fieldDefinitions = useFieldsForOperation(`partial_update_${resource}`)
-  const fields = useMemo(()=> fieldDefinitions.map((def, index) => createElement(def.component, {key: `create-${resource}-${index}`, ...def.props})),[fieldDefinitions])
+  const fields = useMemo(
+    ()=> 
+      fieldDefinitions.filter(fieldDefinition => !fieldDefinition.props.disabled ).map(
+        (fieldDefinition, index) => {
 
-  const onCreateSuccess = useCallback(()=>{
+          const update = updateFieldDefinitions?.find(def => def.props.source === fieldDefinition.props.source)
+        
+          return createElement(
+            update?.component || fieldDefinition.component, 
+            {
+              ...fieldDefinition.props, 
+              key:`create-${resource}-${index}`,
+              ...update?.props
+            }
+          )
+        })
+    ,[fieldDefinitions]
+  )
+
+  const onCreateSuccess = useCallback((data: RaRecord)=>{
     notify(`resources.${resource}.notifications.created`, {
       type: 'info',
       messageArgs: {
@@ -40,7 +65,9 @@ const CreateDialog = (
           })
       },
       undoable: false,
-  });
+    });
+    onCreate && onCreate(data)
+    setIsOpen && setIsOpen(false)
   },[resource])
 
   /* Create and Form component needed to be outside the Dialog component. 
@@ -62,7 +89,7 @@ const CreateDialog = (
         <Form>
           <Dialog 
             open={isOpen}
-            onClose={onClose}
+            onClose={() => {onClose && onClose();  setIsOpen && setIsOpen(false); onCancel && onCancel()}}
             scroll={'paper'}
             aria-labelledby="scroll-dialog-title"
             aria-describedby="scroll-dialog-description"
@@ -70,10 +97,10 @@ const CreateDialog = (
             <DialogTitle id="scroll-dialog-title">
               <Box display="flex" alignItems="center">
                 <Box flexGrow={1} >
-                  <RecordRepresentation/>
+                  Create new {resource}
                 </Box>
                 <Box>
-                  <IconButton onClick={() => {onClose && onClose(); setIsOpen && setIsOpen(false)}}>
+                  <IconButton onClick={() => {onClose && onClose(); setIsOpen && setIsOpen(false);onCancel &&  onCancel()}}>
                     <CloseIcon />
                   </IconButton>
                 </Box>

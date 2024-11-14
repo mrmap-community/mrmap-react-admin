@@ -104,7 +104,9 @@ export const getFieldDefinition = (fieldSchema: FieldSchema, forInput: boolean =
     source: fieldSchema.name,
     label: fieldSchema.schema.title ?? fieldSchema.name,
     disabled: fieldSchema.isReadOnly?? false,
-    ...(forInput && {required: fieldSchema.isRequired, helperText: fieldSchema.schema.description}),
+    defaultValue: fieldSchema.schema.default,
+    helperText: fieldSchema.schema.description,
+    ...(forInput && {required: fieldSchema.isRequired}),
     ...(fieldSchema.reference && {reference: fieldSchema.reference})
   }
 
