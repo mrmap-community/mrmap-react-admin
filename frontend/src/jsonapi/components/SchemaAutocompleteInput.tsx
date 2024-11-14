@@ -29,7 +29,8 @@ const SchemaAutocompleteInput = (
   
   const { data, isPending, isFetching } = useGetList(reference, {filter: filter, sort: {field: '', order: 'DESC'}, ...params});
 
-  const optionText = useSchemaRecordRepresentation()
+  const optionText = useSchemaRecordRepresentation({resource: reference})
+
   if (multiple){
     return (
         <AutocompleteArrayInput 

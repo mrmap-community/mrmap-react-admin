@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { type RaRecord, type RecordToStringFunction, useResourceDefinition } from 'react-admin'
+import { type RaRecord, RecordToStringFunction, useResourceDefinition } from 'react-admin'
 
 import { type OpenAPIV3 } from 'openapi-client-axios'
 
 import useResourceSchema from './useResourceSchema'
+
+export interface SchemaRecordRepresentationProps {
+  operationId?: string
+  resource?: string
+}
 
 const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObject): string => {
   let recordRepresentation = 'id'
@@ -25,11 +30,14 @@ const getRecordRepresentationFromSchema = (schema: OpenAPIV3.NonArraySchemaObjec
 }
 
 const useSchemaRecordRepresentation = (
-  operationId?: string
+  {
+    operationId,
+    resource
+  }: SchemaRecordRepresentationProps
 ): RecordToStringFunction => {
-  const { name } = useResourceDefinition()
+  const { name } = useResourceDefinition({resource: resource})
   const { schema } = useResourceSchema(operationId ?? `list_${name}`)
-
+  
   const [representation, setRepresentation] = useState<string>()
   
   const optionTextFunc = useCallback((record: RaRecord) => {

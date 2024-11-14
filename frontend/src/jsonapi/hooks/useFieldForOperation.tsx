@@ -139,11 +139,17 @@ export const getFieldDefinition = (fieldSchema: FieldSchema, forInput: boolean =
   } else if (fieldSchema?.kind === 'relationship' ) {
     return {
       component: forInput ? SchemaAutocompleteInput: ReferenceField, 
-      props: {...commonProps, ...(forInput ? {target: fieldSchema.name, link: 'edit'}: {reference: fieldSchema.reference, target: fieldSchema.resource,})}
+      props: {
+        ...commonProps, 
+        ...(forInput ? {target: fieldSchema.name, link: 'edit'}: {reference: fieldSchema.reference, target: fieldSchema.resource,})
+      }
     }
     
-  } else if (fieldSchema?.kind === 'array-relationship') {
-    const props = {...commonProps, ...(forInput ? {multiple: true}: {reference: fieldSchema.reference, target: fieldSchema.resource,})}
+  } else if (fieldSchema?.kind === 'array-relationship') {   
+    const props = {
+      ...commonProps, 
+      ...(forInput ? {multiple: true}: {reference: fieldSchema.reference, target: fieldSchema.resource,})
+    }
     return {
       component: forInput ? SchemaAutocompleteInput: ReferenceArrayField, 
       props: props
