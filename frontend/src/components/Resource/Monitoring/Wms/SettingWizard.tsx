@@ -1,7 +1,6 @@
-import AddIcon from '@mui/icons-material/Add';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
-import { Box, IconButton } from '@mui/material';
+import { Box } from '@mui/material';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Stepper, { StepperOwnProps } from '@mui/material/Stepper';
@@ -12,8 +11,8 @@ import { useCallback, useState } from 'react';
 import { Button, DeleteButton, Identifier, ListActionsProps, RaRecord, SaveButton, Toolbar, TopToolbar, useCreatePath } from 'react-admin';
 import { Link, useParams } from 'react-router-dom';
 import CreateGuesser from '../../../../jsonapi/components/CreateGuesser';
+import DataGridDemo from '../../../../jsonapi/components/EditableList';
 import EditGuesser from '../../../../jsonapi/components/EditGuesser';
-import ListGuesser from '../../../../jsonapi/components/ListGuesser';
 import SchemaAutocompleteInput from '../../../../jsonapi/components/SchemaAutocompleteInput';
 import CreateDialog from '../../../Dialog/CreateDialog';
 import CreateSuggestionDialog from '../../../Dialog/CreateSuggestionDialog';
@@ -126,16 +125,8 @@ export const SettingWizardStep2 = () => {
       <Steps
         activeStep={1}
       />
-      <ListGuesser 
-        resource='GetCapabilitiesProbe'
-        relatedResource='WebMapServiceMonitoringSetting'
-        actions={
-          <IconButton onClick={() => setCreateDialogOpen(true)}>
-            <AddIcon />
-          </IconButton>
-        }
-        empty={false}
-      />
+      <DataGridDemo/>
+      
       
       <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
         <Button
