@@ -47,9 +47,14 @@ const MrMapFrontend = (): ReactElement => {
   
   const resourceDefinitions = useMemo(() => {
     return RESOURCES.map((resource)=> {
-      const createOperation = api?.getOperation(`create_${resource.name}`)
-      const editOperation = api?.getOperation(`partial_update_${resource.name}`)
-      const listOperation = api?.getOperation(`list_${resource.name}`)
+      const showOperationName = `retreive_${resource.name}`
+      const createOperationName = `create_${resource.name}`
+      const editOperationName = `partial_update_${resource.name}`
+      const listOperationName =`list_${resource.name}`
+
+      const createOperation = api?.getOperation(createOperationName)
+      const editOperation = api?.getOperation(editOperationName)
+      const listOperation = api?.getOperation(listOperationName)
 
       const related_list_operations = api?.getOperations().filter((operation) => operation.operationId?.includes(`_of_${resource.name}`)) as AxiosOperation[]
       const related_list_resources = related_list_operations?.map((schema) => {
@@ -71,7 +76,14 @@ const MrMapFrontend = (): ReactElement => {
           children: related_list_resources.map((relatedResource) => <Route key={`nested-${relatedResource}-of-${resource.name}`} path={`:id/${relatedResource}`} element={<ListGuesser resource={relatedResource} relatedResource={resource.name}> </ListGuesser>}></Route>)
         }) as ReactElement[],
         ...(resource.recordRepresentation ? {recordRepresentation: resource.recordRepresentation}: {recordRepresentation: defaultRecordRepresentation}),
+        ...({options: {...resource.options, 
+              showOperationName: showOperationName,
+              createOperationName: createOperationName,
+              editOperationName: editOperationName,
+              listOperationName: listOperationName
+            }}),
         ...resource,
+        
       }
     })
   }, [api])
