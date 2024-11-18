@@ -20,7 +20,7 @@ export default defineConfig({
     },
     base: './',
     optimizeDeps: {
-        include: ['@mui/material/Tooltip'],
+        include: ['@mui/material/Tooltip', '@mui/x-data-grid', '@emotion/styled'],
     }
     // resolve: {
     //     alias: {

@@ -12,12 +12,17 @@
     "format": "prettier --write ./src"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "@mui/lab": "^5.0.0-alpha.164",
+    "@mui/material": "^5.16.7",
+    "@mui/x-data-grid": "^7.22.2",
     "@mui/x-tree-view": "^7.21.0",
     "@react-hook/resize-observer": "^2.0.2",
     "@types/inflection": "^1.13.2",
     "@types/proj4": "^2.5.5",
     "@types/sortablejs": "^1.15.8",
+    "@uidotdev/usehooks": "^2.4.1",
     "fast-xml-parser": "^4.5.0",
     "jsonpointer": "^5.0.1",
     "leaflet": "^1.9.4",
@@ -30,10 +35,9 @@
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-leaflet-draw": "^0.20.4",
-    "sortablejs": "^1.15.3",
-    "uuid": "^10.0.0",
     "react-use-websocket": "^4.9.0",
-    "@uidotdev/usehooks": "^2.4.1"
+    "sortablejs": "^1.15.3",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.2",

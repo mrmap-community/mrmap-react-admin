@@ -7,13 +7,14 @@ import Stepper, { StepperOwnProps } from '@mui/material/Stepper';
 import {
   sanitizeListRestProps
 } from 'ra-core';
-import { useCallback, useState } from 'react';
-import { Button, DeleteButton, Identifier, ListActionsProps, RaRecord, SaveButton, Toolbar, TopToolbar, useCreatePath } from 'react-admin';
+import { createElement, useCallback, useState } from 'react';
+import { ArrayInput, Button, DeleteButton, Identifier, ListActionsProps, RaRecord, SaveButton, SimpleFormIterator, Toolbar, TopToolbar, useCreatePath } from 'react-admin';
 import { Link, useParams } from 'react-router-dom';
 import CreateGuesser from '../../../../jsonapi/components/CreateGuesser';
-import DataGridDemo from '../../../../jsonapi/components/EditableList';
+import EditableDatagrid from '../../../../jsonapi/components/EditableList';
 import EditGuesser from '../../../../jsonapi/components/EditGuesser';
 import SchemaAutocompleteInput from '../../../../jsonapi/components/SchemaAutocompleteInput';
+import { useFieldsForOperation } from '../../../../jsonapi/hooks/useFieldsForOperation';
 import CreateDialog from '../../../Dialog/CreateDialog';
 import CreateSuggestionDialog from '../../../Dialog/CreateSuggestionDialog';
 
@@ -36,6 +37,31 @@ const Steps = (
         <StepLabel>Get Map Probes</StepLabel>
       </Step>
     </Stepper>
+  )
+}
+
+interface FormInteratorProps {
+  resource: string
+  source: string
+  forEdit?: boolean
+}
+
+const FormInterator = (
+  {
+    resource,
+    source,
+    forEdit=true
+  }: FormInteratorProps
+) => {
+
+  const fields = useFieldsForOperation(forEdit ? `partial_update_${resource}`: `create_${resource}`)
+
+  return (
+    <ArrayInput source={source}>
+        <SimpleFormIterator inline>
+            {fields.map((fieldDefinition, index) => createElement(fieldDefinition.component, {key: `${fieldDefinition.props.source}-${index}`, ...fieldDefinition.props}))}
+        </SimpleFormIterator>
+    </ArrayInput>
   )
 }
 
@@ -69,6 +95,12 @@ export const SettingWizardStep1 = () => {
             {
               component: SchemaAutocompleteInput, 
               props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true} />}
+            },{
+              component: FormInterator,
+              props: {source: 'getCapabilititesProbes', resource: 'GetCapabilitiesProbe', forEdit: false}
+            },{
+              component: FormInterator,
+              props: {source: 'getMapProbes', resource: 'GetMapProbe', forEdit: false}
             }
           ]}
         />: 
@@ -80,6 +112,12 @@ export const SettingWizardStep1 = () => {
             {
               component: SchemaAutocompleteInput, 
               props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true}/>}
+            },{
+              component: FormInterator,
+              props: {source: 'getCapabilititesProbes', resource: 'GetCapabilitiesProbe'}
+            },{
+              component: FormInterator,
+              props: {source: 'getMapProbes', resource: 'GetMapProbe'}
             }
           ]}          toolbar={
             <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -125,7 +163,7 @@ export const SettingWizardStep2 = () => {
       <Steps
         activeStep={1}
       />
-      <DataGridDemo/>
+      <EditableDatagrid resource='GetCapabilitiesProbe'/>
       
       
       <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
