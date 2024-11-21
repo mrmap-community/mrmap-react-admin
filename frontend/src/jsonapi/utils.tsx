@@ -1,7 +1,7 @@
 import OpenAPIClientAxios, { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
-import { ArrayField, ArrayInput, AutocompleteArrayInput, BooleanField, BooleanInput, ChipField, DateField, DateInput, DateTimeInput, EmailField, NumberField, NumberInput, ReferenceArrayField, ReferenceField, SimpleFormIterator, SingleFieldList, TextField, TextInput, TimeInput, UrlField, type RaRecord } from 'react-admin'
+import { ArrayField, ArrayInput, AutocompleteArrayInput, BooleanField, BooleanInput, ChipField, DateField, DateInput, DateTimeInput, EmailField, NumberField, NumberInput, ReferenceArrayField, ReferenceField, SingleFieldList, TextField, TextInput, TimeInput, UrlField, type RaRecord } from 'react-admin'
 
-import { ComponentType, createElement } from 'react'
+import React, { ComponentType } from 'react'
 import {
   email,
   maxLength,
@@ -264,24 +264,34 @@ export const getArrayInput = (
     console.debug(`nested resoruces are not supported for now. Source: ${source}`);
   } else {
     // single array of simple typed field
-    const field = getFieldForType(
-      source, 
-      nestedSchema, 
-      isRequired,
-      isReadOnly,
-      forInput
-    )
+    if (!forInput){
+      definition.props.children = (
+        <SingleFieldList linkType={false}>
+          <ChipField source={source} size="small" />
+        </SingleFieldList>
+      ) 
+    } else {
+      // this results in form field states like 
+      /**
+       * { source: [
+       *    {source: 'huhu'}, {source: 'huhu'}, {source: 'huhu'}
+       *   ]
+       * }
+      
+      const field = getFieldForType(source, 
+                                    nestedSchema, 
+                                    isRequired,
+                                    isReadOnly,
+                                    forInput)
+  
+      definition.props.children =  (
+        <SimpleFormIterator>
+          {createElement(field.component, field.props)}
+        </SimpleFormIterator>
+      ) */
+      definition.component = forInput ? TextField: TextInput;
 
-    definition.props.children = forInput ? (
-      <SimpleFormIterator>
-        {createElement(field.component, field.props)}
-      </SimpleFormIterator>
-    ): 
-    (
-      <SingleFieldList linkType={false}>
-        <ChipField source={source} size="small" />
-      </SingleFieldList>
-    )
+    }
   }
   return definition;
 }
@@ -424,7 +434,6 @@ export const getFieldDefinition = (api: OpenAPIClientAxios, fieldSchema: FieldSc
       forInput
     )
   } else if (fieldSchema?.kind === 'relationship' ) {
-    console.log('source', fieldSchema)
     const hasCreate = api.getOperation(`create_${fieldSchema.reference}`) !== undefined
     return {
       component: forInput ? SchemaAutocompleteInput: ReferenceField, 
