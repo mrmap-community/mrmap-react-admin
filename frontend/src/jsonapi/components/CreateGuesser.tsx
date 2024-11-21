@@ -1,8 +1,8 @@
 import { createElement, type ReactElement, useMemo } from 'react';
 import { Create, type CreateProps, RaRecord, SaveButton, SimpleForm, Toolbar, useResourceDefinition } from 'react-admin';
 
-import { FieldDefinition } from '../hooks/useFieldForOperation';
 import { useFieldsForOperation } from '../hooks/useFieldsForOperation';
+import { FieldDefinition } from '../utils';
 
 
 export const CreateToolbar = () => (
@@ -18,7 +18,7 @@ export interface CreateGuesserProps<RecordType extends RaRecord = any>
   defaultValues?: any
   toolbar?: ReactElement | false;
   updateFieldDefinitions?: FieldDefinition[];
-
+  referenceInputs?: ReactElement[]
 }
 
 
@@ -28,6 +28,8 @@ const CreateGuesser = (
     toolbar,
     defaultValues,
     updateFieldDefinitions,
+    referenceInputs,
+
     ...rest
   }: CreateGuesserProps
 ): ReactElement => {
@@ -69,6 +71,8 @@ const CreateGuesser = (
         defaultValues={defaultValues}
       >
         {fields}
+        huhu
+        {referenceInputs}
       </SimpleForm>
     </Create>
   )

@@ -1,9 +1,6 @@
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import { Box } from '@mui/material';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import Stepper, { StepperOwnProps } from '@mui/material/Stepper';
 import {
   sanitizeListRestProps
 } from 'ra-core';
@@ -16,46 +13,23 @@ import EditGuesser from '../../../../jsonapi/components/EditGuesser';
 import SchemaAutocompleteInput from '../../../../jsonapi/components/SchemaAutocompleteInput';
 import { useFieldsForOperation } from '../../../../jsonapi/hooks/useFieldsForOperation';
 import CreateDialog from '../../../Dialog/CreateDialog';
-import CreateSuggestionDialog from '../../../Dialog/CreateSuggestionDialog';
 
-const Steps = (
-  {
-    activeStep,
-    ...rest
-  }: StepperOwnProps
-) => {
-  return (
-    <Stepper activeStep={activeStep} {...rest}>
-
-      <Step key='settings'>
-        <StepLabel>Settings</StepLabel>
-      </Step>
-      <Step key='get-capabilities-probes'>
-        <StepLabel>Get Capabilities Probes</StepLabel>
-      </Step>
-      <Step key='get-map-probes'>
-        <StepLabel>Get Map Probes</StepLabel>
-      </Step>
-    </Stepper>
-  )
-}
 
 interface FormInteratorProps {
-  resource: string
+  parentResource: string
   source: string
   forEdit?: boolean
 }
 
 const FormInterator = (
   {
-    resource,
+    parentResource,
     source,
     forEdit=true
   }: FormInteratorProps
 ) => {
 
-  const fields = useFieldsForOperation(forEdit ? `partial_update_${resource}`: `create_${resource}`)
-
+  const fields = useFieldsForOperation(forEdit ? `partial_update_${parentResource}`: `create_${parentResource}`)
   return (
     <ArrayInput source={source}>
         <SimpleFormIterator inline>
@@ -64,6 +38,33 @@ const FormInterator = (
     </ArrayInput>
   )
 }
+
+interface ReferenceManyInputProps {
+  reference: string
+  target: string
+}
+
+export const ReferenceManyInput = (
+  {
+    reference,
+    target,
+    
+
+  }: ReferenceManyInputProps
+) => {
+
+  const fields = useFieldsForOperation(`create_${reference}`)
+  return (
+    <ArrayInput source={`${reference}s`}>
+      <SimpleFormIterator inline>
+          {
+            fields.map(fieldDefinition => createElement(fieldDefinition.component, fieldDefinition.props))
+          }
+      </SimpleFormIterator>
+    </ArrayInput>
+  )
+};
+
 
 
 export const SettingWizardStep1 = () => {
@@ -83,48 +84,25 @@ export const SettingWizardStep1 = () => {
   
   return (
     <Box sx={{ width: '100%' }}>
-      <Steps
-        activeStep={0}
-      />
       {
         settingId === undefined ? 
         <CreateGuesser
           resource='WebMapServiceMonitoringSetting'
           redirect={redirect}
-          updateFieldDefinitions={[
-            {
-              component: SchemaAutocompleteInput, 
-              props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true} />}
-            },{
-              component: FormInterator,
-              props: {source: 'getCapabilititesProbes', resource: 'GetCapabilitiesProbe', forEdit: false}
-            },{
-              component: FormInterator,
-              props: {source: 'getMapProbes', resource: 'GetMapProbe', forEdit: false}
-            }
-          ]}
+          referenceInputs={[<ReferenceManyInput key='getCapabilitiesProbes' reference='GetCapabilitiesProbe' target='service'/>]}
+
         />: 
         <EditGuesser 
           resource='WebMapServiceMonitoringSetting'
           id={settingId}
-          redirect={redirect}
-          updateFieldDefinitions={[
-            {
-              component: SchemaAutocompleteInput, 
-              props: {source: 'crontab', create: <CreateSuggestionDialog resource='CrontabSchedule' isOpen={true}/>}
-            },{
-              component: FormInterator,
-              props: {source: 'getCapabilititesProbes', resource: 'GetCapabilitiesProbe'}
-            },{
-              component: FormInterator,
-              props: {source: 'getMapProbes', resource: 'GetMapProbe'}
-            }
-          ]}          toolbar={
+          redirect={redirect}      
+          toolbar={
             <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <SaveButton alwaysEnable/>
                 <DeleteButton/>
             </Toolbar>
           }
+          referenceInputs={[<ReferenceManyInput key='getCapabilitiesProbes' reference='GetCapabilitiesProbe' target='service'/>]}
         />
       }
     </Box>

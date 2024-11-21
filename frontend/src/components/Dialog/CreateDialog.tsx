@@ -6,8 +6,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { createElement, useCallback, useMemo } from 'react';
 import { Create, CreateProps, Form, RaRecord, SaveButton, useNotify, useTranslate } from 'react-admin';
-import { FieldDefinition } from '../../jsonapi/hooks/useFieldForOperation';
 import { useFieldsForOperation } from '../../jsonapi/hooks/useFieldsForOperation';
+import { FieldDefinition } from '../../jsonapi/utils';
 
 export interface CreateDialogProps extends Partial<CreateProps>{
   isOpen?: boolean

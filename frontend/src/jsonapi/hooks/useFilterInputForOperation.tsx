@@ -3,7 +3,7 @@ import { type OpenAPIV3 } from 'openapi-client-axios';
 
 import { AutocompleteInput, BooleanInput, NullableBooleanInput, NumberInput, TextInput } from 'react-admin';
 import GeoJsonInput from '../../components/Input/GeoJsonInput';
-import { FieldDefinition } from './useFieldForOperation';
+import { FieldDefinition } from '../utils';
 import useOperation from './useOperation';
 
 
