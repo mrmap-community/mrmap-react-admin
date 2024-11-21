@@ -331,7 +331,7 @@ export const getFieldForFormat = (
       definition.component = forInput ? TextInput: UrlField;
       definition.props.validate = [
         ...definition.props.validate, 
-        regex(`^(http(s):\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$`)
+        regex(/^(http(s):\/\/.)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/)
       ]
       break;
     case 'email':
