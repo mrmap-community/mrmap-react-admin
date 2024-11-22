@@ -71,7 +71,6 @@ const CreateGuesser = (
         defaultValues={defaultValues}
       >
         {fields}
-        huhu
         {referenceInputs}
       </SimpleForm>
     </Create>

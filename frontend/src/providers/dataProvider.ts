@@ -4,9 +4,9 @@ import jsonpointer from 'jsonpointer'
 import OpenAPIClientAxios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, Operation, type ParamsArray } from 'openapi-client-axios'
 import { WebSocketLike } from 'react-use-websocket/dist/lib/types'
 
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { isEqual } from 'lodash'
-import { type JsonApiDocument, type JsonApiErrorObject, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
+import { type JsonApiDocument, type JsonApiPrimaryData } from '../jsonapi/types/jsonapi'
 import { capsulateJsonApiPrimaryData, encapsulateJsonApiPrimaryData } from '../jsonapi/utils'
 
 
@@ -168,6 +168,37 @@ const checkOperationExists = (api: OpenAPIClientAxios, operationId: string): Ope
   return operation
 }
 
+const handleBadRequest = (error: AxiosError) => {
+  if (error.response?.data?.hasOwnProperty("errors")){
+
+    const jsonApiResponse = error.response.data as JsonApiDocument
+    const jsonApiErrors = jsonApiResponse.errors
+    
+    const raErrorPayload: any = {
+        errors: {
+        }
+    }
+
+    jsonApiErrors?.forEach(jsonApiError => {
+      if (jsonApiError.source.pointer !== undefined) {
+        // https://jsonapi.org/format/#error-objects
+        const fieldName = jsonApiError.source.pointer?.replace('/data/attributes/', '').replace('/data/relationships/', '')
+
+        if (jsonApiError.source.pointer.includes("/data/id")){
+          raErrorPayload.errors["id"] = jsonApiError.detail
+        } else if (fieldName === undefined) {
+          raErrorPayload.errors["root"] = jsonApiError.detail
+        } else {
+          raErrorPayload.errors[fieldName] = jsonApiError.detail
+        }
+      } 
+    })
+    throw new HttpError(error.message, 400, raErrorPayload)
+  } else {
+    throw new HttpError(error.message, 400)
+  }
+}
+
 const dataProvider = ({
   total = '/meta/pagination/count',
   httpClient,
@@ -199,44 +230,8 @@ const dataProvider = ({
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
       }).catch((error) => {
-        if (axios.isAxiosError(error)) {
-          if (error.status === 400 && error.response?.data?.hasOwnProperty("errors")){
-
-            const requestBody = JSON.parse(error.config?.data)
-
-            const jsonApiResponse = error.response.data as JsonApiDocument
-            const jsonApiErrors = jsonApiResponse.errors
-
-            const raErrorPayload: any = {
-              
-                errors: {
-                  root: { serverError: error.message },
-                }
-              
-            }
-
-            jsonApiErrors?.forEach(jsonApiError => {
-              if (jsonApiError.source.pointer !== undefined) {
-                // https://jsonapi.org/format/#error-objects
-
-                const fieldValue = jsonpointer.get(requestBody, jsonApiError.source.pointer)
-                
-                if (fieldValue === undefined) return // we ingnore the error, cause the pointer is not valid.
-                if (jsonApiError.source.pointer.includes("/data/id")){
-                  raErrorPayload.errors["id"] = jsonApiError.detail
-                } else if (jsonApiError.source.pointer.includes("/data/attributes")) {
-                  const fieldKey = jsonApiError.source.pointer.split("/data/attributes/")[1]
-                  raErrorPayload.errors[fieldKey] = jsonApiError.detail
-                } else if (jsonApiError.source.pointer.includes("/data/relationships")){
-                  const fieldKey = jsonApiError.source.pointer.split("/data/relationships/")[1]
-                  raErrorPayload.errors[fieldKey] = jsonApiError.detail
-                }
-              } 
-            })
-            
-            throw new HttpError(error.message, 400, raErrorPayload)
-              
-          }
+        if (axios.isAxiosError(error) && error.status === 400) {
+          handleBadRequest(error)
         }
         throw error
       }) 
@@ -258,7 +253,7 @@ const dataProvider = ({
       checkOperationExists(httpClient, operationId)
       
       const parameters = buildQueryParams(params)
-      const  conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
+      const conf = httpClient.getAxiosConfigForOperation(operationId, [parameters, undefined, httpClient.axiosConfigDefaults])
       
       return await handleListRequest(httpClient.client, conf, total)
     },
@@ -323,30 +318,9 @@ const dataProvider = ({
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
       }).catch(async error => {
         if (error.response.status === 400) {
-          const jsonApiErrors: JsonApiErrorObject[] = error.response.data.errors
-          const fieldErrors: any = {}
-          const formErrors: string[] = []
-          jsonApiErrors?.forEach(e => {
-            const pointer = e.source?.pointer
-            if (['/data/attributes', '/data/relationships'].some(v => pointer?.includes(v))) {
-              // TODO: field error
-              const fieldName = pointer?.replace('/data/attributes/', '').replace('/data/relationships/', '')
-              if (fieldName !== undefined) {
-                fieldErrors[fieldName] = e.detail
-              } else {
-                formErrors.push(e.detail)
-              }
-            }
-          })
-          // TODO: translate message
-          return await Promise.reject(new HttpError(
-            'Bad Request',
-            error.response.status,
-            { errors: fieldErrors }
-          ))
-        } else {
-          return await Promise.reject(error)
+          handleBadRequest(error)
         }
+        throw error
       })
     },
     update: async (resource: string, params: UpdateParams) =>

@@ -58,7 +58,6 @@ const EditGuesser = (
         sanitizeEmptyValues
       >
         {fields}
-        huhu
         {referenceInputs}
       </SimpleForm>
     </Edit>
