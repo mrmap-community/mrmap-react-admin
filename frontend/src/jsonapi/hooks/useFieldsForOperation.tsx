@@ -16,5 +16,12 @@ export const useFieldsForOperation = (
   const allFields = useMemo(()=> schema && (ignore_id ? encapsulateFields(schema).filter(name => name !== 'id'): encapsulateFields(schema)) || [], [schema])
   const fieldSchemas = useMemo<FieldSchema[]>(()=> schema && allFields.map(name => getFieldSchema(name, schema)).filter(schema => schema !== undefined) || [], [schema, allFields])
 
-  return fieldSchemas.map(fieldSchema => api && fieldSchema && getFieldDefinition(api, fieldSchema, forInput)).filter(fieldDefinition => fieldDefinition !== undefined)
+  const fieldDefinitions = useMemo(() =>
+    fieldSchemas.map(
+      fieldSchema => api && fieldSchema && getFieldDefinition(api, fieldSchema, forInput))
+        .filter(fieldDefinition => fieldDefinition !== undefined),
+        [api, fieldSchemas]
+  )
+
+  return fieldDefinitions
 }

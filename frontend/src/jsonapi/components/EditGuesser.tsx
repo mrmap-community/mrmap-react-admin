@@ -50,7 +50,6 @@ const EditGuesser = (
       }}
       mutationOptions={{ meta: { type: options?.type }}}
       mutationMode='pessimistic'
-      
       {...props}
     >
       <SimpleForm

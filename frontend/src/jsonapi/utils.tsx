@@ -1,7 +1,7 @@
 import OpenAPIClientAxios, { type OpenAPIV3, type Operation, type ParameterObject } from 'openapi-client-axios'
 import { ArrayField, ArrayInput, AutocompleteArrayInput, BooleanField, BooleanInput, ChipField, DateField, DateInput, DateTimeInput, EmailField, NumberField, NumberInput, ReferenceArrayField, ReferenceField, SingleFieldList, TextField, TextInput, TimeInput, UrlField, type RaRecord } from 'react-admin'
 
-import React, { ComponentType } from 'react'
+import { ComponentType } from 'react'
 import {
   email,
   maxLength,
@@ -242,16 +242,16 @@ export const getArrayInput = (
     props: {
       source: source,
       label: schema.title ?? source,
-      defaultValue: schema.default,
-      helptText: schema.description,
       disabled: isReadOnly?? false,
+      ...(schema.default && {defaultValue: schema.default}),
       ...(forInput && {required: isRequired}),
+      ...(schema.description && {helptText: schema.description}),
     }
   }
 
   const nestedSchema = schema.items as OpenAPIV3.SchemaObject
 
-  if (forInput && nestedSchema.enum !== undefined){
+  if (forInput && nestedSchema.enum !== undefined && Array.isArray(nestedSchema.enum) && nestedSchema.enum.length > 0){
     // simple choice input
     definition.component = AutocompleteArrayInput;
     definition.props.choices = nestedSchema.enum.map(choice => ({id: choice, name: choice}));
@@ -303,22 +303,27 @@ export const getFieldForFormat = (
   isReadOnly: boolean = false, 
   forInput: boolean = true
 ): FieldDefinition => {
+  const validate = [
+    ... schema.maxLength ? [maxLength(schema.maxLength)] : [],
+    ... schema.minLength ? [minLength(schema.minLength)] : [],
+    ... schema.pattern ? [regex(schema.pattern)] : []
+  ]
+
   const definition: FieldDefinition = {
-    component: forInput ? TextInput: TextField,
-    props: {
-      source: source,
-      label: schema.title ?? source,
-      defaultValue: schema.default,
-      helptText: schema.description,
-      disabled: isReadOnly?? false,
-      validate: [
-        ... schema.maxLength ? [maxLength(schema.maxLength)] : [],
-        ... schema.minLength ? [minLength(schema.minLength)] : [],
-        ... schema.pattern ? [regex(schema.pattern)] : []
-      ],
-      ...(forInput && {required: isRequired}),
+      component: forInput ? TextInput: TextField,
+
+      props: {
+        source: source,
+        label: schema.title ?? source,
+        disabled: isReadOnly?? false,
+        ...(schema.default && {defaultValue: schema.default}),
+        ...(validate.length > 0 && {validate: validate}),
+        ...(forInput && {required: isRequired}),
+        ...(schema.description && {helptText: schema.description}),
+        }
     }
-  }
+
+
   // See https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-01#name-defined-formats for valid schema.format strings
   switch(schema.format){
     case 'date-time':
@@ -367,29 +372,33 @@ export const getFieldForType = (
   isReadOnly: boolean = false, 
   forInput: boolean = true): FieldDefinition => {
   
+  const validate = [
+    ... schema.maxLength ? [maxLength(schema.maxLength)] : [],
+    ... schema.minLength ? [minLength(schema.minLength)] : [],
+    ... schema.pattern ? [regex(schema.pattern)] : []
+  ]
+
+
   const definition: FieldDefinition = {
       component: forInput ? TextInput: TextField,
+
       props: {
         source: source,
         label: schema.title ?? source,
-        defaultValue: schema.default,
-        helptText: schema.description,
         disabled: isReadOnly?? false,
-        validate: [
-          ... schema.maxLength ? [maxLength(schema.maxLength)] : [],
-          ... schema.minLength ? [minLength(schema.minLength)] : [],
-          ... schema.pattern ? [regex(schema.pattern)] : []
-        ],
+        ...(schema.default && {defaultValue: schema.default}),
+        ...(validate.length > 0 && {validate: validate}),
         ...(forInput && {required: isRequired}),
-      }
+        ...(schema.description && {helptText: schema.description}),
+        }
     }
 
   switch(schema.type) {
     case 'integer':
     case 'number':
       definition.component = forInput ? NumberInput: NumberField;
-      definition.props.max = schema.maximum;
-      definition.props.min = schema.minimum;
+      if (schema.maximum !== undefined) definition.props.max = schema.maximum;
+      if (schema.minimum !== undefined) definition.props.min = schema.minimum;
       break;
     case 'boolean':
       definition.component = forInput ? BooleanInput: BooleanField;
@@ -419,8 +428,8 @@ export const getFieldDefinition = (api: OpenAPIClientAxios, fieldSchema: FieldSc
     source: fieldSchema.name,
     label: fieldSchema.schema.title ?? fieldSchema.name,
     disabled: fieldSchema.isReadOnly?? false,
-    defaultValue: fieldSchema.schema.default,
-    helperText: fieldSchema.schema.description,
+    ...(fieldSchema.schema.default && {defaultValue: fieldSchema.schema.default}),
+    ...(fieldSchema.schema.description && {helperText: fieldSchema.schema.description}),
     ...(forInput && {required: fieldSchema.isRequired}),
     ...(fieldSchema.reference && {reference: fieldSchema.reference})
   }
@@ -447,12 +456,16 @@ export const getFieldDefinition = (api: OpenAPIClientAxios, fieldSchema: FieldSc
     
   } else if (fieldSchema?.kind === 'array-relationship') {   
     const props = {
-      ...commonProps, 
+      ...commonProps,
       ...(forInput ? {multiple: true}: {reference: fieldSchema.reference, target: fieldSchema.resource,})
     }
+
     return {
       component: forInput ? SchemaAutocompleteInput: ReferenceArrayField, 
-      props: props
+      props: {
+        ...props,
+        ...(props.defaultValue ?? {defaultValue: []}), // define an empty array as defaultValue. Otherwise it can results in to null values for this field as values, which causes TypeErrors on => undefined.map()
+      }
     }
   }
 

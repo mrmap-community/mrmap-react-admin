@@ -228,6 +228,8 @@ const dataProvider = ({
       .then((response: AxiosResponse) => {
         const jsonApiDocument = response.data as JsonApiDocument
         const jsonApiResource = jsonApiDocument.data as JsonApiPrimaryData
+        
+
         return { data: encapsulateJsonApiPrimaryData(jsonApiDocument, jsonApiResource) }
       }).catch((error) => {
         if (axios.isAxiosError(error) && error.status === 400) {
@@ -249,7 +251,13 @@ const dataProvider = ({
   return {
     getList: async (resource: string, params: GetListJsonApiParams) => {
       const relatedResource = params.meta?.relatedResource
+      if (relatedResource !== undefined && relatedResource.id === undefined){
+        // possible if the getList is called inside a CreateGuesser with a ReferenceManyInput as child component. 
+        // Therewhile the parent object isnt created and the getList is called with an undefined id. This results in 404 requests.
+        return 
+      }
       const operationId = relatedResource === undefined ? `list_${resource}` : `list_related_${resource}_of_${relatedResource.resource}`
+
       checkOperationExists(httpClient, operationId)
       
       const parameters = buildQueryParams(params)

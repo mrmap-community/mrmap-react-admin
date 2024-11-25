@@ -22,6 +22,7 @@ const SchemaAutocompleteInput = (
     source,
     multiple,
     params,
+    defaultValue,
     ...rest
   }: SchemaAutocompleteInputProps
 ): ReactElement => {
@@ -30,6 +31,7 @@ const SchemaAutocompleteInput = (
   const { data, isPending, isFetching } = useGetList(reference, {filter: filter, sort: {field: '', order: 'DESC'}, ...params});
 
   const optionText = useSchemaRecordRepresentation({resource: reference})
+
 
   if (multiple){
     return (
@@ -42,7 +44,6 @@ const SchemaAutocompleteInput = (
           optionText={optionText}
           parse={(value: Identifier[]) => { return value?.map(identifier => ({id: identifier})) }} // form input value (string) ---> parse ---> form state value
           format={(value: RaRecord[]) => value?.map(record => (record.id))}
-          
           {...rest}
         />
       )

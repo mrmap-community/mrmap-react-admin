@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {
   HttpError,
   useCreate,
@@ -6,7 +7,7 @@ import {
   useResourceContext,
   useUpdate
 } from 'ra-core';
-import { createElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrayInput, Loading, RaRecord, RemoveItemButton, SimpleFormIterator, useSimpleFormIterator, useSimpleFormIteratorItem } from 'react-admin';
 import { FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 import { useFieldsForOperation } from '../hooks/useFieldsForOperation';
@@ -25,7 +26,7 @@ export const RemoveButton = () => {
   const { remove, index,  } = useSimpleFormIteratorItem();
   const { getValues } = useFormContext();
 
-  const [deleteOne, { isPending, error, isSuccess }] = useDelete();
+  const [deleteOne, { isPending, isSuccess }] = useDelete();
 
   const onClick = useCallback(async ()=>{
     const record = getValues()[source][index]
@@ -69,40 +70,37 @@ export const ReferenceManyInput = (
   const source = useMemo(()=> `${reference}s`, [reference])
   const resource = useResourceContext();
 
-  const { getValues: getValuesParent, formState: formStateParent  } = useFormContext();
-  
+  const { getValues: getValuesParent, formState: formStateParent, } = useFormContext();
+
   const [targetValue, setTargetValue] = useState({id: getValuesParent('id')});
   const [simpleFormInteratorKey, setSimpleFormInteratorKey] = useState((Math.random() + 1).toString(36).substring(7));
 
-  const { 
-    data,
-    total,
-    isPending,
-    error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
+  const {
+    data
   } = useInfiniteGetList(
       reference,
       {
         pagination: { page: 1, perPage: 10 },
-        meta: { relatedResource: { resource: resource, ...targetValue}},
+        meta: { relatedResource: { resource: resource, ...(targetValue.id && targetValue)}},
       }
   );
 
   const methods = useForm();
+  const values: RaRecord[] = methods.watch(source);
+  const valuesRef = useRef(values);
+
+  console.log(source, values)
 
   const { append: appendValue } = useFieldArray({
     control: methods.control, // control props comes from useForm (optional: if you are using FormProvider)
     name: source, // unique name for your Field Array
   });
 
-  const { getValues, setError, setValue } = methods;
+  const { setError, setValue } = methods;
 
-  const [ create, ] = useCreate();
-  const [ update, ] = useUpdate();
+  const [ create ] = useCreate();
+  const [ update ] = useUpdate();
   
-
   const fieldDefinitions = useFieldsForOperation(`create_${reference}`)
 
   if (fieldDefinitions.length > 0 && !fieldDefinitions.find(def => def.props.source === target)) {
@@ -118,67 +116,74 @@ export const ReferenceManyInput = (
         `${source}.${index}.${key}`,
         {message: value as string}
       )
-    });
-
-    setError(`${source}.root.serverError`, {message: 'huhu'})
-    
+    });    
   },[source])
+
+  useEffect(()=> {
+    if (!_.isEqual(values, valuesRef.current)){
+      valuesRef.current = values
+    }
+  },[values])
 
   useEffect(()=>{
     if (Array.isArray(data?.pages) && data?.pages.length > 0) {
       
       data?.pages.forEach((page, pageIndex) => {
         page.data.forEach((record, index) => {
-          //Object.entries(record).forEach(([key, value]) => {
-          //  setValue(`${source}.${(pageIndex+1)*index}.${key}`, value)
-          //})
-          //updateValue((pageIndex+1) * index, record)
-          const exists = getValues()[source].find((existing: RaRecord) => existing.id === record.id) !== undefined
+
+          const exists = values?.find((existing: RaRecord) => existing.id === record.id) !== undefined
           !exists && appendValue(record)
-          //setValue(`${source}.${(pageIndex+1)*index}`, record)
         })
       })
 
       setSimpleFormInteratorKey((Math.random() + 1).toString(36).substring(7))
-      console.log(data?.pages, getValues())
 
     }
   }, [data])
 
   useEffect(()=>{
-    if (formStateParent.isSubmitSuccessful){
+    if (!formStateParent.isSubmitting && formStateParent.isSubmitSuccessful){
       
       setTargetValue({ id: getValuesParent('id') })
 
-      setValue(source, getValues()[source].map((element: any) => {
+      setValue(source, values?.map((element: any) => {
         element[target] = {id: getValuesParent('id')}
         return element;
       }))
-      const nestedValues = getValues()[source] as RaRecord[]
       
       methods.clearErrors()
 
-      nestedValues.forEach((resource, index) => { 
+      values?.forEach((resource, index) => { 
         if (resource.id === undefined){
-          console.log('call create', index)
           create(
             reference, 
-            { data: resource }, 
-            { onError: (error, variables, context) => onError(index, error)}
+            { 
+              data: resource 
+            }, 
+            { 
+              onError: (error, variables, context) => onError(index, error)
+            }
           )
         } else {
+          const previousData = valuesRef.current?.find((value: RaRecord) => value.id === resource.id)
           update(
             reference, 
-            { data: resource}, 
-            { onError: (error, variables, context) => onError(index, error)}
+            { 
+              id: resource.id, 
+              data: resource,
+              previousData: previousData
+            }, 
+            { 
+              onError: (error, variables, context) => onError(index, error)
+            }
           )
         }
       })
    }
-  }, [formStateParent.isSubmitSuccessful])
-
+  }, [formStateParent.isSubmitSuccessful, formStateParent.isSubmitting])
 
   return (
+    targetValue.id === undefined ? null:
     <FormProvider {...methods} >
       <ArrayInput
        source={source}
@@ -186,27 +191,24 @@ export const ReferenceManyInput = (
        key={simpleFormInteratorKey}
       >
         <SimpleFormIterator
-          
           inline
           disableReordering
           removeButton={<RemoveButton/>}
-          meta={{error: {'checkResponseDoesContain': 'huhu'}}}
-          
-          //append={append}
         >
             {
               fieldDefinitions.map(
                 (fieldDefinition, index) => {
                   const props = {
-                    key: `${reference}-${index}`,
+                    key: `${reference}-${fieldDefinition.props.source}`,
                     ...fieldDefinition.props,
                   }
-                  
+                  if (fieldDefinition.props.source === 'referenceSystem') console.log(fieldDefinition);
+                  if (fieldDefinition.props.source === 'layers') console.log(fieldDefinition);
+
                   if (fieldDefinition.props.source === target) {
                     props.hidden = true
                     props.defaultValue = targetValue
                   }
-
                   return createElement(
                     fieldDefinition.component, 
                     props

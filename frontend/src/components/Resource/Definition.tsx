@@ -20,7 +20,8 @@ import EditAllowedWebMapServiceOperation from './AllowedWebMapServiceOperation/E
 import { WmsShow } from './WebMapService/WmsShow';
 
 import MultipleStopIcon from '@mui/icons-material/MultipleStop';
-import { SettingWizardStep1 } from './Monitoring/Wms/SettingWizard';
+import CreateWebMapServiceMonitoringSetting from './Monitoring/Wms/CreateWebMapServiceMonitoringSetting';
+import EditWebMapServiceMonitoringSetting from './Monitoring/Wms/EditWebMapServiceMonitoringSetting';
 
 const RESOURCES: Array<ResourceProps> = [
   {name: "WebMapService", icon: MapIcon, list: WmsList, show: WmsShow},
@@ -39,19 +40,21 @@ const RESOURCES: Array<ResourceProps> = [
   // monitoring
   {
     name: "WebMapServiceMonitoringSetting", 
-    create: SettingWizardStep1,
-    edit: SettingWizardStep1,
+    create: CreateWebMapServiceMonitoringSetting,
+    edit: EditWebMapServiceMonitoringSetting,
   },
   {name: "GetCapabilitiesProbe"},
   {name: "GetMapProbe"},
+  
 
   {name: "WebMapServiceMonitoringRun"},
   {name: "GetCapabilitiesProbeResult"},
   {name: "GetMapProbeResult"},
 
+  {name: "ReferenceSystem"},
+
+
   {name: "CrontabSchedule"},
-
-
   {name: "BackgroundProcess"},
 
   {name: "AllowedWebMapServiceOperation", icon: VpnLockIcon, create: CreateAllowedWebMapServiceOperation, edit: EditAllowedWebMapServiceOperation},
