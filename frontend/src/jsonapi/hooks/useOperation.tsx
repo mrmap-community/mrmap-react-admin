@@ -6,19 +6,19 @@ import { useHttpClientContext } from '../../context/HttpClientContext'
 
 
 const useOperation = (operationId: string): Operation | undefined => {
-  const { api: client } = useHttpClientContext()
+  const { api } = useHttpClientContext()
   const [operation, setOperation] = useState<Operation>()
 
   useEffect(() => {
-    if (operationId !== undefined && operationId !== '' && client !== undefined) {
-      const _operation = client.client.api.getOperation(operationId)
+    if (operationId !== undefined && operationId !== '' && api !== undefined) {
+      const _operation = api.getOperation(operationId)
       if (_operation === undefined) {
         setOperation(undefined)
         return
       }
       setOperation(_operation)
     }
-  }, [operationId, client])
+  }, [operationId, api])
 
   return operation
 }

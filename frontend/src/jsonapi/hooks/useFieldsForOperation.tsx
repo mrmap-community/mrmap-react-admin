@@ -1,33 +1,27 @@
 import { useMemo } from 'react';
-
-import { type OpenAPIV3 } from 'openapi-client-axios';
-
-import { FieldDefinition, FieldSchema, getFieldDefinition, getFieldSchema } from './useFieldForOperation';
+import { useHttpClientContext } from '../../context/HttpClientContext';
+import { encapsulateFields, FieldDefinition, FieldSchema, getFieldDefinition, getFieldSchema } from '../utils';
 import useResourceSchema from './useResourceSchema';
 
-const encapsulateFields = (schema: OpenAPIV3.NonArraySchemaObject) => {
 
-  const jsonApiPrimaryDataProperties = schema?.properties as Record<string, OpenAPIV3.NonArraySchemaObject>
-  const jsonApiResourceAttributes = jsonApiPrimaryDataProperties?.attributes?.properties 
-  const jsonApiResourceRelationships = jsonApiPrimaryDataProperties?.relationships?.properties
-  const jsonApiResourceId = jsonApiPrimaryDataProperties?.id as Record<string, OpenAPIV3.NonArraySchemaObject>
-
-  return [
-    ...(jsonApiResourceAttributes && Object.keys(jsonApiResourceAttributes) || []),
-    ...(jsonApiResourceRelationships && Object.keys(jsonApiResourceRelationships) || []),
-    ...(jsonApiResourceId && ['id'] || [])
-  ]
-
-};
 
 export const useFieldsForOperation = (
   operationId: string,
   ignore_id = true,
   forInput = true
 ): FieldDefinition[] => {
+  const { api } = useHttpClientContext()
+
   const {schema} = useResourceSchema(operationId)
   const allFields = useMemo(()=> schema && (ignore_id ? encapsulateFields(schema).filter(name => name !== 'id'): encapsulateFields(schema)) || [], [schema])
   const fieldSchemas = useMemo<FieldSchema[]>(()=> schema && allFields.map(name => getFieldSchema(name, schema)).filter(schema => schema !== undefined) || [], [schema, allFields])
 
-  return fieldSchemas.map(fieldSchema => fieldSchema && getFieldDefinition(fieldSchema, forInput)).filter(fieldDefinition => fieldDefinition !== undefined)
+  const fieldDefinitions = useMemo(() =>
+    fieldSchemas.map(
+      fieldSchema => api && fieldSchema && getFieldDefinition(api, fieldSchema, forInput))
+        .filter(fieldDefinition => fieldDefinition !== undefined),
+        [api, fieldSchemas]
+  )
+
+  return fieldDefinitions
 }
